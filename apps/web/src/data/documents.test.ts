@@ -3,6 +3,8 @@ import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { database } from './database';
 import {
   addTask,
+  findCheckIn,
+  getOrCreateCheckIn,
   getOrCreateMorningCheckIn,
   setTaskCompleted,
   updateCheckIn,
@@ -50,5 +52,21 @@ describe('local documents', () => {
     const resumedCheckIn = await getOrCreateMorningCheckIn();
     expect(resumedCheckIn.id).toBe(checkIn.id);
     expect(resumedCheckIn.payload.currentStep).toBe(2);
+  });
+
+  it('keeps morning and evening check-ins independent', async () => {
+    const date = new Date('2026-07-14T12:00:00.000Z');
+    const morning = await getOrCreateCheckIn('morning', date);
+    const evening = await getOrCreateCheckIn('evening', date);
+
+    expect(morning.id).not.toBe(evening.id);
+    expect(morning.payload.responses).toHaveLength(3);
+    expect(evening.payload.responses).toHaveLength(4);
+    expect(await findCheckIn('morning', morning.payload.localDate)).toEqual(
+      morning,
+    );
+    expect(await findCheckIn('evening', evening.payload.localDate)).toEqual(
+      evening,
+    );
   });
 });

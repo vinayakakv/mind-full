@@ -47,6 +47,15 @@
   width: 100%;
 }
 
+.checkIns {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.secondaryCheckIn {
+  background: transparent;
+}
+
 .checkInButton[data-hovered] {
   background: var(--accent-soft);
   transform: translateY(-1px);
@@ -58,6 +67,10 @@
   letter-spacing: 0.05em;
   min-width: 3.6rem;
   text-transform: uppercase;
+}
+
+.secondaryCheckIn .checkInState {
+  color: var(--text-muted);
 }
 
 @keyframes arrive {

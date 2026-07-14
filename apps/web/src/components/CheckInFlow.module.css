@@ -15,8 +15,8 @@
   border-radius: 1.25rem;
   box-shadow: 0 2rem 5rem var(--shadow-soft);
   max-height: calc(100dvh - 2rem);
-  max-width: 37rem;
-  min-height: min(34rem, calc(100dvh - 2rem));
+  max-width: 39rem;
+  min-height: min(36rem, calc(100dvh - 2rem));
   overflow: auto;
   padding: clamp(1.25rem, 5vw, 2.5rem);
   width: 100%;
@@ -70,7 +70,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-height: 27rem;
+  min-height: 29rem;
 }
 
 .kicker {
@@ -83,15 +83,16 @@
 
 .step h2 {
   font-family: var(--font-reflection);
-  font-size: clamp(2rem, 7vw, 3.25rem);
+  font-size: clamp(2rem, 7vw, 3.15rem);
   font-weight: 400;
   letter-spacing: -0.035em;
   line-height: 1.08;
   margin: 0;
-  max-width: 13ch;
+  max-width: 16ch;
 }
 
-.supporting {
+.supporting,
+.aiLabel {
   color: var(--text-muted);
   font-family: var(--font-reflection);
   font-size: 1.05rem;
@@ -99,15 +100,23 @@
   margin: 1.25rem 0 0;
 }
 
-.primaryActions {
+.aiLabel {
+  color: var(--accent-strong);
+  font-family: var(--font-control);
+  font-size: 0.78rem;
+}
+
+.actions {
   align-items: center;
   display: flex;
-  gap: 1rem;
-  margin-top: 2.5rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 2.25rem;
 }
 
 .primaryButton,
 .textButton,
+.backButton,
 .choice {
   cursor: pointer;
   font: inherit;
@@ -125,17 +134,31 @@
   filter: brightness(1.06);
 }
 
-.textButton {
+.primaryButton[data-disabled] {
+  cursor: default;
+  opacity: 0.42;
+}
+
+.textButton,
+.backButton {
   background: transparent;
   border: 0;
   color: var(--text-muted);
   padding: 0.8rem 0.4rem;
 }
 
+.backButton {
+  margin-left: auto;
+}
+
 .choiceGroup {
   border: 0;
-  margin: 2rem 0 0;
+  margin: 1.6rem 0 0;
   padding: 0;
+}
+
+.choiceGroup + .choiceGroup {
+  margin-top: 1rem;
 }
 
 .choiceGroup legend {
@@ -144,10 +167,27 @@
   margin-bottom: 0.65rem;
 }
 
-.choices {
+.choices,
+.emotions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.55rem;
+}
+
+.emotions {
+  border: 0;
+  margin-top: 1.75rem;
+  padding: 0;
+}
+
+.visuallyHidden {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
 }
 
 .choice {
@@ -172,11 +212,15 @@
   font-family: var(--font-reflection);
   font-size: 1.15rem;
   line-height: 1.65;
-  margin-top: 2rem;
-  min-height: 7rem;
+  margin-top: 1.75rem;
+  min-height: 6.5rem;
   outline: none;
   padding: 0.75rem 0;
   resize: vertical;
+}
+
+.reflection:focus-visible {
+  border-color: var(--accent-calm);
 }
 
 .reflection::placeholder,

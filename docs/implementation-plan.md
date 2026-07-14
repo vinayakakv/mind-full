@@ -83,14 +83,24 @@ runs the domain, local-storage, and server integration suites while building.
 
 ## Milestone 2 — Complete daily experience
 
-- Full morning and evening flows
-- Rotating curated prompts and emotion vocabulary
+Status: in progress as of July 14, 2026.
+
+- [x] Full morning and evening flows
+- [x] Rotating curated prompts and emotion vocabulary
+- [x] Time-aware flow selection and configurable daily boundaries
 - Habits, schedules, optional miss reasons, and streaks
 - Shared reminder documents
 - Journal writing and rendered reading mode
 - Shared task-suggestions area
 - Time-aware theme variations and polished gentle motion
 - Seven-day completed-task retention job
+
+Morning and evening check-ins are separate editable documents. Both use a
+resumable, fully skippable flow with named states, emotion words, stable prompt
+snapshots, and an optional final reflection. Curated wording rotates
+deterministically by local date, so creating or resuming a check-in never
+depends on connectivity or randomness. The Today screen offers the relevant
+flow from synchronized time boundaries while keeping the other flow available.
 
 ## Milestone 3 — Local AI and reflection
 

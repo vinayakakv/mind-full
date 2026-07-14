@@ -59,26 +59,44 @@
   border-color: var(--accent-calm);
 }
 
-.pairingForm {
+.pairingForm,
+.scheduleForm {
   display: grid;
   gap: 0.75rem;
   min-width: min(100%, 16rem);
 }
 
-.pairingForm label {
+.pairingForm label,
+.scheduleForm label {
   color: var(--text-muted);
   display: block;
   font-size: 0.75rem;
   margin-bottom: 0.35rem;
 }
 
-.pairingForm input {
+.pairingForm input,
+.scheduleForm input {
   background: var(--surface-soft);
   border: 1px solid var(--border-subtle);
   border-radius: 0.65rem;
   color: var(--text-primary);
   padding: 0.65rem 0.75rem;
   width: 100%;
+}
+
+.timeFields {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.timeFields input {
+  min-width: 7.25rem;
+}
+
+.formActions {
+  align-items: center;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .syncButton {
@@ -90,6 +108,11 @@
   font: inherit;
   justify-self: end;
   padding: 0.65rem 1rem;
+}
+
+.syncButton[data-disabled] {
+  cursor: default;
+  opacity: 0.42;
 }
 
 .setting p.error {

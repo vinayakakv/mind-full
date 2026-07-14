@@ -1,5 +1,6 @@
 import {
   type CheckInDocument,
+  type CheckInKind,
   type CheckInPayload,
   compareDocumentVersions,
   createCheckInDocument,
@@ -7,9 +8,11 @@ import {
   createSettingsDocument,
   createTaskDocument,
   type DomainDocument,
+  isCheckInScheduleValid,
   nextDocumentTimestamp,
   parseDomainDocument,
   type SettingsDocument,
+  selectCuratedPrompts,
   type TaskDocument,
 } from '@mindfull/domain';
 import { database } from './database';
@@ -127,6 +130,25 @@ export const updateTheme = async (
   });
 };
 
+export const updateCheckInSchedule = async (
+  morningStartsAt: string,
+  eveningStartsAt: string,
+): Promise<void> => {
+  if (!isCheckInScheduleValid(morningStartsAt, eveningStartsAt)) {
+    throw new Error('Morning must begin before evening.');
+  }
+
+  const settings = await ensureSettings();
+  const now = updatedNow(settings);
+
+  await saveDocument({
+    ...settings,
+    payload: { ...settings.payload, morningStartsAt, eveningStartsAt },
+    updatedAt: now,
+    updatedByDeviceId: getDeviceId(),
+  });
+};
+
 const nextTaskSortKey = (): string => {
   const now = Date.now().toString().padStart(16, '0');
   return `${now}:${createDocumentId()}`;
@@ -234,7 +256,8 @@ export const swapTaskOrder = async (
   ]);
 };
 
-export const findMorningCheckIn = async (
+export const findCheckIn = async (
+  kind: CheckInKind,
   localDate: string,
 ): Promise<CheckInDocument | undefined> => {
   const checkIns = await database.documents
@@ -245,7 +268,7 @@ export const findMorningCheckIn = async (
   const document = checkIns.find(
     (candidate) =>
       candidate.type === 'check-in' &&
-      candidate.payload.kind === 'morning' &&
+      candidate.payload.kind === kind &&
       candidate.payload.localDate === localDate &&
       !candidate.deletedAt,
   );
@@ -253,9 +276,12 @@ export const findMorningCheckIn = async (
   return document?.type === 'check-in' ? document : undefined;
 };
 
-export const getOrCreateMorningCheckIn = async (): Promise<CheckInDocument> => {
-  const localDate = localDateFor(new Date());
-  const existingCheckIn = await findMorningCheckIn(localDate);
+export const getOrCreateCheckIn = async (
+  kind: CheckInKind,
+  date = new Date(),
+): Promise<CheckInDocument> => {
+  const localDate = localDateFor(date);
+  const existingCheckIn = await findCheckIn(kind, localDate);
 
   if (existingCheckIn) {
     return existingCheckIn;
@@ -267,7 +293,7 @@ export const getOrCreateMorningCheckIn = async (): Promise<CheckInDocument> => {
     now,
     deviceId: getDeviceId(),
     payload: {
-      kind: 'morning',
+      kind,
       localDate,
       timezone: currentTimezone(),
       status: 'draft',
@@ -276,7 +302,13 @@ export const getOrCreateMorningCheckIn = async (): Promise<CheckInDocument> => {
       energy: null,
       stress: null,
       emotions: [],
-      responses: [],
+      responses: selectCuratedPrompts(kind, localDate).map((prompt) => ({
+        promptId: prompt.id,
+        promptText: prompt.text,
+        source: 'curated',
+        answer: null,
+        skipped: false,
+      })),
       reflectionMarkdown: null,
       completedAt: null,
     },
@@ -285,6 +317,9 @@ export const getOrCreateMorningCheckIn = async (): Promise<CheckInDocument> => {
   await saveDocument(checkIn);
   return checkIn;
 };
+
+export const getOrCreateMorningCheckIn = (): Promise<CheckInDocument> =>
+  getOrCreateCheckIn('morning');
 
 export const updateCheckIn = async (
   checkInId: string,

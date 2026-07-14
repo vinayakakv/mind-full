@@ -32,3 +32,9 @@ export const greetingFor = (date: Date): string => {
 
   return 'Good evening';
 };
+
+export const localTimeFor = (date: Date): string =>
+  `${date.getHours().toString().padStart(2, '0')}:${date
+    .getMinutes()
+    .toString()
+    .padStart(2, '0')}`;

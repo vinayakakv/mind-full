@@ -25,7 +25,9 @@ test('keeps tasks and a check-in draft through an offline reload', async ({
   await page.getByRole('button', { name: 'Begin morning check-in' }).click();
   await page.getByRole('button', { name: "I'm here" }).click();
   await page.getByRole('button', { name: 'Steady' }).click();
-  await page.getByRole('button', { name: 'At ease' }).click();
+  await page.getByRole('button', { name: 'Light' }).click();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByRole('button', { name: 'Calm' }).click();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByRole('button', { name: 'Close check-in' }).click();
 
@@ -33,11 +35,59 @@ test('keeps tasks and a check-in draft through an offline reload', async ({
 
   await expect(page.getByText('Drink tea slowly')).toBeVisible();
   await page.getByRole('button', { name: 'Continue morning check-in' }).click();
+  await expect(page.getByText('Appreciate', { exact: true })).toBeVisible();
+});
+
+const completeCheckInBySkipping = async (
+  page: Page,
+  kind: 'morning' | 'evening',
+): Promise<void> => {
+  await page.getByRole('button', { name: `Begin ${kind} check-in` }).click();
+
+  const remainingSteps = kind === 'morning' ? 6 : 7;
+  await page.getByRole('button', { name: 'Skip' }).click();
+
+  for (let step = 0; step < remainingSteps; step += 1) {
+    await page.getByRole('button', { name: 'Skip' }).click();
+  }
+
   await expect(
-    page.getByRole('heading', {
-      name: 'What is one good thing already present?',
-    }),
+    page.getByRole('button', { name: 'Return to today' }),
   ).toBeVisible();
+  await page.getByRole('button', { name: 'Return to today' }).click();
+};
+
+test('completes distinct morning and evening check-ins and edits an answer', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await completeCheckInBySkipping(page, 'morning');
+  await completeCheckInBySkipping(page, 'evening');
+
+  await expect(
+    page.getByRole('button', { name: 'Review morning check-in' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Review evening check-in' }),
+  ).toBeVisible();
+
+  await page.getByRole('button', { name: 'Review morning check-in' }).click();
+  await page.getByRole('button', { name: 'Review answers' }).click();
+  await page.getByRole('button', { name: 'Steady' }).click();
+  await page.getByRole('button', { name: 'Light' }).click();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByRole('button', { name: 'Close check-in' }).click();
+
+  await page.getByRole('button', { name: 'Review morning check-in' }).click();
+  await page.getByRole('button', { name: 'Review answers' }).click();
+  await expect(page.getByRole('button', { name: 'Steady' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(page.getByRole('button', { name: 'Light' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
 });
 
 test('synchronizes a task between two paired browsers', async ({ browser }) => {
