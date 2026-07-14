@@ -1,0 +1,36 @@
+.status {
+  align-items: center;
+  color: var(--text-faint);
+  display: inline-flex;
+  font-size: 0.7rem;
+  gap: 0.35rem;
+  justify-self: end;
+  white-space: nowrap;
+}
+
+.status > span {
+  background: currentColor;
+  border-radius: 50%;
+  height: 0.38rem;
+  width: 0.38rem;
+}
+
+.status[data-status="idle"] {
+  color: var(--accent-calm);
+}
+
+.status[data-status="syncing"] > span {
+  animation: breathe 1.2s ease infinite;
+}
+
+@keyframes breathe {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status[data-status="syncing"] > span {
+    animation: none;
+  }
+}

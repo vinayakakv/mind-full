@@ -22,7 +22,7 @@ describe('local documents', () => {
 
     expect(await database.documents.get(task.id)).toEqual(task);
     expect(await database.syncState.get(task.id)).toMatchObject({
-      dirty: true,
+      dirty: 1,
     });
   });
 

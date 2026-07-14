@@ -179,6 +179,17 @@ export const compareDocumentVersions = (
   return left.updatedByDeviceId.localeCompare(right.updatedByDeviceId);
 };
 
+export const nextDocumentTimestamp = (
+  previousTimestamp: string,
+  proposedTimestamp: string,
+): string => {
+  if (proposedTimestamp > previousTimestamp) {
+    return proposedTimestamp;
+  }
+
+  return new Date(Date.parse(previousTimestamp) + 1).toISOString();
+};
+
 export const selectWinningDocument = <TDocument extends DomainDocument>(
   left: TDocument,
   right: TDocument,

@@ -6,6 +6,8 @@ only work after a large integration phase.
 
 ## Milestone 1 — Local-first walking skeleton
 
+Status: complete as of July 14, 2026.
+
 Prove the hardest architectural promise:
 
 > Create a task or morning check-in offline, reload safely, reconnect,
@@ -74,6 +76,11 @@ Prove the hardest architectural promise:
 - Service-worker assets permit the installed app to open without the server.
 - The relevant typecheck, unit, integration, and end-to-end tests pass.
 
+The acceptance suite now proves an offline task and in-progress check-in survive
+a service-worker-backed reload, and that a task synchronizes between two paired
+browser contexts. The same multi-stage image used for Raspberry Pi deployment
+runs the domain, local-storage, and server integration suites while building.
+
 ## Milestone 2 — Complete daily experience
 
 - Full morning and evening flows
@@ -119,4 +126,3 @@ The expected Milestone 1 sequence is:
 
 The sequence may be combined where separating commits would leave a misleading
 or non-working state. Every commit must pass the checks relevant to its scope.
-

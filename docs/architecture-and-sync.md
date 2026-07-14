@@ -58,7 +58,7 @@ repositories that persist changes locally.
 
 ## Backend
 
-- Node.js
+- Node.js 24.15 or newer, using the built-in SQLite driver
 - Fastify HTTP server
 - SQLite with Drizzle-managed schema and migrations
 - Vercel AI SDK provider registry
@@ -178,4 +178,3 @@ experience.
 - Server integration tests against temporary SQLite databases
 - Migration tests using fixtures from every prior schema version
 - Real-device Android notification tests after the Capacitor milestone
-

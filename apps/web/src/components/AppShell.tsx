@@ -3,7 +3,9 @@ import { NavLink, Outlet } from 'react-router';
 
 import { documentTable } from '../data/documents';
 import { useResolvedTheme } from '../hooks/use-resolved-theme';
+import { useSync } from '../hooks/use-sync';
 import styles from './AppShell.module.css';
+import { SyncIndicator } from './SyncIndicator';
 
 const navItems = [
   { to: '/', label: 'Today', end: true },
@@ -13,6 +15,7 @@ const navItems = [
 ] as const;
 
 export function AppShell() {
+  useSync();
   const settings = useLiveQuery(async () => {
     const document = await documentTable().get('settings');
     return document?.type === 'settings' ? document : undefined;
@@ -40,6 +43,7 @@ export function AppShell() {
             </NavLink>
           ))}
         </nav>
+        <SyncIndicator />
       </header>
       <main className={styles.main}>
         <Outlet />

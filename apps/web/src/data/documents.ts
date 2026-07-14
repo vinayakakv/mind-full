@@ -1,25 +1,31 @@
 import {
   type CheckInDocument,
   type CheckInPayload,
+  compareDocumentVersions,
   createCheckInDocument,
   createDocumentId,
   createSettingsDocument,
   createTaskDocument,
   type DomainDocument,
+  nextDocumentTimestamp,
   parseDomainDocument,
   type SettingsDocument,
   type TaskDocument,
 } from '@mindfull/domain';
 import { database } from './database';
 import { getDeviceId } from './device';
+import { localDocumentsChanged } from './events';
 import { currentTimezone, localDateFor } from './time';
 
 const settingsId = 'settings';
 
+const updatedNow = (document: DomainDocument): string =>
+  nextDocumentTimestamp(document.updatedAt, new Date().toISOString());
+
 const markDirty = async (documentId: string): Promise<void> => {
   await database.syncState.put({
     documentId,
-    dirty: true,
+    dirty: 1,
     lastSyncedAt: null,
     lastServerVersion: null,
   });
@@ -39,10 +45,46 @@ export const saveDocuments = async (
       await Promise.all(validatedDocuments.map(({ id }) => markDirty(id)));
     },
   );
+
+  window.dispatchEvent(new Event(localDocumentsChanged));
 };
 
 export const saveDocument = async (document: DomainDocument): Promise<void> =>
   saveDocuments([document]);
+
+export const applyRemoteDocuments = async (
+  documents: DomainDocument[],
+  serverVersion: number,
+): Promise<void> => {
+  const remoteDocuments = documents.map(parseDomainDocument);
+  const syncedAt = new Date().toISOString();
+
+  await database.transaction(
+    'rw',
+    database.documents,
+    database.syncState,
+    async () => {
+      for (const remoteDocument of remoteDocuments) {
+        const localDocument = await database.documents.get(remoteDocument.id);
+
+        if (
+          localDocument &&
+          compareDocumentVersions(localDocument, remoteDocument) > 0
+        ) {
+          continue;
+        }
+
+        await database.documents.put(remoteDocument);
+        await database.syncState.put({
+          documentId: remoteDocument.id,
+          dirty: 0,
+          lastSyncedAt: syncedAt,
+          lastServerVersion: serverVersion,
+        });
+      }
+    },
+  );
+};
 
 export const ensureSettings = async (): Promise<SettingsDocument> => {
   const existingSettings = await database.documents.get(settingsId);
@@ -75,7 +117,7 @@ export const updateTheme = async (
   theme: SettingsDocument['payload']['theme'],
 ): Promise<void> => {
   const settings = await ensureSettings();
-  const now = new Date().toISOString();
+  const now = updatedNow(settings);
 
   await saveDocument({
     ...settings,
@@ -132,28 +174,32 @@ export const setTaskCompleted = async (
   taskId: string,
   completed: boolean,
 ): Promise<void> => {
-  const now = new Date().toISOString();
+  await updateTask(taskId, (task) => {
+    const now = updatedNow(task);
 
-  await updateTask(taskId, (task) => ({
-    ...task,
-    payload: {
-      ...task.payload,
-      completedAt: completed ? now : null,
-    },
-    updatedAt: now,
-    updatedByDeviceId: getDeviceId(),
-  }));
+    return {
+      ...task,
+      payload: {
+        ...task.payload,
+        completedAt: completed ? now : null,
+      },
+      updatedAt: now,
+      updatedByDeviceId: getDeviceId(),
+    };
+  });
 };
 
 export const deleteTask = async (taskId: string): Promise<void> => {
-  const now = new Date().toISOString();
+  await updateTask(taskId, (task) => {
+    const now = updatedNow(task);
 
-  await updateTask(taskId, (task) => ({
-    ...task,
-    deletedAt: now,
-    updatedAt: now,
-    updatedByDeviceId: getDeviceId(),
-  }));
+    return {
+      ...task,
+      deletedAt: now,
+      updatedAt: now,
+      updatedByDeviceId: getDeviceId(),
+    };
+  });
 };
 
 export const swapTaskOrder = async (
@@ -164,7 +210,12 @@ export const swapTaskOrder = async (
     getTask(firstTaskId),
     getTask(secondTaskId),
   ]);
-  const now = new Date().toISOString();
+  const now = nextDocumentTimestamp(
+    firstTask.updatedAt > secondTask.updatedAt
+      ? firstTask.updatedAt
+      : secondTask.updatedAt,
+    new Date().toISOString(),
+  );
   const deviceId = getDeviceId();
 
   await saveDocuments([
@@ -248,7 +299,7 @@ export const updateCheckIn = async (
   const updatedDocument = parseDomainDocument({
     ...document,
     payload: update(document.payload),
-    updatedAt: new Date().toISOString(),
+    updatedAt: updatedNow(document),
     updatedByDeviceId: getDeviceId(),
   });
 

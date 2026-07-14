@@ -2,7 +2,15 @@
   "name": "mindfull",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=24.15.0"
+  },
   "packageManager": "pnpm@10.0.0",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  },
   "scripts": {
     "build": "pnpm --filter @mindfull/domain build && pnpm --filter @mindfull/web build && pnpm --filter @mindfull/server build",
     "check": "biome check .",
@@ -12,10 +20,12 @@
     "format:check": "biome format .",
     "lint": "biome lint .",
     "test": "pnpm -r test",
+    "test:e2e": "playwright test",
     "typecheck": "pnpm --filter @mindfull/domain typecheck && pnpm --filter @mindfull/web typecheck && pnpm --filter @mindfull/server typecheck"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.3",
+    "@playwright/test": "1.61.1",
     "typescript": "7.0.2",
     "vitest": "4.1.10"
   }

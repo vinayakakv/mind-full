@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   createTaskDocument,
   migrateDomainDocument,
+  nextDocumentTimestamp,
   selectWinningDocument,
 } from './documents.js';
 
@@ -63,5 +64,9 @@ describe('domain documents', () => {
     };
 
     expect(selectWinningDocument(task, deleted).deletedAt).not.toBeNull();
+  });
+
+  it('keeps rapid edits monotonically ordered', () => {
+    expect(nextDocumentTimestamp(now, now)).toBe('2026-07-14T12:00:00.001Z');
   });
 });
