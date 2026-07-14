@@ -1,0 +1,258 @@
+# Domain model
+
+## Model strategy
+
+User-domain data is stored as typed documents distinguished by `type`. The same
+document envelope is used in IndexedDB and SQLite so adding a domain such as
+body measurements does not require changing the synchronization protocol.
+
+The store is flexible, not schemaless. Every document type requires a TypeScript
+type, Zod schema, schema version, migration path, and repository functions.
+
+## Document envelope
+
+```ts
+type DocumentEnvelope<
+  TType extends string = string,
+  TPayload = unknown,
+> = {
+  id: string;
+  type: TType;
+  schemaVersion: number;
+  payload: TPayload;
+
+  occurredAt: string | null;
+  parentId: string | null;
+  sortKey: string | null;
+
+  createdAt: string;
+  updatedAt: string;
+  updatedByDeviceId: string;
+  deletedAt: string | null;
+};
+```
+
+Identifiers should be client-generatable and chronologically sortable, such as
+ULIDs. Timestamps are ISO-8601 UTC instants. Documents containing a local-date
+concept also record the original local date and IANA timezone in their payload.
+
+## Domain document types
+
+### Settings
+
+A synchronized singleton containing:
+
+- Morning and evening time boundaries
+- Morning, evening, habit, and review reminder preferences
+- Configured timezone
+- Theme preference: light, dark, or system
+- Weekly-review schedule
+- Completed-task retention, initially seven days
+
+Device-specific resolved theme and native-notification identifiers do not
+synchronize.
+
+### Habit
+
+```ts
+type HabitPayload = {
+  name: string;
+  weekdays: number[];
+  reminderTime: string | null;
+  archivedAt: string | null;
+};
+```
+
+### Habit log
+
+```ts
+type HabitLogPayload = {
+  habitId: string;
+  localDate: string;
+  timezone: string;
+  outcome: "completed" | "missed";
+  reason: string | null;
+};
+```
+
+A log is written for a completion or an explicitly recorded miss. An absent log
+on a scheduled past day is calculated as a miss. This avoids pre-generating
+occurrence records.
+
+### Task
+
+```ts
+type TaskPayload = {
+  text: string;
+  completedAt: string | null;
+  availableFrom: string | null;
+  reminderAt: string | null;
+  source:
+    | { kind: "manual" }
+    | { kind: "journal"; documentId: string }
+    | { kind: "check-in"; documentId: string };
+};
+```
+
+Manual order is stored in the envelope's `sortKey`. New tasks are added at the
+bottom. Reordering updates only the documents whose positions need to change.
+
+### Journal
+
+```ts
+type JournalPayload = {
+  title: string | null;
+  markdown: string;
+  localDate: string;
+  timezone: string;
+};
+```
+
+AI status is not embedded in the journal because the backend and client may
+update those concerns independently.
+
+### Check-in
+
+```ts
+type CheckInPayload = {
+  kind: "morning" | "evening";
+  localDate: string;
+  timezone: string;
+  status: "draft" | "completed";
+  currentStep: number;
+  mood: string | null;
+  energy: string | null;
+  stress: string | null;
+  emotions: string[];
+  responses: Array<{
+    promptId: string;
+    promptText: string;
+    source: "curated" | "ai";
+    answer: string | null;
+    skipped: boolean;
+  }>;
+  reflectionMarkdown: string | null;
+  completedAt: string | null;
+};
+```
+
+Prompt text is snapshotted into the response so later prompt-library changes do
+not alter history.
+
+### Prompt candidate
+
+```ts
+type PromptCandidatePayload = {
+  question: string;
+  suitableFor: "morning" | "evening" | "either";
+  sourceDocumentIds: string[];
+  rationale: string;
+  availableFrom: string;
+  expiresAt: string | null;
+  state: "available" | "presented" | "answered" | "dismissed";
+};
+```
+
+Candidates are generated ahead of time, synchronize to devices, and are usable
+without the backend. Answering or skipping resolves the candidate permanently.
+
+### Task suggestion
+
+```ts
+type TaskSuggestionPayload = {
+  proposedText: string;
+  availableFrom: string | null;
+  sourceDocumentId: string;
+  sourceContentHash: string;
+  state: "pending" | "accepted" | "rejected" | "superseded";
+  acceptedTaskId: string | null;
+};
+```
+
+### Analysis result
+
+A derived document linked to a journal or check-in. It records the source
+content hash, state, summaries, themes, unfinished commitments, timestamps, and
+provider/model metadata. Keeping it separate prevents an AI status update from
+overwriting an offline journal edit.
+
+### Insight
+
+A concise derived observation with a type, text, supporting date range, source
+document IDs, creation time, and dismissal state.
+
+### Weekly review
+
+```ts
+type WeeklyReviewPayload = {
+  weekStart: string;
+  weekEnd: string;
+  generatedMarkdown: string;
+  personalReflectionMarkdown: string | null;
+  sourceDocumentIds: string[];
+  generatedAt: string;
+  provider: string;
+  model: string;
+};
+```
+
+Generated content is a snapshot and is not silently regenerated. Personal
+reflection remains independently editable within the review document.
+
+### Reminder
+
+```ts
+type ReminderPayload = {
+  targetType: "habit" | "task" | "check-in";
+  targetId: string;
+  scheduledAt: string | null;
+  localTime: string | null;
+  weekdays: number[] | null;
+  enabled: boolean;
+};
+```
+
+The shared reminder describes intent. Each device maintains local-only mapping
+to a platform notification identifier and scheduling status.
+
+## Future documents
+
+Future types, including body measurements, follow the same envelope and schema
+registry. For example:
+
+```ts
+type BodyMeasurementPayload = {
+  metric: "weight" | "waist";
+  value: number;
+  unit: "kg" | "cm";
+  note: string | null;
+};
+```
+
+New payload types may avoid SQL table changes, but they still require payload
+versioning and application migrations.
+
+## Backend-only operational tables
+
+Infrastructure records are relational tables rather than domain documents:
+
+- Devices and hashed pairing tokens
+- Server change sequence and client sync cursors
+- Scheduled jobs and execution leases
+- AI work queue and attempt history
+- Embeddings and their source content hashes
+- Backup execution records
+
+These records have different consistency and lifecycle requirements and should
+not be forced through the user-document abstraction.
+
+## Deletion
+
+Deleting a domain object sets `deletedAt`. Tombstones synchronize like other
+documents so an offline device cannot resurrect deleted content.
+
+Completed tasks are automatically tombstoned seven days after completion.
+Tombstones may remain indefinitely initially because the dataset is small and
+this makes long-offline device recovery safe. Physical compaction can be added
+only after the server tracks acknowledgement by every paired device.
+

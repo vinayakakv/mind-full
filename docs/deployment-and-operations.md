@@ -1,0 +1,123 @@
+# Deployment and operations
+
+## Target environment
+
+Mindfull is self-hosted on a Raspberry Pi 5 with 4 GB RAM behind Tailscale. The
+Pi already hosts other services, so Mindfull must have bounded resource usage
+and straightforward recovery.
+
+Production is deployed with Docker Compose. The stack is self-contained and
+does not rely on host cron, host systemd timers, external databases, cloud job
+runners, or required third-party APIs.
+
+## Services
+
+The intended Compose stack contains:
+
+- `mindfull` — built SPA, API, sync engine, scheduler, backups, and AI
+  orchestration
+- `ollama` — local inference service with a persistent model volume
+
+SQLite data, backups, and Ollama models use explicit mounted volumes. The web UI
+and API are served from the same Mindfull origin.
+
+Ollama is part of the self-hosted stack but remains an optional capability from
+the application's perspective. Mindfull must start and work if Ollama is
+unavailable.
+
+## Internal scheduler
+
+All application schedules run inside the `mindfull` backend container.
+
+The scheduler uses persisted SQLite job rows rather than relying solely on
+in-memory timers. A small polling loop claims due jobs with a lease, runs them,
+and records completion or retry state.
+
+Scheduled work includes:
+
+- Weekly review generation
+- Daily SQLite backups
+- Completed-task retention cleanup
+- AI retry processing
+- Optional derived-data maintenance
+
+If the container is down at a scheduled time, overdue jobs run after startup.
+Jobs are idempotent and leases prevent duplicate execution after a crash.
+
+The default weekly review time is Sunday at 7:00 PM in the configured timezone.
+
+## Backups
+
+- Create one consistent SQLite snapshot daily.
+- Retain seven daily snapshots.
+- Retain four weekly snapshots.
+- Store snapshots in a Docker-mounted backup directory.
+- Record success, path, size, and error metadata in an operational table.
+- Use SQLite-safe backup/checkpoint behavior rather than copying an actively
+  changing database blindly.
+
+An import/export UI is not part of the first release. Restore instructions
+should nevertheless be documented before production use.
+
+## Pairing and authentication
+
+Tailscale restricts network reachability, but devices also authenticate with a
+long-lived pairing token.
+
+- The server stores only a secure hash of each token.
+- Each token is associated with a device ID and human-readable device name.
+- Tokens can be revoked from Settings.
+- Native clients remember the Mindfull server URL and token in platform-secure
+  storage where available.
+- The browser installation served by the Pi uses the same API origin and a
+  device credential established during setup.
+
+Pairing should be intentionally simple for one person. It does not need email,
+OAuth, account recovery, organizations, or roles.
+
+## Notifications
+
+The shared Reminder documents express notification intent. Each device has a
+local scheduling adapter.
+
+### Browser PWA
+
+- Works offline while open and from its cached application shell.
+- Uses available browser notification features as progressive enhancement.
+- Does not promise exact closed-app offline alerts.
+
+### Android shell
+
+- Uses Capacitor local notifications.
+- Schedules exact local alerts where Android permissions and platform policy
+  allow it.
+- Maintains a local map from reminder document IDs to native notification IDs.
+- Reschedules after reminder changes, timezone changes, app updates, and device
+  reboot where required.
+- Supports Mark complete for habits and Complete/Remind me in one hour for
+  tasks where notification actions are available.
+
+### macOS
+
+The first release uses the browser PWA. A Tauri shell for reliable closed-app
+local alerts is deferred.
+
+## Resource behavior
+
+- AI jobs run at low concurrency on the 4 GB Pi.
+- The main server remains responsive while inference is active.
+- Model and embedding choices must be configurable rather than hard-coded.
+- Startup does not block on loading or downloading a model.
+- Health checks distinguish core application health from optional AI health.
+- Logs must not print journal bodies, check-in answers, tokens, or AI prompts.
+
+## Service degradation
+
+| Unavailable component | Expected behavior |
+|---|---|
+| Network/Pi | All local product features continue; sync waits. |
+| Ollama | AI jobs wait or fail visibly but quietly; core server works. |
+| Semantic index | Source entries remain available; semantic search reports unavailable. |
+| Notification permission | In-app reminders remain visible; Settings explains permission state. |
+| Backend scheduler downtime | Persisted overdue jobs catch up after restart. |
+
