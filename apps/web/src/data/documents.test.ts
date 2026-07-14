@@ -3,11 +3,14 @@ import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { database } from './database';
 import {
   addTask,
+  createJournal,
+  deleteJournal,
   findCheckIn,
   getOrCreateCheckIn,
   getOrCreateMorningCheckIn,
   setTaskCompleted,
   updateCheckIn,
+  updateJournal,
 } from './documents';
 
 describe('local documents', () => {
@@ -40,6 +43,25 @@ describe('local documents', () => {
       expect(completedTask.payload.completedAt).not.toBeNull();
       expect(task.payload.completedAt).toBeNull();
     }
+  });
+
+  it('autosaves and tombstones a journal locally', async () => {
+    const journal = await createJournal(new Date('2026-07-14T12:00:00.000Z'));
+
+    const updated = await updateJournal(journal.id, {
+      title: 'Evening light',
+      markdown: 'The sky was **violet**.',
+    });
+
+    expect(updated.payload.markdown).toBe('The sky was **violet**.');
+    expect(await database.syncState.get(journal.id)).toMatchObject({
+      dirty: 1,
+    });
+
+    await deleteJournal(journal.id);
+    expect(
+      (await database.documents.get(journal.id))?.deletedAt,
+    ).not.toBeNull();
   });
 
   it('resumes the same persisted morning check-in draft', async () => {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  createJournalDocument,
   createTaskDocument,
   migrateDomainDocument,
   nextDocumentTimestamp,
@@ -38,6 +39,22 @@ describe('domain documents', () => {
         payload: { ...task.payload, text: '  ' },
       }),
     ).toThrow();
+  });
+
+  it('preserves journal markdown through the document boundary', () => {
+    const journal = createJournalDocument({
+      id: '01-journal',
+      now,
+      deviceId: 'phone',
+      payload: {
+        title: null,
+        markdown: '# A small moment\n\nTea by the window.',
+        localDate: '2026-07-14',
+        timezone: 'Asia/Kolkata',
+      },
+    });
+
+    expect(migrateDomainDocument(journal)).toEqual(journal);
   });
 
   it('selects the document with the later timestamp', () => {

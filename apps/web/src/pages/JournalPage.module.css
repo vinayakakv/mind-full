@@ -1,0 +1,277 @@
+.page {
+  animation: arrive 300ms ease both;
+}
+
+.pageHeader {
+  align-items: end;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: clamp(2.5rem, 8vh, 5rem);
+}
+
+.eyebrow,
+.readingDate {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.pageHeader h1 {
+  font-family: var(--font-reflection);
+  font-size: clamp(3.5rem, 11vw, 6rem);
+  font-weight: 400;
+  letter-spacing: -0.06em;
+  line-height: 0.9;
+  margin: 1rem 0 0;
+}
+
+.newEntryButton,
+.primaryButton,
+.textButton,
+.deleteButton {
+  cursor: pointer;
+  font: inherit;
+}
+
+.newEntryButton,
+.primaryButton {
+  background: var(--accent-strong);
+  border: 1px solid var(--accent-strong);
+  border-radius: 2rem;
+  color: var(--on-accent);
+  padding: 0.7rem 1.05rem;
+}
+
+.newEntryButton[data-hovered],
+.primaryButton[data-hovered] {
+  filter: brightness(1.06);
+}
+
+.editor,
+.reading {
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 3.5rem;
+  padding-bottom: 3.5rem;
+}
+
+.editorMeta {
+  color: var(--text-muted);
+  display: flex;
+  font-size: 0.75rem;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.titleField input,
+.writingField textarea {
+  background: transparent;
+  border: 0;
+  color: var(--text-primary);
+  outline: none;
+  padding: 0;
+  width: 100%;
+}
+
+.titleField input {
+  font-family: var(--font-reflection);
+  font-size: clamp(2.1rem, 7vw, 3.3rem);
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+}
+
+.titleField input::placeholder,
+.writingField textarea::placeholder {
+  color: var(--text-faint);
+}
+
+.writingField textarea {
+  font-family: var(--font-reflection);
+  font-size: 1.15rem;
+  line-height: 1.75;
+  margin-top: 1.75rem;
+  min-height: 22rem;
+  resize: vertical;
+}
+
+.editorFooter {
+  align-items: center;
+  color: var(--text-muted);
+  display: flex;
+  font-size: 0.76rem;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-top: 1.5rem;
+}
+
+.reading h2 {
+  font-family: var(--font-reflection);
+  font-size: clamp(2.2rem, 8vw, 3.75rem);
+  font-weight: 400;
+  letter-spacing: -0.04em;
+  line-height: 1.08;
+  margin: 1rem 0 2.25rem;
+}
+
+.markdown {
+  color: var(--text-primary);
+  font-family: var(--font-reflection);
+  font-size: 1.12rem;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+
+.markdown > :first-child {
+  margin-top: 0;
+}
+
+.markdown h1,
+.markdown h2,
+.markdown h3 {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  margin: 2rem 0 0.75rem;
+}
+
+.markdown blockquote {
+  border-left: 2px solid var(--accent-calm);
+  color: var(--text-muted);
+  margin: 1.5rem 0;
+  padding-left: 1.25rem;
+}
+
+.markdown code {
+  background: var(--surface-soft);
+  border-radius: 0.25rem;
+  font-family: ui-monospace, monospace;
+  font-size: 0.86em;
+  padding: 0.1em 0.25em;
+}
+
+.markdown a {
+  color: var(--accent-strong);
+  text-underline-offset: 0.2rem;
+}
+
+.emptyEntry,
+.invitation,
+.emptyHistory {
+  color: var(--text-muted);
+  font-family: var(--font-reflection);
+  font-size: 1.05rem;
+}
+
+.readingActions,
+.confirmDelete {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 2.5rem;
+}
+
+.confirmDelete {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  margin: 0;
+}
+
+.textButton,
+.deleteButton {
+  background: transparent;
+  border: 0;
+  color: var(--text-muted);
+  padding: 0.7rem 0.35rem;
+}
+
+.deleteButton {
+  color: #98554d;
+}
+
+.history {
+  margin-top: 3.5rem;
+}
+
+.history > h2 {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  margin: 0 0 1rem;
+  text-transform: uppercase;
+}
+
+.entryList {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.entryDate {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  margin: 1.4rem 0 0.25rem;
+}
+
+.entryButton {
+  align-items: baseline;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  font-family: var(--font-reflection);
+  font-size: 1.08rem;
+  gap: 1.5rem;
+  justify-content: space-between;
+  padding: 1rem 0;
+  text-align: left;
+  width: 100%;
+}
+
+.entryButton time {
+  color: var(--text-muted);
+  flex: none;
+  font-family: var(--font-control);
+  font-size: 0.72rem;
+}
+
+.entryButton[data-hovered],
+.entryButton[aria-current="true"] {
+  color: var(--accent-strong);
+}
+
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translateY(0.4rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 36rem) {
+  .pageHeader {
+    align-items: center;
+  }
+
+  .editorFooter {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .entryButton {
+    gap: 0.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page {
+    animation: none;
+  }
+}

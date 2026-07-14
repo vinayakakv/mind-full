@@ -90,6 +90,64 @@ test('completes distinct morning and evening check-ins and edits an answer', asy
   );
 });
 
+test('autosaves a journal offline and renders its markdown after reload', async ({
+  context,
+  page,
+}) => {
+  await prepareServiceWorker(page);
+  await page.goto('/journal');
+  await context.setOffline(true);
+
+  await page.getByRole('button', { name: 'New entry' }).click();
+  await page.getByLabel('Entry title').fill('A quiet afternoon');
+  await page
+    .getByLabel('Journal entry')
+    .fill('The rain sounded **soft** against the window.');
+  await page.waitForTimeout(700);
+
+  await page.reload();
+  await expect(page.getByLabel('Entry title')).toHaveValue('A quiet afternoon');
+  await expect(page.getByLabel('Journal entry')).toHaveValue(
+    'The rain sounded **soft** against the window.',
+  );
+
+  await page.getByRole('button', { name: 'Finish writing' }).click();
+  await expect(page.getByText('soft', { exact: true })).toBeVisible();
+});
+
+test('synchronizes a journal between two paired browsers', async ({
+  browser,
+}) => {
+  const firstContext = await browser.newContext();
+  const secondContext = await browser.newContext();
+  const title = `Shared reflection ${Date.now()}`;
+
+  try {
+    const firstPage = await firstContext.newPage();
+    const secondPage = await secondContext.newPage();
+
+    await pairBrowser(firstPage);
+    await pairBrowser(secondPage);
+
+    await firstPage.goto('/journal');
+    await firstPage.getByRole('button', { name: 'New entry' }).click();
+    await firstPage.getByLabel('Entry title').fill(title);
+    await firstPage
+      .getByLabel('Journal entry')
+      .fill('A **clear** thought, kept for later.');
+    await firstPage.getByRole('button', { name: 'Finish writing' }).click();
+    await expect(firstPage.getByText('Synced')).toBeVisible();
+
+    await secondPage.goto('/settings');
+    await secondPage.getByRole('button', { name: 'Sync now' }).click();
+    await secondPage.goto('/journal');
+    await secondPage.getByRole('button', { name: new RegExp(title) }).click();
+    await expect(secondPage.getByText('clear', { exact: true })).toBeVisible();
+  } finally {
+    await Promise.all([firstContext.close(), secondContext.close()]);
+  }
+});
+
 test('synchronizes a task between two paired browsers', async ({ browser }) => {
   const firstContext = await browser.newContext();
   const secondContext = await browser.newContext();

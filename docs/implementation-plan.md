@@ -76,10 +76,11 @@ Prove the hardest architectural promise:
 - Service-worker assets permit the installed app to open without the server.
 - The relevant typecheck, unit, integration, and end-to-end tests pass.
 
-The acceptance suite now proves an offline task and in-progress check-in survive
-a service-worker-backed reload, and that a task synchronizes between two paired
-browser contexts. The same multi-stage image used for Raspberry Pi deployment
-runs the domain, local-storage, and server integration suites while building.
+The acceptance suite proves offline task, check-in, and journal work survives a
+service-worker-backed reload. It also verifies journal and task synchronization
+between paired browser contexts. The same multi-stage image used for Raspberry
+Pi deployment runs the domain, local-storage, and server integration suites
+while building.
 
 ## Milestone 2 — Complete daily experience
 
@@ -90,7 +91,7 @@ Status: in progress as of July 14, 2026.
 - [x] Time-aware flow selection and configurable daily boundaries
 - Habits, schedules, optional miss reasons, and streaks
 - Shared reminder documents
-- Journal writing and rendered reading mode
+- [x] Journal writing and rendered reading mode
 - Shared task-suggestions area
 - Time-aware theme variations and polished gentle motion
 - Seven-day completed-task retention job
@@ -101,6 +102,12 @@ snapshots, and an optional final reflection. Curated wording rotates
 deterministically by local date, so creating or resuming a check-in never
 depends on connectivity or randomness. The Today screen offers the relevant
 flow from synchronized time boundaries while keeping the other flow available.
+
+Journal entries now use the same typed document and synchronization path as the
+rest of the local-first domain. Writing autosaves to IndexedDB, survives an
+offline reload through its URL-addressed draft, and renders safely as Markdown
+when reading. Multiple entries per day appear in a chronological history and
+remain editable or deletable through synchronized tombstones.
 
 ## Milestone 3 — Local AI and reflection
 

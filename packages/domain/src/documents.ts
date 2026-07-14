@@ -35,6 +35,13 @@ export const taskPayloadSchema = z.object({
   source: sourceSchema,
 });
 
+export const journalPayloadSchema = z.object({
+  title: z.string().trim().min(1).max(200).nullable(),
+  markdown: z.string(),
+  localDate: localDateSchema,
+  timezone: timezoneSchema,
+});
+
 export const checkInResponseSchema = z.object({
   promptId: z.string().min(1),
   promptText: z.string().min(1),
@@ -82,6 +89,12 @@ export const taskDocumentSchema = z.object({
   payload: taskPayloadSchema,
 });
 
+export const journalDocumentSchema = z.object({
+  ...envelopeFields,
+  type: z.literal('journal'),
+  payload: journalPayloadSchema,
+});
+
 export const checkInDocumentSchema = z.object({
   ...envelopeFields,
   type: z.literal('check-in'),
@@ -91,14 +104,17 @@ export const checkInDocumentSchema = z.object({
 export const domainDocumentSchema = z.discriminatedUnion('type', [
   settingsDocumentSchema,
   taskDocumentSchema,
+  journalDocumentSchema,
   checkInDocumentSchema,
 ]);
 
 export type SettingsPayload = z.infer<typeof settingsPayloadSchema>;
 export type TaskPayload = z.infer<typeof taskPayloadSchema>;
+export type JournalPayload = z.infer<typeof journalPayloadSchema>;
 export type CheckInPayload = z.infer<typeof checkInPayloadSchema>;
 export type SettingsDocument = z.infer<typeof settingsDocumentSchema>;
 export type TaskDocument = z.infer<typeof taskDocumentSchema>;
+export type JournalDocument = z.infer<typeof journalDocumentSchema>;
 export type CheckInDocument = z.infer<typeof checkInDocumentSchema>;
 export type DomainDocument = z.infer<typeof domainDocumentSchema>;
 export type DocumentType = DomainDocument['type'];
@@ -150,6 +166,14 @@ export const createTaskDocument = (
   taskDocumentSchema.parse({
     ...createEnvelope(input),
     type: 'task',
+  });
+
+export const createJournalDocument = (
+  input: NewDocument<JournalPayload>,
+): JournalDocument =>
+  journalDocumentSchema.parse({
+    ...createEnvelope(input),
+    type: 'journal',
   });
 
 export const createCheckInDocument = (

@@ -13,11 +13,10 @@ const router = createBrowserRouter([
       { index: true, Component: TodayPage },
       {
         path: 'journal',
-        element: (
-          <PlaceholderPage eyebrow="Write freely" title="Journal">
-            The writing space arrives in the next daily-experience slice.
-          </PlaceholderPage>
-        ),
+        lazy: async () => {
+          const { JournalPage } = await import('./pages/JournalPage');
+          return { Component: JournalPage };
+        },
       },
       {
         path: 'reflect',

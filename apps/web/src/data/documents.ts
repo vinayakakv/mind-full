@@ -5,10 +5,13 @@ import {
   compareDocumentVersions,
   createCheckInDocument,
   createDocumentId,
+  createJournalDocument,
   createSettingsDocument,
   createTaskDocument,
   type DomainDocument,
   isCheckInScheduleValid,
+  type JournalDocument,
+  type JournalPayload,
   nextDocumentTimestamp,
   parseDomainDocument,
   type SettingsDocument,
@@ -172,6 +175,68 @@ export const addTask = async (text: string): Promise<TaskDocument> => {
 
   await saveDocument(task);
   return task;
+};
+
+export const createJournal = async (
+  date = new Date(),
+): Promise<JournalDocument> => {
+  const now = date.toISOString();
+  const journal = createJournalDocument({
+    id: createDocumentId(),
+    now,
+    deviceId: getDeviceId(),
+    payload: {
+      title: null,
+      markdown: '',
+      localDate: localDateFor(date),
+      timezone: currentTimezone(),
+    },
+  });
+
+  await saveDocument(journal);
+  return journal;
+};
+
+const getJournal = async (journalId: string): Promise<JournalDocument> => {
+  const document = await database.documents.get(journalId);
+
+  if (document?.type !== 'journal') {
+    throw new Error(`Journal ${journalId} was not found.`);
+  }
+
+  return document;
+};
+
+export const updateJournal = async (
+  journalId: string,
+  update: Pick<JournalPayload, 'title' | 'markdown'>,
+): Promise<JournalDocument> => {
+  const journal = await getJournal(journalId);
+  const updatedDocument = parseDomainDocument({
+    ...journal,
+    payload: { ...journal.payload, ...update },
+    updatedAt: updatedNow(journal),
+    updatedByDeviceId: getDeviceId(),
+  });
+
+  if (updatedDocument.type !== 'journal') {
+    throw new Error('Expected an updated journal document.');
+  }
+
+  await saveDocument(updatedDocument);
+  return updatedDocument;
+};
+
+export const deleteJournal = async (journalId: string): Promise<void> => {
+  const journal = await getJournal(journalId);
+  const now = updatedNow(journal);
+
+  await saveDocument({
+    ...journal,
+    deletedAt: now,
+    updatedAt: now,
+    updatedByDeviceId: getDeviceId(),
+  });
 };
 
 const getTask = async (taskId: string): Promise<TaskDocument> => {
