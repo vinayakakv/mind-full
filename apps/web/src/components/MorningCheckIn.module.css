@@ -1,0 +1,206 @@
+.backdrop {
+  align-items: center;
+  background: color-mix(in srgb, var(--surface-canvas) 82%, transparent);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 1rem;
+  position: fixed;
+  z-index: 20;
+}
+
+.dialog {
+  background: var(--surface-canvas);
+  border: 1px solid var(--border-subtle);
+  border-radius: 1.25rem;
+  box-shadow: 0 2rem 5rem var(--shadow-soft);
+  max-height: calc(100dvh - 2rem);
+  max-width: 37rem;
+  min-height: min(34rem, calc(100dvh - 2rem));
+  overflow: auto;
+  padding: clamp(1.25rem, 5vw, 2.5rem);
+  width: 100%;
+}
+
+.dialogHeader {
+  align-items: center;
+  color: var(--text-muted);
+  display: flex;
+  font-size: 0.78rem;
+  justify-content: space-between;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.closeButton {
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1.25rem;
+  height: 2.25rem;
+  width: 2.25rem;
+}
+
+.closeButton[data-hovered] {
+  background: var(--surface-soft);
+}
+
+.progress {
+  background: var(--surface-soft);
+  border-radius: 1rem;
+  height: 2px;
+  margin-top: 1rem;
+  overflow: hidden;
+}
+
+.progress span {
+  background: var(--accent-calm);
+  display: block;
+  height: 100%;
+  transition: width 240ms ease;
+}
+
+.stepFrame {
+  animation: enter 240ms ease both;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 27rem;
+}
+
+.kicker {
+  color: var(--accent-strong);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  margin: 0 0 0.75rem;
+  text-transform: uppercase;
+}
+
+.step h2 {
+  font-family: var(--font-reflection);
+  font-size: clamp(2rem, 7vw, 3.25rem);
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+  margin: 0;
+  max-width: 13ch;
+}
+
+.supporting {
+  color: var(--text-muted);
+  font-family: var(--font-reflection);
+  font-size: 1.05rem;
+  line-height: 1.6;
+  margin: 1.25rem 0 0;
+}
+
+.primaryActions {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  margin-top: 2.5rem;
+}
+
+.primaryButton,
+.textButton,
+.choice {
+  cursor: pointer;
+  font: inherit;
+}
+
+.primaryButton {
+  background: var(--accent-strong);
+  border: 1px solid var(--accent-strong);
+  border-radius: 2rem;
+  color: var(--on-accent);
+  padding: 0.8rem 1.25rem;
+}
+
+.primaryButton[data-hovered] {
+  filter: brightness(1.06);
+}
+
+.textButton {
+  background: transparent;
+  border: 0;
+  color: var(--text-muted);
+  padding: 0.8rem 0.4rem;
+}
+
+.choiceGroup {
+  border: 0;
+  margin: 2rem 0 0;
+  padding: 0;
+}
+
+.choiceGroup legend {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin-bottom: 0.65rem;
+}
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.choice {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 2rem;
+  color: var(--text-primary);
+  padding: 0.65rem 1rem;
+}
+
+.choice[data-hovered],
+.choice[aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent-calm);
+}
+
+.reflection {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-family: var(--font-reflection);
+  font-size: 1.15rem;
+  line-height: 1.65;
+  margin-top: 2rem;
+  min-height: 7rem;
+  outline: none;
+  padding: 0.75rem 0;
+  resize: vertical;
+}
+
+.reflection::placeholder,
+.loading {
+  color: var(--text-faint);
+}
+
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.4rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stepFrame {
+    animation: none;
+  }
+
+  .progress span {
+    transition: none;
+  }
+}

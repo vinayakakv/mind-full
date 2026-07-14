@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <title>Mindfull leaf</title>
+  <rect width="512" height="512" rx="112" fill="#e8e2d5"/>
+  <path d="M145 293c54-7 97-49 106-109 49 35 78 89 74 148-68 20-137 5-180-39Z" fill="#6f8064"/>
+  <path d="M163 320c66-29 115-73 147-132" fill="none" stroke="#34443a" stroke-linecap="round" stroke-width="18"/>
+</svg>

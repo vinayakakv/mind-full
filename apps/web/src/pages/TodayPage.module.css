@@ -1,0 +1,82 @@
+.intro {
+  animation: arrive 360ms ease both;
+}
+
+.date {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  margin: 0 0 1.25rem;
+  text-transform: uppercase;
+}
+
+.intro h1 {
+  font-family: var(--font-reflection);
+  font-size: clamp(3.25rem, 10vw, 5.75rem);
+  font-weight: 400;
+  letter-spacing: -0.055em;
+  line-height: 0.95;
+  margin: 0;
+}
+
+.lede {
+  color: var(--text-muted);
+  font-family: var(--font-reflection);
+  font-size: 1.15rem;
+  line-height: 1.65;
+  margin: 1.5rem 0 2.5rem;
+  max-width: 31rem;
+}
+
+.checkInButton {
+  align-items: center;
+  background: var(--surface-soft);
+  border: 1px solid var(--border-subtle);
+  border-radius: 1rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  display: grid;
+  font: inherit;
+  gap: 1rem;
+  grid-template-columns: auto 1fr auto;
+  padding: 1.1rem 1.25rem;
+  text-align: left;
+  transition:
+    background 160ms ease,
+    transform 160ms ease;
+  width: 100%;
+}
+
+.checkInButton[data-hovered] {
+  background: var(--accent-soft);
+  transform: translateY(-1px);
+}
+
+.checkInState {
+  color: var(--accent-strong);
+  font-size: 0.76rem;
+  letter-spacing: 0.05em;
+  min-width: 3.6rem;
+  text-transform: uppercase;
+}
+
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro {
+    animation: none;
+  }
+
+  .checkInButton {
+    transition: none;
+  }
+}

@@ -1,0 +1,66 @@
+.eyebrow {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.page h1 {
+  font-family: var(--font-reflection);
+  font-size: clamp(3rem, 9vw, 5rem);
+  font-weight: 400;
+  letter-spacing: -0.05em;
+  margin: 1rem 0 3rem;
+}
+
+.setting {
+  align-items: start;
+  border-top: 1px solid var(--border-subtle);
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: 1fr auto;
+  padding: 1.5rem 0;
+}
+
+.setting h2 {
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.setting p {
+  color: var(--text-muted);
+  font-family: var(--font-reflection);
+  margin: 0.4rem 0 0;
+}
+
+.themeChoices {
+  border: 0;
+  display: flex;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+}
+
+.themeChoice {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 2rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  font: inherit;
+  padding: 0.55rem 0.8rem;
+  text-transform: capitalize;
+}
+
+.themeChoice[data-hovered],
+.themeChoice[aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent-calm);
+}
+
+@media (max-width: 36rem) {
+  .setting {
+    grid-template-columns: 1fr;
+  }
+}

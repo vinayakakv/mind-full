@@ -1,0 +1,22 @@
+.page > p {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.page h1 {
+  font-family: var(--font-reflection);
+  font-size: clamp(3rem, 9vw, 5rem);
+  font-weight: 400;
+  letter-spacing: -0.05em;
+  margin: 1rem 0 1.5rem;
+}
+
+.page div {
+  color: var(--text-muted);
+  font-family: var(--font-reflection);
+  font-size: 1.1rem;
+  line-height: 1.7;
+  max-width: 32rem;
+}
