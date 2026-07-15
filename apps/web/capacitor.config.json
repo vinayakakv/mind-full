@@ -6,6 +6,9 @@
     "backgroundColor": "#f4f0e8"
   },
   "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    },
     "SystemBars": {
       "insetsHandling": "css",
       "style": "LIGHT"

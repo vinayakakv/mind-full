@@ -128,6 +128,13 @@ the PWA service worker because the application shell is already packaged in the
 APK. Android cloud backup is disabled so journals and check-ins are not copied
 to an unrelated backup provider.
 
+After installing, open Settings and enter the backend origin before pairing,
+for example `https://mindfull.example` on Tailscale. The Android emulator reaches
+the host machine at `http://10.0.2.2:3001`. Private plain-HTTP addresses are
+allowed for LAN and emulator development; prefer HTTPS when the server is
+reachable beyond a trusted private network. Browser installations served by
+Mindfull leave the field empty to keep same-origin sync.
+
 Native CSS targets Chrome/WebView 101 so the minimum supported Android WebView
 receives conventional media-query syntax. Capacitor 8.4.2 is pinned with a
 small pnpm patch that guards its safe-area injection until the document root

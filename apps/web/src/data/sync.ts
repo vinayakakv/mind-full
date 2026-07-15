@@ -7,6 +7,7 @@ import { getDeviceId } from './device';
 import { applyRemoteDocuments } from './documents';
 
 const tokenKey = 'mindfull.sync-token';
+const serverAddressKey = 'mindfull.sync-server-address';
 const cursorKey = 'server-cursor';
 const store = getDefaultStore();
 
@@ -16,11 +17,58 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 export const hasPairingToken = (): boolean =>
   Boolean(window.localStorage.getItem(tokenKey));
 
+export const syncServerAddress = (): string =>
+  window.localStorage.getItem(serverAddressKey) ?? '';
+
+export const normalizeSyncServerAddress = (value: string): string | null => {
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+
+  try {
+    const url = new URL(trimmed);
+    const hasRootPath = url.pathname === '/' || url.pathname === '';
+    const isHttp = url.protocol === 'http:' || url.protocol === 'https:';
+
+    if (
+      !isHttp ||
+      !hasRootPath ||
+      url.username ||
+      url.password ||
+      url.search ||
+      url.hash
+    ) {
+      return null;
+    }
+
+    return url.origin;
+  } catch {
+    return null;
+  }
+};
+
+export const configureSyncServer = async (value: string): Promise<string> => {
+  const address = normalizeSyncServerAddress(value);
+  if (address === null) {
+    throw new Error('Enter a complete HTTP or HTTPS address.');
+  }
+  if (address === syncServerAddress()) return address;
+
+  if (address) window.localStorage.setItem(serverAddressKey, address);
+  else window.localStorage.removeItem(serverAddressKey);
+
+  window.localStorage.removeItem(tokenKey);
+  await database.syncMeta.delete(cursorKey);
+  store.set(syncStatusAtom, 'unpaired');
+  return address;
+};
+
+const syncEndpoint = (path: string): string => `${syncServerAddress()}${path}`;
+
 export const pairWithServer = async (
   pairingCode: string,
   deviceName: string,
 ): Promise<void> => {
-  const response = await fetch('/api/pair', {
+  const response = await fetch(syncEndpoint('/api/pair'), {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
@@ -78,7 +126,7 @@ const runSynchronization = async (): Promise<void> => {
         )
       ).filter((document) => document !== undefined);
 
-      const response = await fetch('/api/sync', {
+      const response = await fetch(syncEndpoint('/api/sync'), {
         method: 'POST',
         headers: {
           authorization: `Bearer ${token}`,

@@ -20,7 +20,14 @@ import {
   browserNotificationPermission,
   requestBrowserNotificationPermission,
 } from '../data/notifications';
-import { hasPairingToken, pairWithServer, synchronize } from '../data/sync';
+import {
+  configureSyncServer,
+  hasPairingToken,
+  pairWithServer,
+  synchronize,
+  syncServerAddress,
+} from '../data/sync';
+import { deviceName } from '../platform/native-shell';
 import { syncStatusAtom } from '../state/sync';
 import styles from './SettingsPage.module.css';
 
@@ -197,6 +204,7 @@ function NotificationPermissionSetting() {
 export function SettingsPage() {
   const syncStatus = useAtomValue(syncStatusAtom);
   const [isPaired, setIsPaired] = useState(hasPairingToken);
+  const [serverAddress, setServerAddress] = useState(syncServerAddress);
   const [pairingCode, setPairingCode] = useState('');
   const [pairingError, setPairingError] = useState<string | null>(null);
   const settings = useLiveQuery(() => ensureSettings());
@@ -206,12 +214,34 @@ export function SettingsPage() {
     setPairingError(null);
 
     try {
-      await pairWithServer(pairingCode, 'This browser');
+      await configureSyncServer(serverAddress);
+      setServerAddress(syncServerAddress());
+      setIsPaired(hasPairingToken());
+      await pairWithServer(pairingCode, deviceName());
       setIsPaired(true);
       setPairingCode('');
       await synchronize();
-    } catch {
-      setPairingError('The pairing code was not accepted.');
+    } catch (error) {
+      setPairingError(
+        error instanceof Error
+          ? error.message
+          : 'Mindfull could not reach that server.',
+      );
+    }
+  };
+
+  const saveServer = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setPairingError(null);
+
+    try {
+      const address = await configureSyncServer(serverAddress);
+      setServerAddress(address);
+      setIsPaired(hasPairingToken());
+    } catch (error) {
+      setPairingError(
+        error instanceof Error ? error.message : 'That address is not valid.',
+      );
     }
   };
 
@@ -278,16 +308,53 @@ export function SettingsPage() {
           <h2>Sync</h2>
           <p>
             {isPaired
-              ? `This browser is paired. Status: ${syncStatus}.`
-              : 'Pair this browser with your Mindfull server.'}
+              ? `This device is paired. Status: ${syncStatus}.`
+              : 'Pair this device with your Mindfull server.'}
           </p>
         </div>
         {isPaired ? (
-          <Button className={styles.syncButton} onPress={synchronize}>
-            Sync now
-          </Button>
+          <Form className={styles.pairingForm} onSubmit={saveServer}>
+            <TextField value={serverAddress} onChange={setServerAddress}>
+              <Label>Backend address</Label>
+              <Input
+                type="url"
+                inputMode="url"
+                placeholder="https://mindfull.example"
+                autoCapitalize="none"
+                autoComplete="url"
+              />
+            </TextField>
+            <p className={styles.fieldHint}>
+              Leave empty when the app and server share an address. Changing it
+              requires pairing again.
+            </p>
+            {pairingError ? (
+              <p className={styles.error}>{pairingError}</p>
+            ) : null}
+            <div className={styles.syncActions}>
+              <Button className={styles.quietButton} type="submit">
+                Save address
+              </Button>
+              <Button className={styles.syncButton} onPress={synchronize}>
+                Sync now
+              </Button>
+            </div>
+          </Form>
         ) : (
           <Form className={styles.pairingForm} onSubmit={pairDevice}>
+            <TextField value={serverAddress} onChange={setServerAddress}>
+              <Label>Backend address</Label>
+              <Input
+                type="url"
+                inputMode="url"
+                placeholder="https://mindfull.example"
+                autoCapitalize="none"
+                autoComplete="url"
+              />
+            </TextField>
+            <p className={styles.fieldHint}>
+              Leave empty when the app and server share an address.
+            </p>
             <TextField value={pairingCode} onChange={setPairingCode} isRequired>
               <Label>Pairing code</Label>
               <Input type="password" autoComplete="off" />
@@ -296,7 +363,7 @@ export function SettingsPage() {
               <p className={styles.error}>{pairingError}</p>
             ) : null}
             <Button className={styles.syncButton} type="submit">
-              Pair browser
+              Pair device
             </Button>
           </Form>
         )}

@@ -9,3 +9,6 @@ export const applyNativeTheme = async (theme: AppTheme): Promise<void> => {
     style: theme === 'dark' ? SystemBarsStyle.Dark : SystemBarsStyle.Light,
   });
 };
+
+export const deviceName = (): string =>
+  Capacitor.isNativePlatform() ? 'Android' : 'This browser';

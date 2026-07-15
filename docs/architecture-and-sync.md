@@ -172,6 +172,13 @@ the shell beside its web assets follows Capacitor's normal build and sync flow.
 The native adapter is behind a small capability interface so web and Android
 behavior differ without forking domain logic.
 
+Each installation keeps its backend address locally. An empty address means the
+web application's own origin; packaged Android installations use an absolute
+HTTP or HTTPS origin. Changing it clears that server's pairing token and sync
+cursor, but never deletes local documents. Android routes fetch through
+Capacitor's native HTTP bridge so a private Pi or Tailscale origin does not need
+browser CORS configuration.
+
 A Tauri macOS shell is deferred. The browser PWA remains the initial macOS
 experience.
 
