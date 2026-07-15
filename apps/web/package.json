@@ -4,13 +4,21 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "android:apk": "pnpm android:sync && ./android/gradlew -p android assembleDebug",
+    "android:open": "cap open android",
+    "android:run": "pnpm android:sync && cap run android",
+    "android:sync": "pnpm build:native && cap sync android",
     "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "build:native": "tsc -p tsconfig.json --noEmit && vite build --mode native",
     "dev": "vite",
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/app": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
     "@mindfull/domain": "workspace:*",
     "dexie": "^4.4.4",
     "dexie-react-hooks": "^4.4.0",
@@ -24,6 +32,7 @@
     "recharts": "3.8.1"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.0.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/react": "^19.2.14",

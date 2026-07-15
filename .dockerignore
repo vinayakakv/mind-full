@@ -2,10 +2,10 @@
 node_modules
 **/node_modules
 **/dist
+apps/web/android
 coverage
 playwright-report
 test-results
 data
 *.sqlite*
 .DS_Store
-

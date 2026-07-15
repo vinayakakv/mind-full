@@ -1,6 +1,8 @@
 import type { SettingsDocument } from '@mindfull/domain';
 import { useEffect, useState } from 'react';
 
+import { applyNativeTheme } from '../platform/native-shell';
+
 type ThemePreference = SettingsDocument['payload']['theme'];
 type ResolvedTheme = Exclude<ThemePreference, 'system'>;
 
@@ -32,5 +34,6 @@ export const useResolvedTheme = (preference: ThemePreference): void => {
 
   useEffect(() => {
     document.documentElement.dataset.theme = resolvedTheme;
+    void applyNativeTheme(resolvedTheme).catch(() => undefined);
   }, [resolvedTheme]);
 };

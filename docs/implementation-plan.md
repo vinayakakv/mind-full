@@ -169,7 +169,37 @@ initial version timestamp let independently initialized browsers converge
 without overwriting later customization. Health remains outside primary bottom
 navigation and History; its chart dependency is isolated to the lazy route.
 
-## Milestone 3 — Local AI and reflection
+## Milestone 3 — Android capability
+
+Status: in progress as of July 15, 2026.
+
+### Android foundation
+
+- [x] Capacitor 8 Android wrapper beside the web application
+- [x] Repeatable build, sync, open, and debug-APK commands
+- [x] Calm app identity, splash screen, system bars, safe areas, and back behavior
+- [ ] Configurable Pi address and pairing from the packaged application
+- [ ] Offline startup and IndexedDB persistence on a real Android device
+- [x] Web/PWA and Docker builds remain unchanged
+
+### Native reminders
+
+- [ ] Native exact-time local-notification adapter
+- [ ] Habit and task notification actions
+- [ ] Rescheduling after reboot, timezone changes, and app updates
+- [ ] Real-device notification and backend-off tests
+
+The first slice adds the native shell without changing reminder behavior. The
+second replaces progressive browser delivery with native scheduling behind the
+existing notification capability boundary. Android keeps its own IndexedDB;
+data moves between an existing browser installation and Android through normal
+document synchronization rather than shared local storage.
+
+After the Android foundation, validate installation and offline behavior as a
+macOS Safari web app. A Tauri shell remains deferred unless that validation
+shows that reliable closed-app local reminders justify a second native shell.
+
+## Milestone 4 — Local AI and reflection
 
 - Optional Ollama Compose service
 - Persisted AI work queue with leases and idempotency
@@ -180,14 +210,6 @@ navigation and History; its chart dependency is isolated to the lazy route.
 - In-container scheduler and catch-up behavior
 - Weekly review snapshots
 - Daily SQLite backups
-
-## Milestone 4 — Android capability
-
-- Capacitor Android wrapper
-- Native exact-time local-notification adapter
-- Habit and task notification actions
-- Rescheduling after reboot, timezone changes, and app updates
-- Real-device notification and offline tests
 
 ## Commit strategy
 

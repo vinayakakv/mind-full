@@ -12,6 +12,10 @@
     ]
   },
   "scripts": {
+    "android:apk": "pnpm --filter @mindfull/web android:apk",
+    "android:open": "pnpm --filter @mindfull/web android:open",
+    "android:run": "pnpm --filter @mindfull/web android:run",
+    "android:sync": "pnpm --filter @mindfull/web android:sync",
     "build": "pnpm --filter @mindfull/domain build && pnpm --filter @mindfull/web build && pnpm --filter @mindfull/server build",
     "check": "biome check .",
     "check:write": "biome check --write .",

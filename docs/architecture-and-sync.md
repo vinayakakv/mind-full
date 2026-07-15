@@ -7,9 +7,8 @@ The anticipated repository uses a small pnpm workspace:
 ```text
 mindfull/
 ├── apps/
-│   ├── web/       React PWA
-│   ├── server/    API, sync, jobs, backups, and AI orchestration
-│   └── android/   Capacitor wrapper, added after the first milestone
+│   ├── web/       React PWA and its Capacitor Android project
+│   └── server/    API, sync, jobs, backups, and AI orchestration
 ├── packages/
 │   ├── domain/    document types, schemas, migrations, and pure rules
 │   └── ui/        app-owned accessible UI primitives and tokens
@@ -167,10 +166,11 @@ Deletion tombstones participate in the same comparison.
 The browser PWA is the first target. Exact closed-app offline notifications are
 not assumed to be reliable in a pure browser installation.
 
-The Android milestone adds a Capacitor shell that reuses the web app and
-maps Reminder documents to native local notifications. The native adapter is
-behind a small capability interface so web and Android behavior differ without
-forking domain logic.
+The Android milestone adds a Capacitor project at `apps/web/android` that reuses
+the web build and maps Reminder documents to native local notifications. Keeping
+the shell beside its web assets follows Capacitor's normal build and sync flow.
+The native adapter is behind a small capability interface so web and Android
+behavior differ without forking domain logic.
 
 A Tauri macOS shell is deferred. The browser PWA remains the initial macOS
 experience.

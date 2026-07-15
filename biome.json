@@ -6,6 +6,10 @@
       "!!**/node_modules",
       "!!**/dist",
       "!!**/coverage",
+      "!!**/android/.gradle",
+      "!!**/android/**/build",
+      "!!**/android/app/src/main/assets",
+      "!!**/android/capacitor-cordova-android-plugins",
       "!!**/playwright-report",
       "!!**/test-results"
     ]

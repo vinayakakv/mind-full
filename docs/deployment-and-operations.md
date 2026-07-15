@@ -109,6 +109,25 @@ the backend is unavailable.
 - Supports Mark complete for habits and Complete/Remind me in one hour for
   tasks where notification actions are available.
 
+The native project lives at `apps/web/android` and uses application ID
+`app.mindfull`. Capacitor 8 development requires Node 22 or newer, Android
+Studio 2025.2.1 or newer, JDK 21, and Android SDK 36. The web build remains the
+source of truth; `cap sync android` copies it into the native project. On this
+Mac, use Homebrew's JDK without changing the system Java installation:
+
+```sh
+export JAVA_HOME="$(brew --prefix openjdk@21)/libexec/openjdk.jdk/Contents/Home"
+pnpm android:sync
+pnpm android:apk
+pnpm android:open
+```
+
+The debug APK is written to
+`apps/web/android/app/build/outputs/apk/debug/app-debug.apk`. Native builds omit
+the PWA service worker because the application shell is already packaged in the
+APK. Android cloud backup is disabled so journals and check-ins are not copied
+to an unrelated backup provider.
+
 ### macOS
 
 The first release uses the browser PWA. A Tauri shell for reliable closed-app

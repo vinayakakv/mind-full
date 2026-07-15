@@ -1,0 +1,14 @@
+{
+  "appId": "app.mindfull",
+  "appName": "Mindfull",
+  "webDir": "dist",
+  "android": {
+    "backgroundColor": "#f4f0e8"
+  },
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "css",
+      "style": "LIGHT"
+    }
+  }
+}
