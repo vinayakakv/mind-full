@@ -13,6 +13,38 @@ const prepareServiceWorker = async (page: Page): Promise<void> => {
   await page.reload();
 };
 
+test('keeps navigation reachable on long pages', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+
+  const desktopHeader = await page.locator('header').first().boundingBox();
+  expect(desktopHeader?.y).toBe(0);
+  await expect(page.getByRole('link', { name: 'Settings' })).toBeVisible();
+
+  await page.setViewportSize({ width: 390, height: 600 });
+  await page.reload();
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+
+  const mobileHeader = await page.locator('header').first().boundingBox();
+  const mobileNavigation = page.locator(
+    'nav[aria-label="Primary navigation"]:visible',
+  );
+  const settings = await page
+    .getByRole('link', { name: 'Settings' })
+    .boundingBox();
+  const history = await mobileNavigation
+    .getByRole('link', { name: 'History' })
+    .boundingBox();
+  expect(mobileHeader?.y).toBe(0);
+  await expect(mobileNavigation).toHaveCount(1);
+  expect(settings?.y).toBeLessThan(100);
+  expect(history?.y).toBeGreaterThan(500);
+  await expect(
+    mobileNavigation.getByRole('link', { name: 'History' }),
+  ).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Settings' })).toBeVisible();
+});
+
 test('keeps tasks and a check-in draft through an offline reload', async ({
   context,
   page,

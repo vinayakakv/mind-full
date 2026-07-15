@@ -2,13 +2,23 @@
   min-height: 100dvh;
 }
 
+.headerFrame {
+  backdrop-filter: blur(16px);
+  background: color-mix(in srgb, var(--surface-canvas) 92%, transparent);
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--border-subtle) 72%, transparent);
+  position: sticky;
+  top: 0;
+  z-index: 9;
+}
+
 .header {
   align-items: center;
   display: flex;
   justify-content: space-between;
   margin: 0 auto;
   max-width: 70rem;
-  padding: 1.5rem clamp(1.25rem, 4vw, 3rem);
+  padding: 1rem clamp(1.25rem, 4vw, 3rem);
 }
 
 .wordmark {
@@ -22,6 +32,10 @@
 .navigation {
   display: flex;
   gap: clamp(0.75rem, 3vw, 1.75rem);
+}
+
+.mobileNavigation {
+  display: none;
 }
 
 .utilities {
@@ -91,10 +105,16 @@
   .header {
     align-items: center;
     gap: 1.5rem;
+    padding: calc(0.8rem + env(safe-area-inset-top)) 1.25rem 0.8rem;
   }
 
-  .navigation {
+  .desktopNavigation {
+    display: none;
+  }
+
+  .mobileNavigation {
     bottom: 0;
+    display: flex;
     justify-content: space-around;
     left: 0;
     padding: 0.9rem 0.75rem calc(0.9rem + env(safe-area-inset-bottom));
@@ -103,7 +123,7 @@
     z-index: 10;
   }
 
-  .navigation::before {
+  .mobileNavigation::before {
     backdrop-filter: blur(16px);
     background: color-mix(in srgb, var(--surface-canvas) 88%, transparent);
     border-top: 1px solid var(--border-subtle);

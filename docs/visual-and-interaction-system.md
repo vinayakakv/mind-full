@@ -92,6 +92,12 @@ Contrast and focus visibility remain accessible even when colors are subtle.
   typography and rhythm.
 - Primary navigation contains Today, History, and Reflect. Settings uses a
   consistently placed icon button with an accessible name and focus treatment.
+- The compact app header remains sticky on long pages. It uses a translucent
+  canvas surface and subtle divider so content can pass beneath it without
+  becoming difficult to read.
+- On mobile, the top bar is reserved for the wordmark, sync state, and settings;
+  Today, History, and Reflect remain in a fixed bottom bar. The two bars never
+  repeat the same action.
 - On mobile, a journal compose action floats above the bottom navigation. On
   wider screens it may include the short label Write.
 - A floating action should remain visually quiet: one action, no speed dial,
