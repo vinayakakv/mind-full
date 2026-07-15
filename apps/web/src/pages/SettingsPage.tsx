@@ -31,7 +31,7 @@ import {
   syncServerAddress,
 } from '../data/sync';
 import { deviceName } from '../platform/native-shell';
-import { syncStatusAtom } from '../state/sync';
+import { syncStatusAtom, syncStatusDescriptions } from '../state/sync';
 import styles from './SettingsPage.module.css';
 
 const themes: Array<SettingsDocument['payload']['theme']> = [
@@ -375,7 +375,7 @@ export function SettingsPage() {
           <h2>Sync</h2>
           <p>
             {isPaired
-              ? `This device is paired. Status: ${syncStatus}.`
+              ? `This device is paired. ${syncStatusDescriptions[syncStatus]}`
               : 'Pair this device with your Mindfull server.'}
           </p>
         </div>
@@ -403,7 +403,7 @@ export function SettingsPage() {
                 Save address
               </Button>
               <Button className={styles.syncButton} onPress={synchronize}>
-                Sync now
+                {syncStatus === 'error' ? 'Try sync again' : 'Sync now'}
               </Button>
             </div>
           </Form>

@@ -44,6 +44,7 @@ import {
 } from '@mindfull/domain';
 import { database } from './database';
 import { getDeviceId } from './device';
+import { claimLocalDocument } from './document-ownership';
 import { documentsChanged, localDocumentsChanged } from './events';
 import { currentTimezone, localDateFor } from './time';
 
@@ -102,7 +103,11 @@ const reminderDocument = async (
 export const saveDocuments = async (
   documents: DomainDocument[],
 ): Promise<void> => {
-  const validatedDocuments = documents.map(parseDomainDocument);
+  const deviceId = getDeviceId();
+  const now = new Date().toISOString();
+  const validatedDocuments = documents
+    .map(parseDomainDocument)
+    .map((document) => claimLocalDocument(document, deviceId, now));
 
   await database.transaction(
     'rw',

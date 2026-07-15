@@ -4,6 +4,7 @@ import { getDefaultStore } from 'jotai';
 import { syncStatusAtom } from '../state/sync';
 import { database } from './database';
 import { getDeviceId } from './device';
+import { dirtyDocumentsForSync } from './document-ownership';
 import { applyRemoteDocuments } from './documents';
 
 const tokenKey = 'mindfull.sync-token';
@@ -116,15 +117,10 @@ const runSynchronization = async (): Promise<void> => {
   try {
     while (isSynchronizationRequested) {
       isSynchronizationRequested = false;
-      const [cursor, dirtyStates] = await Promise.all([
+      const [cursor, localDocuments] = await Promise.all([
         readCursor(),
-        database.syncState.filter(({ dirty }) => dirty === 1).toArray(),
+        dirtyDocumentsForSync(getDeviceId()),
       ]);
-      const localDocuments = (
-        await database.documents.bulkGet(
-          dirtyStates.map(({ documentId }) => documentId),
-        )
-      ).filter((document) => document !== undefined);
 
       const response = await fetch(syncEndpoint('/api/sync'), {
         method: 'POST',

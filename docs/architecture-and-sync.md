@@ -143,6 +143,13 @@ control. Requests arriving during an active sync coalesce into another pass
 before the client returns to idle, so a local write made during a network round
 trip does not wait for the periodic interval.
 
+Every local write is attributed to the current device. Before upload, the
+client also repairs any older device identity found on a document already
+marked dirty, advancing its timestamp monotonically before sending it. This
+recovers safely from older migrations or a replaced local device identity.
+Clean documents received from another device are never re-attributed, and the
+repair is idempotent.
+
 Reminder intent follows this same sync path. Device-local occurrence state is
 not synchronized: each installation records its next scheduled instant and any
 currently due in-app reminder in a separate IndexedDB store. Android also keeps

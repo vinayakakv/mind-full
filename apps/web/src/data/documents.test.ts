@@ -50,6 +50,23 @@ describe('local documents', () => {
     });
   });
 
+  it('claims a foreign document when it becomes a local write', async () => {
+    window.localStorage.setItem('mindfull.device-id', 'this-device');
+    const task = await addTask('Take a quiet walk');
+    const foreignVersion = {
+      ...task,
+      updatedAt: '2030-07-15T10:00:00.000Z',
+      updatedByDeviceId: 'previous-device',
+    };
+
+    await saveDocument(foreignVersion);
+
+    expect(await database.documents.get(task.id)).toMatchObject({
+      updatedAt: '2030-07-15T10:00:00.001Z',
+      updatedByDeviceId: 'this-device',
+    });
+  });
+
   it('creates stable body metrics without replacing local preferences', async () => {
     const metrics = await ensureDefaultBodyMetrics();
     const weight = metrics.find(({ id }) => id === 'body-metric:weight');
