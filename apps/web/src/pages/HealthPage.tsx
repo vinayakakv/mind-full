@@ -146,18 +146,29 @@ function HealthOverview({
 
 function MeasurementDialog({
   metrics,
+  measurements,
   initialMetricId,
   measurement,
   onClose,
 }: {
   metrics: BodyMetricDocument[];
+  measurements: BodyMeasurementDocument[];
   initialMetricId: string;
   measurement?: BodyMeasurementDocument;
   onClose: () => void;
 }) {
-  const [metricId, setMetricId] = useState(
-    measurement?.payload.metricId ?? initialMetricId,
-  );
+  const startingMetricId = measurement?.payload.metricId ?? initialMetricId;
+  const valueForMetric = (metricId: string): string => {
+    const selectedMetric = metrics.find(({ id }) => id === metricId);
+    const latest = latestBodyMeasurements(measurements, metricId)[0];
+    if (!selectedMetric || !latest) return '';
+
+    return displayedBodyValue(
+      latest.payload.value,
+      selectedMetric.payload.preferredUnit,
+    ).toString();
+  };
+  const [metricId, setMetricId] = useState(startingMetricId);
   const metric = metrics.find(({ id }) => id === metricId) ?? metrics[0];
   const initialValue =
     measurement && metric
@@ -165,7 +176,7 @@ function MeasurementDialog({
           measurement.payload.value,
           metric.payload.preferredUnit,
         ).toString()
-      : '';
+      : valueForMetric(startingMetricId);
   const [value, setValue] = useState(initialValue);
   const numericValue = Number(value);
   const hasValidPrecision = /^\d+(\.\d{1,2})?$/.test(value);
@@ -213,8 +224,9 @@ function MeasurementDialog({
                 value={metric?.id ?? ''}
                 disabled={Boolean(measurement)}
                 onChange={(event) => {
-                  setMetricId(event.currentTarget.value);
-                  setValue('');
+                  const nextMetricId = event.currentTarget.value;
+                  setMetricId(nextMetricId);
+                  setValue(valueForMetric(nextMetricId));
                 }}
               >
                 {metrics.map((candidate) => (
@@ -603,6 +615,7 @@ function MeasurementHistory({
       {editing ? (
         <MeasurementDialog
           metrics={[metric]}
+          measurements={measurements}
           initialMetricId={metric.id}
           measurement={editing}
           onClose={() => setEditing(null)}
@@ -704,6 +717,7 @@ export function HealthPage() {
       {isAdding && selectedMetric ? (
         <MeasurementDialog
           metrics={activeMetrics}
+          measurements={health?.measurements ?? []}
           initialMetricId={selectedMetric.id}
           onClose={() => setIsAdding(false)}
         />

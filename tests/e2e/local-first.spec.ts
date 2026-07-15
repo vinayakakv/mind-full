@@ -361,6 +361,18 @@ test('records and reviews a body measurement offline', async ({
   await page.reload();
   await expect(page.getByText('72.4 kg').first()).toBeVisible();
 
+  await page.getByRole('button', { name: 'Add measurement' }).click();
+  await expect(page.getByLabel('Value')).toHaveValue('72.4');
+  await page
+    .getByLabel('Metric', { exact: true })
+    .selectOption({ label: 'Neck' });
+  await expect(page.getByLabel('Value')).toHaveValue('');
+  await page
+    .getByLabel('Metric', { exact: true })
+    .selectOption({ label: 'Weight' });
+  await expect(page.getByLabel('Value')).toHaveValue('72.4');
+  await page.getByRole('button', { name: 'Close' }).click();
+
   await page.goto('/');
   await expect(page.getByText(/Weight · 72.4 kg/)).toBeVisible();
 });

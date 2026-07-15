@@ -75,13 +75,17 @@ Add measurement opens a small modal on wider screens and a compact drawer on
 mobile. It contains:
 
 1. A metric selector
-2. One numeric value field
+2. One numeric value field, prefilled with that metric's latest recorded value
 3. The selected metric's preferred unit
 4. Save and Cancel actions
 
 Only one metric is recorded at a time. Saving is local-first and never waits
 for the backend. Multiple readings of the same metric may exist on one day;
 their exact timestamps and individual values are preserved.
+
+Changing the selected metric loads that metric's own latest value. A metric
+without any history starts with an empty field. Editing always opens with the
+selected entry's value rather than a newer reading.
 
 Entries may be edited or deleted from Health. There are no notes or custom
 date/time controls in the normal recording flow. Deletion uses the ordinary
