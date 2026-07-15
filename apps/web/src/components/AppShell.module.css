@@ -5,10 +5,10 @@
 }
 
 .headerFrame {
-  backdrop-filter: blur(16px);
-  background: color-mix(in srgb, var(--surface-canvas) 92%, transparent);
+  backdrop-filter: blur(20px) saturate(118%);
+  background: color-mix(in srgb, var(--surface-canvas) 48%, transparent);
   border-bottom: 1px solid
-    color-mix(in srgb, var(--border-subtle) 72%, transparent);
+    color-mix(in srgb, var(--border-subtle) 58%, transparent);
   position: sticky;
   top: 0;
   z-index: 9;

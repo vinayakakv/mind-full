@@ -8,59 +8,71 @@
 
 .backdrop::before,
 .backdrop::after {
-  border-radius: 50%;
   content: "";
+  inset: -24%;
   opacity: var(--ambient-opacity);
   position: absolute;
-  will-change: transform;
 }
 
 .backdrop::before {
   background:
-    radial-gradient(circle at 38% 42%, var(--ambient-first), transparent 62%),
-    radial-gradient(circle at 68% 58%, var(--ambient-second), transparent 66%);
-  height: 88vmax;
-  left: -38vmax;
-  top: -42vmax;
-  width: 88vmax;
+    linear-gradient(
+      128deg,
+      transparent 8%,
+      var(--ambient-first) 31%,
+      var(--ambient-second) 50%,
+      transparent 75%
+    ),
+    linear-gradient(
+      22deg,
+      transparent 42%,
+      var(--ambient-third) 68%,
+      transparent 88%
+    );
 }
 
 .backdrop::after {
   background:
-    radial-gradient(circle at 44% 45%, var(--ambient-third), transparent 64%),
-    radial-gradient(circle at 65% 62%, var(--ambient-fourth), transparent 68%);
-  bottom: -40vmax;
-  height: 82vmax;
-  right: -36vmax;
-  width: 82vmax;
+    linear-gradient(
+      38deg,
+      transparent 18%,
+      var(--ambient-fourth) 43%,
+      transparent 69%
+    ),
+    linear-gradient(
+      154deg,
+      transparent 34%,
+      var(--ambient-third) 57%,
+      transparent 82%
+    );
 }
 
 .backdrop[data-period="morning"] {
-  --ambient-first: #edab7b;
-  --ambient-second: #d7b5d4;
-  --ambient-third: #e9cb77;
-  --ambient-fourth: #9fbdaa;
+  --ambient-first: #e48768;
+  --ambient-second: #bc6d94;
+  --ambient-third: #d1a13c;
+  --ambient-fourth: #5e998b;
 }
 
 .backdrop[data-period="evening"] {
-  --ambient-first: #8a83bd;
-  --ambient-second: #b17f9e;
-  --ambient-third: #668ea2;
-  --ambient-fourth: #b08d72;
+  --ambient-first: #6856a3;
+  --ambient-second: #994b72;
+  --ambient-third: #3f788c;
+  --ambient-fourth: #ae6b49;
 }
 
 :global(:root[data-theme="dark"]) .backdrop[data-period="morning"] {
-  --ambient-first: #925b44;
-  --ambient-second: #6d537a;
-  --ambient-third: #7f703d;
-  --ambient-fourth: #496d60;
+  --ambient-first: #8f4f3d;
+  --ambient-second: #713f62;
+  --ambient-third: #826421;
+  --ambient-fourth: #356b61;
 }
 
 :global(:root[data-theme="dark"]) .backdrop[data-period="evening"] {
-  --ambient-first: #514b84;
-  --ambient-second: #74485e;
-  --ambient-third: #315c70;
-  --ambient-fourth: #76513f;
+  --ambient-first: #4d407e;
+  --ambient-second: #713651;
+  --ambient-third: #285c70;
+  --ambient-fourth: #70412f;
 }
 
 .backdrop[data-motion="gentle"]::before {
@@ -80,21 +92,21 @@
 
 @keyframes ambient-drift-first {
   from {
-    transform: translate3d(-3%, -2%, 0) rotate(-4deg) scale(1);
+    transform: translate3d(-5%, -2%, 0) scale(1.02);
   }
 
   to {
-    transform: translate3d(15%, 10%, 0) rotate(7deg) scale(1.08);
+    transform: translate3d(7%, 5%, 0) scale(1.08);
   }
 }
 
 @keyframes ambient-drift-second {
   from {
-    transform: translate3d(4%, 6%, 0) rotate(5deg) scale(1.04);
+    transform: translate3d(5%, 4%, 0) scale(1.07);
   }
 
   to {
-    transform: translate3d(-14%, -9%, 0) rotate(-6deg) scale(0.96);
+    transform: translate3d(-7%, -5%, 0) scale(0.98);
   }
 }
 
@@ -102,6 +114,5 @@
   .backdrop::before,
   .backdrop::after {
     animation: none;
-    will-change: auto;
   }
 }

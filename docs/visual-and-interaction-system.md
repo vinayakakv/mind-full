@@ -80,12 +80,14 @@ Color tokens should be semantic rather than named after raw hues:
 
 Contrast and focus visibility remain accessible even when colors are subtle.
 
-An optional ambient color field can add a restrained psychedelic quality around
-the reading column. It shifts between warm morning and cooler evening palettes,
-never carries meaning, and remains behind solid or translucent reading surfaces.
-The synchronized setting offers Gentle, Still, and Off; Gentle is the default.
-Animation pauses during focused writing and check-ins, and reduced-motion always
-receives the still treatment.
+An optional ambient color field draws from the calm, graphic character of the
+Zune desktop software: broad asymmetric gradient planes, richer coral, plum,
+amber, teal, and indigo, and generous areas of quiet canvas. It avoids visible
+blobs and decorative particles. The field shifts between warm morning and cooler
+evening palettes, continues behind translucent navigation, and never carries
+meaning. The synchronized setting offers Gentle, Still, and Off; Gentle is the
+default. Animation pauses during focused writing and check-ins, and
+reduced-motion always receives the still treatment.
 
 ## Layout
 
