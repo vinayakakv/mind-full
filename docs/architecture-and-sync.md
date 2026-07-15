@@ -95,6 +95,7 @@ Local-only stores include:
 - Server cursor
 - Device identity
 - Native reminder mappings
+- Browser reminder occurrence and delivery state
 - Cached application metadata
 
 ## Server document storage
@@ -143,6 +144,10 @@ control. Requests arriving during an active sync coalesce into another pass
 before the client returns to idle, so a local write made during a network round
 trip does not wait for the periodic interval.
 
+Reminder intent follows this same sync path. Device-local occurrence state is
+not synchronized: each installation records its next scheduled instant and any
+currently due in-app reminder in a separate IndexedDB store.
+
 ## Conflict resolution
 
 Conflicts resolve per document using:
@@ -162,7 +167,7 @@ Deletion tombstones participate in the same comparison.
 The browser PWA is the first target. Exact closed-app offline notifications are
 not assumed to be reliable in a pure browser installation.
 
-The second milestone adds a Capacitor Android shell that reuses the web app and
+The Android milestone adds a Capacitor shell that reuses the web app and
 maps Reminder documents to native local notifications. The native adapter is
 behind a small capability interface so web and Android behavior differ without
 forking domain logic.

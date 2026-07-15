@@ -64,6 +64,36 @@ export const habitLogPayloadSchema = z.object({
   reason: z.string().trim().min(1).max(500).nullable(),
 });
 
+export const reminderPayloadSchema = z
+  .object({
+    targetType: z.enum(['habit', 'task', 'check-in']),
+    targetId: z.string().min(1),
+    scheduledAt: instantSchema.nullable(),
+    localTime: z
+      .string()
+      .regex(/^\d{2}:\d{2}$/)
+      .nullable(),
+    weekdays: z
+      .array(z.number().int().min(0).max(6))
+      .min(1)
+      .max(7)
+      .refine((weekdays) => new Set(weekdays).size === weekdays.length)
+      .nullable(),
+    enabled: z.boolean(),
+  })
+  .superRefine((payload, context) => {
+    const hasOneTimeSchedule = payload.scheduledAt !== null;
+    const hasRecurringSchedule =
+      payload.localTime !== null && payload.weekdays !== null;
+
+    if (hasOneTimeSchedule === hasRecurringSchedule) {
+      context.addIssue({
+        code: 'custom',
+        message: 'A reminder needs one one-time or recurring schedule.',
+      });
+    }
+  });
+
 export const checkInResponseSchema = z.object({
   promptId: z.string().min(1),
   promptText: z.string().min(1),
@@ -129,6 +159,12 @@ export const habitLogDocumentSchema = z.object({
   payload: habitLogPayloadSchema,
 });
 
+export const reminderDocumentSchema = z.object({
+  ...envelopeFields,
+  type: z.literal('reminder'),
+  payload: reminderPayloadSchema,
+});
+
 export const checkInDocumentSchema = z.object({
   ...envelopeFields,
   type: z.literal('check-in'),
@@ -141,6 +177,7 @@ export const domainDocumentSchema = z.discriminatedUnion('type', [
   journalDocumentSchema,
   habitDocumentSchema,
   habitLogDocumentSchema,
+  reminderDocumentSchema,
   checkInDocumentSchema,
 ]);
 
@@ -149,12 +186,14 @@ export type TaskPayload = z.infer<typeof taskPayloadSchema>;
 export type JournalPayload = z.infer<typeof journalPayloadSchema>;
 export type HabitPayload = z.infer<typeof habitPayloadSchema>;
 export type HabitLogPayload = z.infer<typeof habitLogPayloadSchema>;
+export type ReminderPayload = z.infer<typeof reminderPayloadSchema>;
 export type CheckInPayload = z.infer<typeof checkInPayloadSchema>;
 export type SettingsDocument = z.infer<typeof settingsDocumentSchema>;
 export type TaskDocument = z.infer<typeof taskDocumentSchema>;
 export type JournalDocument = z.infer<typeof journalDocumentSchema>;
 export type HabitDocument = z.infer<typeof habitDocumentSchema>;
 export type HabitLogDocument = z.infer<typeof habitLogDocumentSchema>;
+export type ReminderDocument = z.infer<typeof reminderDocumentSchema>;
 export type CheckInDocument = z.infer<typeof checkInDocumentSchema>;
 export type DomainDocument = z.infer<typeof domainDocumentSchema>;
 export type DocumentType = DomainDocument['type'];
@@ -230,6 +269,14 @@ export const createHabitLogDocument = (
   habitLogDocumentSchema.parse({
     ...createEnvelope(input),
     type: 'habit-log',
+  });
+
+export const createReminderDocument = (
+  input: NewDocument<ReminderPayload>,
+): ReminderDocument =>
+  reminderDocumentSchema.parse({
+    ...createEnvelope(input),
+    type: 'reminder',
   });
 
 export const createCheckInDocument = (

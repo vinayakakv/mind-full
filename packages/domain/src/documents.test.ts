@@ -4,6 +4,7 @@ import {
   createHabitDocument,
   createHabitLogDocument,
   createJournalDocument,
+  createReminderDocument,
   createTaskDocument,
   migrateDomainDocument,
   nextDocumentTimestamp,
@@ -86,6 +87,42 @@ describe('domain documents', () => {
 
     expect(migrateDomainDocument(habit).type).toBe('habit');
     expect(migrateDomainDocument(log).type).toBe('habit-log');
+  });
+
+  it('validates a reminder as its own synchronized document', () => {
+    const reminder = createReminderDocument({
+      id: 'reminder:habit:01-habit',
+      now,
+      deviceId: 'phone',
+      payload: {
+        targetType: 'habit',
+        targetId: '01-habit',
+        scheduledAt: null,
+        localTime: '17:30',
+        weekdays: [1, 3, 5],
+        enabled: true,
+      },
+    });
+
+    expect(migrateDomainDocument(reminder)).toEqual(reminder);
+  });
+
+  it('rejects an ambiguous reminder schedule', () => {
+    expect(() =>
+      createReminderDocument({
+        id: 'reminder:task:01-task',
+        now,
+        deviceId: 'phone',
+        payload: {
+          targetType: 'task',
+          targetId: '01-task',
+          scheduledAt: '2026-07-15T12:00:00.000Z',
+          localTime: '17:30',
+          weekdays: [1, 3, 5],
+          enabled: true,
+        },
+      }),
+    ).toThrow();
   });
 
   it('selects the document with the later timestamp', () => {

@@ -1,21 +1,25 @@
-import { afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { database } from './database';
 import {
   addTask,
+  applyRemoteDocuments,
   createHabit,
   createJournal,
   deleteJournal,
   findCheckIn,
   findHabitLog,
+  findReminder,
   getOrCreateCheckIn,
   getOrCreateMorningCheckIn,
   recordHabitMiss,
+  setCheckInReminder,
   setHabitCompleted,
   setTaskCompleted,
   updateCheckIn,
   updateJournal,
 } from './documents';
+import { localDocumentsChanged } from './events';
 
 describe('local documents', () => {
   beforeEach(async () => {
@@ -33,6 +37,27 @@ describe('local documents', () => {
     expect(await database.syncState.get(task.id)).toMatchObject({
       dirty: 1,
     });
+  });
+
+  it('does not treat an applied remote version as a new local write', async () => {
+    const task = await addTask('Take a quiet walk');
+    const localChange = vi.fn();
+    window.addEventListener(localDocumentsChanged, localChange);
+
+    await applyRemoteDocuments(
+      [
+        {
+          ...task,
+          payload: { ...task.payload, text: 'Take a slow, quiet walk' },
+          updatedAt: '2030-07-15T12:00:00.000Z',
+          updatedByDeviceId: 'other-device',
+        },
+      ],
+      2,
+    );
+
+    expect(localChange).not.toHaveBeenCalled();
+    window.removeEventListener(localDocumentsChanged, localChange);
   });
 
   it('uses one revivable log document for a habit occurrence', async () => {
@@ -62,6 +87,30 @@ describe('local documents', () => {
         reason: 'The day became too full.',
       },
     });
+  });
+
+  it('stores shared reminder intent beside habits, tasks, and check-ins', async () => {
+    const habit = await createHabit({
+      name: 'Step outside',
+      weekdays: [1, 3, 5],
+      reminderTime: '08:15',
+    });
+    const task = await addTask('Call a friend', '2026-07-16T12:00:00.000Z');
+    await setCheckInReminder('evening', '20:30');
+
+    expect(await findReminder('habit', habit.id)).toMatchObject({
+      id: `reminder:habit:${habit.id}`,
+      payload: { localTime: '08:15', weekdays: [1, 3, 5], enabled: true },
+    });
+    expect(await findReminder('task', task.id)).toMatchObject({
+      payload: { scheduledAt: '2026-07-16T12:00:00.000Z' },
+    });
+    expect(await findReminder('check-in', 'evening')).toMatchObject({
+      payload: { localTime: '20:30', enabled: true },
+    });
+    expect(
+      await database.syncState.get(`reminder:habit:${habit.id}`),
+    ).toMatchObject({ dirty: 1 });
   });
 
   it('persists a task completion as a new document version', async () => {

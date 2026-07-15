@@ -8,6 +8,7 @@ import {
   createHabitDocument,
   createHabitLogDocument,
   createJournalDocument,
+  createReminderDocument,
   createSettingsDocument,
   createTaskDocument,
   type DomainDocument,
@@ -21,13 +22,16 @@ import {
   type JournalPayload,
   nextDocumentTimestamp,
   parseDomainDocument,
+  type ReminderDocument,
+  type ReminderPayload,
+  reminderIdFor,
   type SettingsDocument,
   selectCuratedPrompts,
   type TaskDocument,
 } from '@mindfull/domain';
 import { database } from './database';
 import { getDeviceId } from './device';
-import { localDocumentsChanged } from './events';
+import { documentsChanged, localDocumentsChanged } from './events';
 import { currentTimezone, localDateFor } from './time';
 
 const settingsId = 'settings';
@@ -41,6 +45,43 @@ const markDirty = async (documentId: string): Promise<void> => {
     dirty: 1,
     lastSyncedAt: null,
     lastServerVersion: null,
+  });
+};
+
+const allWeekdays = [0, 1, 2, 3, 4, 5, 6];
+
+const reminderFor = async (
+  targetType: ReminderPayload['targetType'],
+  targetId: string,
+): Promise<ReminderDocument | undefined> => {
+  const document = await database.documents.get(
+    reminderIdFor(targetType, targetId),
+  );
+  return document?.type === 'reminder' ? document : undefined;
+};
+
+const reminderDocument = async (
+  payload: ReminderPayload,
+): Promise<ReminderDocument> => {
+  const id = reminderIdFor(payload.targetType, payload.targetId);
+  const existing = await database.documents.get(id);
+  const now = new Date().toISOString();
+
+  if (existing?.type === 'reminder') {
+    return {
+      ...existing,
+      payload,
+      deletedAt: null,
+      updatedAt: updatedNow(existing),
+      updatedByDeviceId: getDeviceId(),
+    };
+  }
+
+  return createReminderDocument({
+    id,
+    now,
+    deviceId: getDeviceId(),
+    payload,
   });
 };
 
@@ -60,6 +101,7 @@ export const saveDocuments = async (
   );
 
   window.dispatchEvent(new Event(localDocumentsChanged));
+  window.dispatchEvent(new Event(documentsChanged));
 };
 
 export const saveDocument = async (document: DomainDocument): Promise<void> =>
@@ -97,6 +139,8 @@ export const applyRemoteDocuments = async (
       }
     },
   );
+
+  window.dispatchEvent(new Event(documentsChanged));
 };
 
 export const ensureSettings = async (): Promise<SettingsDocument> => {
@@ -170,7 +214,21 @@ export const createHabit = async (
     payload: { ...input, archivedAt: null },
   });
 
-  await saveDocument(habit);
+  const documents: DomainDocument[] = [habit];
+  if (input.reminderTime) {
+    documents.push(
+      await reminderDocument({
+        targetType: 'habit',
+        targetId: habit.id,
+        scheduledAt: null,
+        localTime: input.reminderTime,
+        weekdays: input.weekdays,
+        enabled: true,
+      }),
+    );
+  }
+
+  await saveDocuments(documents);
   return habit;
 };
 
@@ -200,7 +258,25 @@ export const updateHabit = async (
     throw new Error('Expected an updated habit document.');
   }
 
-  await saveDocument(updatedDocument);
+  const existingReminder = await reminderFor('habit', habitId);
+  const reminder =
+    update.reminderTime || existingReminder
+      ? await reminderDocument({
+          targetType: 'habit',
+          targetId: habitId,
+          scheduledAt: null,
+          localTime:
+            update.reminderTime ??
+            existingReminder?.payload.localTime ??
+            '09:00',
+          weekdays: update.weekdays,
+          enabled: Boolean(update.reminderTime),
+        })
+      : undefined;
+
+  await saveDocuments(
+    reminder ? [updatedDocument, reminder] : [updatedDocument],
+  );
   return updatedDocument;
 };
 
@@ -211,12 +287,25 @@ export const setHabitArchived = async (
   const habit = await getHabit(habitId);
   const now = updatedNow(habit);
 
-  await saveDocument({
+  const updatedHabit: HabitDocument = {
     ...habit,
     payload: { ...habit.payload, archivedAt: isArchived ? now : null },
     updatedAt: now,
     updatedByDeviceId: getDeviceId(),
+  };
+  const existingReminder = await reminderFor('habit', habitId);
+
+  if (!existingReminder) {
+    await saveDocument(updatedHabit);
+    return;
+  }
+
+  const reminder = await reminderDocument({
+    ...existingReminder.payload,
+    weekdays: habit.payload.weekdays,
+    enabled: !isArchived && Boolean(habit.payload.reminderTime),
   });
+  await saveDocuments([updatedHabit, reminder]);
 };
 
 export const findHabitLog = async (
@@ -310,7 +399,10 @@ const nextTaskSortKey = (): string => {
   return `${now}:${createDocumentId()}`;
 };
 
-export const addTask = async (text: string): Promise<TaskDocument> => {
+export const addTask = async (
+  text: string,
+  reminderAt: string | null = null,
+): Promise<TaskDocument> => {
   const now = new Date().toISOString();
   const task = createTaskDocument({
     id: createDocumentId(),
@@ -321,12 +413,25 @@ export const addTask = async (text: string): Promise<TaskDocument> => {
       text,
       completedAt: null,
       availableFrom: null,
-      reminderAt: null,
+      reminderAt,
       source: { kind: 'manual' },
     },
   });
 
-  await saveDocument(task);
+  const documents: DomainDocument[] = [task];
+  if (reminderAt) {
+    documents.push(
+      await reminderDocument({
+        targetType: 'task',
+        targetId: task.id,
+        scheduledAt: reminderAt,
+        localTime: null,
+        weekdays: null,
+        enabled: true,
+      }),
+    );
+  }
+  await saveDocuments(documents);
   return task;
 };
 
@@ -402,44 +507,107 @@ const getTask = async (taskId: string): Promise<TaskDocument> => {
   return document;
 };
 
-const updateTask = async (
-  taskId: string,
-  update: (task: TaskDocument) => TaskDocument,
-): Promise<void> => {
-  const task = await getTask(taskId);
-  await saveDocument(update(task));
-};
-
 export const setTaskCompleted = async (
   taskId: string,
   completed: boolean,
 ): Promise<void> => {
-  await updateTask(taskId, (task) => {
-    const now = updatedNow(task);
+  const task = await getTask(taskId);
+  const now = updatedNow(task);
+  const updatedTask: TaskDocument = {
+    ...task,
+    payload: { ...task.payload, completedAt: completed ? now : null },
+    updatedAt: now,
+    updatedByDeviceId: getDeviceId(),
+  };
+  const existingReminder = await reminderFor('task', taskId);
 
-    return {
-      ...task,
-      payload: {
-        ...task.payload,
-        completedAt: completed ? now : null,
-      },
-      updatedAt: now,
-      updatedByDeviceId: getDeviceId(),
-    };
+  if (!existingReminder) {
+    await saveDocument(updatedTask);
+    return;
+  }
+
+  const reminder = await reminderDocument({
+    ...existingReminder.payload,
+    enabled:
+      !completed &&
+      Boolean(task.payload.reminderAt && task.payload.reminderAt > now),
   });
+  await saveDocuments([updatedTask, reminder]);
 };
 
 export const deleteTask = async (taskId: string): Promise<void> => {
-  await updateTask(taskId, (task) => {
-    const now = updatedNow(task);
+  const task = await getTask(taskId);
+  const now = updatedNow(task);
+  const deletedTask: TaskDocument = {
+    ...task,
+    deletedAt: now,
+    updatedAt: now,
+    updatedByDeviceId: getDeviceId(),
+  };
+  const existingReminder = await reminderFor('task', taskId);
+  if (!existingReminder) {
+    await saveDocument(deletedTask);
+    return;
+  }
 
-    return {
-      ...task,
+  await saveDocuments([
+    deletedTask,
+    {
+      ...existingReminder,
       deletedAt: now,
       updatedAt: now,
       updatedByDeviceId: getDeviceId(),
-    };
+    },
+  ]);
+};
+
+export const setCheckInReminder = async (
+  kind: CheckInKind,
+  localTime: string | null,
+): Promise<void> => {
+  const existingReminder = await reminderFor('check-in', kind);
+  if (!localTime && !existingReminder) return;
+
+  const reminder = await reminderDocument({
+    targetType: 'check-in',
+    targetId: kind,
+    scheduledAt: null,
+    localTime: localTime ?? existingReminder?.payload.localTime ?? '09:00',
+    weekdays: allWeekdays,
+    enabled: Boolean(localTime),
   });
+  await saveDocument(reminder);
+};
+
+export const findReminder = reminderFor;
+
+export const migrateLegacyHabitReminders = async (): Promise<void> => {
+  const habits = await database.documents
+    .where('type')
+    .equals('habit')
+    .toArray();
+
+  for (const document of habits) {
+    if (
+      document.type !== 'habit' ||
+      document.deletedAt ||
+      !document.payload.reminderTime ||
+      (await reminderFor('habit', document.id))
+    ) {
+      continue;
+    }
+
+    await saveDocument(
+      await reminderDocument({
+        targetType: 'habit',
+        targetId: document.id,
+        scheduledAt: null,
+        localTime: document.payload.reminderTime,
+        weekdays: document.payload.weekdays,
+        enabled: !document.payload.archivedAt,
+      }),
+    );
+  }
 };
 
 export const swapTaskOrder = async (

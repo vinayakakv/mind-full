@@ -4,14 +4,21 @@ import {
 } from '@mindfull/domain';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAtomValue } from 'jotai';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, Form, Input, Label, TextField } from 'react-aria-components';
 
 import {
   ensureSettings,
+  findReminder,
+  setCheckInReminder,
   updateCheckInSchedule,
   updateTheme,
 } from '../data/documents';
+import {
+  type BrowserNotificationPermission,
+  browserNotificationPermission,
+  requestBrowserNotificationPermission,
+} from '../data/notifications';
 import { hasPairingToken, pairWithServer, synchronize } from '../data/sync';
 import { syncStatusAtom } from '../state/sync';
 import styles from './SettingsPage.module.css';
@@ -63,6 +70,120 @@ function CheckInSchedule({ settings }: { settings: SettingsDocument }) {
         </Button>
       </div>
     </Form>
+  );
+}
+
+function ReminderForm({
+  morning,
+  evening,
+}: {
+  morning: string;
+  evening: string;
+}) {
+  const [morningTime, setMorningTime] = useState(morning);
+  const [eveningTime, setEveningTime] = useState(evening);
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>(
+    'idle',
+  );
+
+  useEffect(() => setMorningTime(morning), [morning]);
+  useEffect(() => setEveningTime(evening), [evening]);
+
+  const save = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSaveState('saving');
+    await Promise.all([
+      setCheckInReminder('morning', morningTime || null),
+      setCheckInReminder('evening', eveningTime || null),
+    ]);
+    setSaveState('saved');
+  };
+
+  const changeMorningTime = (value: string) => {
+    setMorningTime(value);
+    setSaveState('idle');
+  };
+
+  const changeEveningTime = (value: string) => {
+    setEveningTime(value);
+    setSaveState('idle');
+  };
+
+  return (
+    <Form className={styles.scheduleForm} onSubmit={save}>
+      <div className={styles.timeFields}>
+        <TextField value={morningTime} onChange={changeMorningTime}>
+          <Label>Morning</Label>
+          <Input type="time" />
+        </TextField>
+        <TextField value={eveningTime} onChange={changeEveningTime}>
+          <Label>Evening</Label>
+          <Input type="time" />
+        </TextField>
+      </div>
+      <p className={styles.fieldHint}>Leave a time empty to turn it off.</p>
+      <div className={styles.formActions}>
+        <Button
+          className={styles.syncButton}
+          type="submit"
+          isDisabled={saveState === 'saving'}
+        >
+          {saveState === 'saving'
+            ? 'Saving…'
+            : saveState === 'saved'
+              ? 'Saved'
+              : 'Save reminders'}
+        </Button>
+      </div>
+    </Form>
+  );
+}
+
+function ReminderSettings() {
+  const reminders = useLiveQuery(async () => ({
+    morning: await findReminder('check-in', 'morning'),
+    evening: await findReminder('check-in', 'evening'),
+  }));
+  if (!reminders) return null;
+
+  const morning = reminders.morning?.payload.enabled
+    ? (reminders.morning.payload.localTime ?? '')
+    : '';
+  const evening = reminders.evening?.payload.enabled
+    ? (reminders.evening.payload.localTime ?? '')
+    : '';
+
+  return <ReminderForm morning={morning} evening={evening} />;
+}
+
+const permissionText = (permission: BrowserNotificationPermission): string => {
+  if (permission === 'granted') {
+    return 'Browser alerts are allowed on this device.';
+  }
+  if (permission === 'denied') {
+    return 'Browser alerts are blocked. In-app reminders still appear.';
+  }
+  if (permission === 'unsupported') {
+    return 'This browser cannot show system alerts. In-app reminders still work.';
+  }
+  return 'Allow system alerts on this device, or keep reminders inside Mindfull.';
+};
+
+function NotificationPermissionSetting() {
+  const [permission, setPermission] = useState(browserNotificationPermission);
+  const requestPermission = async () => {
+    setPermission(await requestBrowserNotificationPermission());
+  };
+
+  return (
+    <div className={styles.permissionSetting}>
+      <p>{permissionText(permission)}</p>
+      {permission === 'default' ? (
+        <Button className={styles.quietButton} onPress={requestPermission}>
+          Allow alerts
+        </Button>
+      ) : null}
+    </div>
   );
 }
 
@@ -119,6 +240,17 @@ export function SettingsPage() {
           <CheckInSchedule key={settings.updatedAt} settings={settings} />
         </div>
       ) : null}
+      <div className={styles.setting}>
+        <div>
+          <h2>Reminders</h2>
+          <p>
+            Set a gentle daily check-in rhythm. Habit and task reminders are set
+            where you create them.
+          </p>
+          <NotificationPermissionSetting />
+        </div>
+        <ReminderSettings />
+      </div>
       <div className={styles.setting}>
         <div>
           <h2>Sync</h2>

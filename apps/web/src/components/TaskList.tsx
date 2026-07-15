@@ -39,6 +39,7 @@ const loadTasks = async (): Promise<TaskDocument[]> => {
 export function TaskList() {
   const tasks = useLiveQuery(async () => visibleTasks(await loadTasks()), []);
   const [taskText, setTaskText] = useState('');
+  const [reminderLocal, setReminderLocal] = useState('');
 
   const submitTask = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -48,8 +49,12 @@ export function TaskList() {
       return;
     }
 
-    await addTask(trimmedText);
+    await addTask(
+      trimmedText,
+      reminderLocal ? new Date(reminderLocal).toISOString() : null,
+    );
     setTaskText('');
+    setReminderLocal('');
   };
 
   const moveTask = async (taskIndex: number, offset: -1 | 1) => {
@@ -88,6 +93,13 @@ export function TaskList() {
         <Button type="submit" className={styles.addButton}>
           Add
         </Button>
+        <details className={styles.reminderField}>
+          <summary>Add a reminder</summary>
+          <TextField value={reminderLocal} onChange={setReminderLocal}>
+            <Label>Reminder time</Label>
+            <Input type="datetime-local" />
+          </TextField>
+        </details>
       </Form>
 
       {tasks?.length === 0 ? (
@@ -108,6 +120,15 @@ export function TaskList() {
                   }
                 />
                 <span>{task.payload.text}</span>
+                {task.payload.reminderAt && !task.payload.completedAt ? (
+                  <small className={styles.reminderTime}>
+                    {new Intl.DateTimeFormat(undefined, {
+                      weekday: 'short',
+                      hour: 'numeric',
+                      minute: '2-digit',
+                    }).format(new Date(task.payload.reminderAt))}
+                  </small>
+                ) : null}
               </label>
               <fieldset className={styles.actions}>
                 <legend className="visually-hidden">Task actions</legend>

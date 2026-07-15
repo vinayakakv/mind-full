@@ -1,7 +1,7 @@
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { createTaskDocument } from '@mindfull/domain';
+import { createReminderDocument, createTaskDocument } from '@mindfull/domain';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { buildServer } from './server.js';
@@ -62,12 +62,25 @@ describe('Mindfull server', () => {
         source: { kind: 'manual' },
       },
     });
+    const phoneReminder = createReminderDocument({
+      id: `reminder:task:${phoneTask.id}`,
+      now: '2026-07-14T12:00:00.000Z',
+      deviceId: 'phone',
+      payload: {
+        targetType: 'task',
+        targetId: phoneTask.id,
+        scheduledAt: '2026-07-14T13:00:00.000Z',
+        localTime: null,
+        weekdays: null,
+        enabled: true,
+      },
+    });
 
     const phoneSync = await server.inject({
       method: 'POST',
       url: '/api/sync',
       headers: { authorization: `Bearer ${phoneToken}` },
-      payload: { cursor: 0, documents: [phoneTask] },
+      payload: { cursor: 0, documents: [phoneTask, phoneReminder] },
     });
 
     expect(phoneSync.statusCode).toBe(200);
@@ -87,6 +100,9 @@ describe('Mindfull server', () => {
     });
     expect(desktopPull.json().documents).toContainEqual(
       expect.objectContaining({ id: phoneTask.id }),
+    );
+    expect(desktopPull.json().documents).toContainEqual(
+      expect.objectContaining({ id: phoneReminder.id }),
     );
 
     const desktopTask = {

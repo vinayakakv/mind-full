@@ -215,6 +215,13 @@ type ReminderPayload = {
 The shared reminder describes intent. Each device maintains local-only mapping
 to a platform notification identifier and scheduling status.
 
+Reminder IDs are deterministic per target, such as
+`reminder:habit:<habit-id>`, so devices editing the same reminder converge on
+one document. Habit `reminderTime` remains temporarily as a compatibility
+mirror for habits created before Reminder documents existed. On startup, the
+web client creates a missing Reminder from that field; notification scheduling
+uses the Reminder document.
+
 ## Future documents
 
 Future types, including body measurements, follow the same envelope and schema
@@ -255,4 +262,3 @@ Completed tasks are automatically tombstoned seven days after completion.
 Tombstones may remain indefinitely initially because the dataset is small and
 this makes long-offline device recovery safe. Physical compaction can be added
 only after the server tracks acknowledgement by every paired device.
-

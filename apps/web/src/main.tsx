@@ -2,11 +2,13 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { App } from './App';
-import { ensureSettings } from './data/documents';
+import { ensureSettings, migrateLegacyHabitReminders } from './data/documents';
+import { startNotificationCoordinator } from './data/notifications';
 import './styles/global.css';
 
 const start = async () => {
   await ensureSettings();
+  await migrateLegacyHabitReminders();
 
   const root = document.getElementById('root');
 
@@ -19,6 +21,7 @@ const start = async () => {
       <App />
     </StrictMode>,
   );
+  startNotificationCoordinator();
 };
 
 void start();

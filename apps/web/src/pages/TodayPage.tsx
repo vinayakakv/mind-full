@@ -9,6 +9,7 @@ import { Button } from 'react-aria-components';
 
 import { CheckInFlow, openCheckIn } from '../components/CheckInFlow';
 import { HabitList } from '../components/HabitList';
+import { ReminderNotices } from '../components/ReminderNotices';
 import { TaskList } from '../components/TaskList';
 import { ensureSettings, findCheckIn } from '../data/documents';
 import { greetingFor, localDateFor, localTimeFor } from '../data/time';
@@ -108,6 +109,7 @@ export function TodayPage() {
           />
         </div>
       </section>
+      <ReminderNotices />
       <HabitList />
       <TaskList />
       <CheckInFlow />

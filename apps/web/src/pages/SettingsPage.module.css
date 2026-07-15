@@ -121,6 +121,36 @@
   font-size: 0.75rem;
 }
 
+.setting p.fieldHint {
+  font-family: var(--font-control);
+  font-size: 0.72rem;
+}
+
+.permissionSetting {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.85rem;
+}
+
+.permissionSetting p {
+  font-family: var(--font-control);
+  font-size: 0.75rem;
+  margin: 0;
+}
+
+.quietButton {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 2rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.75rem;
+  padding: 0.4rem 0.65rem;
+}
+
 @media (max-width: 36rem) {
   .setting {
     grid-template-columns: 1fr;

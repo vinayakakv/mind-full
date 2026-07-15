@@ -90,7 +90,7 @@ Status: in progress as of July 15, 2026.
 - [x] Rotating curated prompts and emotion vocabulary
 - [x] Time-aware flow selection and configurable daily boundaries
 - [x] Habits, schedules, optional miss reasons, and streaks
-- Shared reminder documents
+- [x] Shared reminder documents and progressive browser notifications
 - [x] Journal writing and rendered reading mode
 - Shared task-suggestions area
 - Time-aware theme variations and polished gentle motion
@@ -114,6 +114,15 @@ and restore behavior, and deterministic per-day log documents. Today shows only
 the habits scheduled for the current local day and completion works entirely
 offline. Habit details calculate streaks across scheduled occurrences and let a
 past miss carry an optional, editable reason without requiring one.
+
+Reminder intent now lives in typed, synchronized documents with stable IDs per
+habit, task, or check-in target. Habit reminders recur on their selected days,
+tasks accept a one-time exact reminder, and morning/evening reminders can be
+configured in Settings. Each browser independently calculates occurrences in
+the configured timezone, uses service-worker notifications when permission is
+available, and retains a due reminder inside Today otherwise. Browser delivery
+is deliberately progressive: the app catches up while opening or returning to
+the foreground, but exact closed-app alerts remain an Android-native milestone.
 
 ## Milestone 3 — Local AI and reflection
 

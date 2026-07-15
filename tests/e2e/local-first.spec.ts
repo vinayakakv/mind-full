@@ -119,6 +119,25 @@ test('creates and completes a habit through an offline reload', async ({
   ).toHaveAttribute('aria-pressed', 'true');
 });
 
+test('keeps reminder settings through an offline reload', async ({
+  context,
+  page,
+}) => {
+  await prepareServiceWorker(page);
+  await page.goto('/settings');
+  await context.setOffline(true);
+
+  const morningReminder = page.getByLabel('Morning', { exact: true });
+  await morningReminder.fill('08:15');
+  await page.getByRole('button', { name: 'Save reminders' }).click();
+  await expect(page.getByRole('button', { name: 'Saved' })).toBeVisible();
+  await page.reload();
+
+  await expect(page.getByLabel('Morning', { exact: true })).toHaveValue(
+    '08:15',
+  );
+});
+
 test('synchronizes a completed habit between paired browsers', async ({
   browser,
 }) => {

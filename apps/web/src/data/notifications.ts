@@ -1,0 +1,235 @@
+import { nextReminderAt, type ReminderDocument } from '@mindfull/domain';
+
+import { database, type LocalNotificationState } from './database';
+import { documentsChanged } from './events';
+
+const maximumTimeoutMs = 2_147_000_000;
+
+export type BrowserNotificationPermission =
+  | NotificationPermission
+  | 'unsupported';
+
+export const browserNotificationPermission =
+  (): BrowserNotificationPermission =>
+    'Notification' in window ? Notification.permission : 'unsupported';
+
+const notificationCopy = async (
+  reminder: ReminderDocument,
+): Promise<{ title: string; body: string }> => {
+  const target = await database.documents.get(reminder.payload.targetId);
+
+  if (reminder.payload.targetType === 'habit' && target?.type === 'habit') {
+    return { title: 'A gentle reminder', body: target.payload.name };
+  }
+
+  if (reminder.payload.targetType === 'task' && target?.type === 'task') {
+    return { title: 'Something to keep in view', body: target.payload.text };
+  }
+
+  return {
+    title: 'A moment to check in',
+    body:
+      reminder.payload.targetId === 'evening'
+        ? 'Take two quiet minutes to close the day.'
+        : 'Take two quiet minutes to meet the day.',
+  };
+};
+
+const showBrowserNotification = async (
+  reminder: ReminderDocument,
+): Promise<boolean> => {
+  if (browserNotificationPermission() !== 'granted') return false;
+  if (!('serviceWorker' in navigator)) return false;
+
+  try {
+    const registration = await navigator.serviceWorker.getRegistration();
+    if (!registration) return false;
+    const copy = await notificationCopy(reminder);
+    await registration.showNotification(copy.title, {
+      body: copy.body,
+      tag: reminder.id,
+      icon: '/mindfull.svg',
+    });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const activeReminders = async (): Promise<ReminderDocument[]> => {
+  const documents = await database.documents
+    .where('type')
+    .equals('reminder')
+    .toArray();
+
+  return documents.filter(
+    (document): document is ReminderDocument =>
+      document.type === 'reminder' &&
+      !document.deletedAt &&
+      document.payload.enabled,
+  );
+};
+
+const configuredTimezone = async (): Promise<string> => {
+  const settings = await database.documents.get('settings');
+  return settings?.type === 'settings'
+    ? settings.payload.timezone
+    : Intl.DateTimeFormat().resolvedOptions().timeZone;
+};
+
+const initialState = (
+  reminder: ReminderDocument,
+  now: Date,
+  timezone: string,
+): LocalNotificationState => ({
+  reminderId: reminder.id,
+  reminderUpdatedAt: reminder.updatedAt,
+  nextScheduledAt: nextReminderAt(reminder.payload, now, timezone),
+  activeOccurrenceAt: null,
+  activeStatus: null,
+});
+
+export const reconcileReminderState = async (
+  reminder: ReminderDocument,
+  previous: LocalNotificationState | undefined,
+  now: Date,
+  timezone: string,
+): Promise<LocalNotificationState> => {
+  if (!previous || previous.reminderUpdatedAt !== reminder.updatedAt) {
+    const state = initialState(reminder, now, timezone);
+    if (
+      reminder.payload.scheduledAt &&
+      reminder.payload.scheduledAt <= now.toISOString()
+    ) {
+      const wasShown = await showBrowserNotification(reminder);
+      return {
+        ...state,
+        activeOccurrenceAt: reminder.payload.scheduledAt,
+        activeStatus: wasShown ? 'notified' : 'due',
+      };
+    }
+    return state;
+  }
+
+  if (
+    !previous.nextScheduledAt ||
+    previous.nextScheduledAt > now.toISOString()
+  ) {
+    if (previous.activeStatus === 'due') {
+      const wasShown = await showBrowserNotification(reminder);
+      return wasShown ? { ...previous, activeStatus: 'notified' } : previous;
+    }
+    return previous;
+  }
+
+  const occurrenceAt = previous.nextScheduledAt;
+  const wasShown = await showBrowserNotification(reminder);
+  return {
+    ...previous,
+    nextScheduledAt: nextReminderAt(reminder.payload, now, timezone),
+    activeOccurrenceAt: occurrenceAt,
+    activeStatus: wasShown ? 'notified' : 'due',
+  };
+};
+
+let reminderTimer: number | undefined;
+let isReconciling = false;
+let shouldReconcileAgain = false;
+
+const armNextTimer = (states: LocalNotificationState[], now: Date): void => {
+  if (reminderTimer !== undefined) window.clearTimeout(reminderTimer);
+  const nextScheduledAt = states
+    .map(({ nextScheduledAt }) => nextScheduledAt)
+    .filter((value): value is string => value !== null)
+    .sort()[0];
+
+  if (!nextScheduledAt) return;
+
+  const delayMs = Math.min(
+    maximumTimeoutMs,
+    Math.max(0, Date.parse(nextScheduledAt) - now.getTime()),
+  );
+  reminderTimer = window.setTimeout(
+    () => void reconcileNotifications(),
+    delayMs,
+  );
+};
+
+export const reconcileNotifications = async (): Promise<void> => {
+  if (isReconciling) {
+    shouldReconcileAgain = true;
+    return;
+  }
+
+  isReconciling = true;
+  try {
+    do {
+      shouldReconcileAgain = false;
+      const now = new Date();
+      const [reminders, timezone] = await Promise.all([
+        activeReminders(),
+        configuredTimezone(),
+      ]);
+      const reminderIds = new Set(reminders.map(({ id }) => id));
+      const staleStates = await database.notificationState
+        .filter(({ reminderId }) => !reminderIds.has(reminderId))
+        .primaryKeys();
+      await database.notificationState.bulkDelete(staleStates);
+
+      const states = await Promise.all(
+        reminders.map(async (reminder) => {
+          const previous = await database.notificationState.get(reminder.id);
+          const state = await reconcileReminderState(
+            reminder,
+            previous,
+            now,
+            timezone,
+          );
+          await database.notificationState.put(state);
+          return state;
+        }),
+      );
+      armNextTimer(states, now);
+    } while (shouldReconcileAgain);
+  } finally {
+    isReconciling = false;
+  }
+};
+
+export const requestBrowserNotificationPermission = async () => {
+  if (!('Notification' in window)) return 'unsupported' as const;
+  const permission = await Notification.requestPermission();
+  await reconcileNotifications();
+  return permission;
+};
+
+export const dismissActiveReminder = async (
+  reminderId: string,
+): Promise<void> => {
+  const state = await database.notificationState.get(reminderId);
+  if (!state) return;
+  await database.notificationState.put({
+    ...state,
+    activeOccurrenceAt: null,
+    activeStatus: null,
+  });
+};
+
+export const startNotificationCoordinator = (): (() => void) => {
+  const reconcile = () => void reconcileNotifications();
+  const reconcileWhenVisible = () => {
+    if (document.visibilityState === 'visible') reconcile();
+  };
+
+  window.addEventListener(documentsChanged, reconcile);
+  window.addEventListener('focus', reconcile);
+  document.addEventListener('visibilitychange', reconcileWhenVisible);
+  reconcile();
+
+  return () => {
+    if (reminderTimer !== undefined) window.clearTimeout(reminderTimer);
+    window.removeEventListener(documentsChanged, reconcile);
+    window.removeEventListener('focus', reconcile);
+    document.removeEventListener('visibilitychange', reconcileWhenVisible);
+  };
+};

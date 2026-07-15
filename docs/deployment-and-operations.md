@@ -84,7 +84,19 @@ local scheduling adapter.
 
 - Works offline while open and from its cached application shell.
 - Uses available browser notification features as progressive enhancement.
+- Reconciles reminders at startup, on focus, after visibility changes, and
+  whenever local or synchronized documents change.
+- Keeps a due reminder visible inside Today when notification permission is
+  absent, denied, or unsupported.
+- Catches up an elapsed one-time task reminder when the app next opens.
+- Collapses several missed recurring occurrences into one in-app catch-up,
+  then schedules the next future occurrence.
 - Does not promise exact closed-app offline alerts.
+
+The browser stores only local occurrence and delivery state. Permission and
+system-notification status never synchronize. Reminder documents for habits,
+tasks, and morning/evening check-ins synchronize normally and are usable while
+the backend is unavailable.
 
 ### Android shell
 
@@ -120,4 +132,3 @@ local alerts is deferred.
 | Semantic index | Source entries remain available; semantic search reports unavailable. |
 | Notification permission | In-app reminders remain visible; Settings explains permission state. |
 | Backend scheduler downtime | Persisted overdue jobs catch up after restart. |
-

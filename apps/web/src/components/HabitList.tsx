@@ -148,7 +148,7 @@ function HabitForm({
         <Label>Reminder time</Label>
         <Input type="time" />
         <p className={styles.formHint}>
-          Optional. Notification delivery arrives in the reminder slice.
+          Optional. Each device keeps this reminder locally available.
         </p>
       </TextField>
       <div className={styles.formActions}>
