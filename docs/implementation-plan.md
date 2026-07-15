@@ -123,7 +123,8 @@ configured in Settings. Each browser independently calculates occurrences in
 the configured timezone, uses service-worker notifications when permission is
 available, and retains a due reminder inside Today otherwise. Browser delivery
 is deliberately progressive: the app catches up while opening or returning to
-the foreground, but exact closed-app alerts remain an Android-native milestone.
+the foreground. The Android shell now maps the same documents to exact native
+alarms.
 
 Navigation now separates Today, History, and Reflect. Journals begin from a
 quiet compose action on Today and completed entries join a chronological
@@ -192,16 +193,24 @@ check.
 
 ### Native reminders
 
-- [ ] Native exact-time local-notification adapter
+- [x] Native exact-time local-notification adapter
 - [ ] Habit and task notification actions
-- [ ] Rescheduling after reboot, timezone changes, and app updates
+- [x] Rescheduling after reminder changes, reboot, and app updates
+- [ ] Explicit configured-timezone change handling
 - [ ] Real-device notification and backend-off tests
 
-The first slice adds the native shell without changing reminder behavior. The
-second replaces progressive browser delivery with native scheduling behind the
-existing notification capability boundary. Android keeps its own IndexedDB;
-data moves between an existing browser installation and Android through normal
-document synchronization rather than shared local storage.
+The native adapter schedules one-time task alarms and weekday-based habit and
+check-in alarms without contacting the backend. It requests Android 13 display
+permission in Mindfull Settings, exposes Android's exact-alarm setting, keeps a
+stable local document-to-notification map, cancels stale alarms, and reconciles
+after document changes and application resume. Capacitor's restore receiver
+recreates pending alarms after reboot. In an Android 13 emulator, a recurring
+check-in reminder fired at its exact minute while Mindfull was backgrounded and
+the next day's alarm remained scheduled.
+
+Android keeps its own IndexedDB; data moves between an existing browser
+installation and Android through normal document synchronization rather than
+shared local storage.
 
 After the Android foundation, validate installation and offline behavior as a
 macOS Safari web app. A Tauri shell remains deferred unless that validation

@@ -9,6 +9,10 @@
     "CapacitorHttp": {
       "enabled": true
     },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_mindfull",
+      "iconColor": "#6f8064"
+    },
     "SystemBars": {
       "insetsHandling": "css",
       "style": "LIGHT"

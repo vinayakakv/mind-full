@@ -101,13 +101,13 @@ the backend is unavailable.
 ### Android shell
 
 - Uses Capacitor local notifications.
-- Schedules exact local alerts where Android permissions and platform policy
-  allow it.
+- Schedules one-time task alerts and weekday habit/check-in alerts locally,
+  without the backend running.
 - Maintains a local map from reminder document IDs to native notification IDs.
-- Reschedules after reminder changes, timezone changes, app updates, and device
-  reboot where required.
-- Supports Mark complete for habits and Complete/Remind me in one hour for
-  tasks where notification actions are available.
+- Reconciles after reminder changes, startup, application resume, and app
+  updates; Capacitor restores pending alarms after device reboot.
+- Leaves notification actions and explicit configured-timezone change handling
+  for the next native reminder slice.
 
 The native project lives at `apps/web/android` and uses application ID
 `app.mindfull`. Capacitor 8 development requires Node 22 or newer, Android
@@ -134,6 +134,13 @@ the host machine at `http://10.0.2.2:3001`. Private plain-HTTP addresses are
 allowed for LAN and emulator development; prefer HTTPS when the server is
 reachable beyond a trusted private network. Browser installations served by
 Mindfull leave the field empty to keep same-origin sync.
+
+Open Settings and choose **Allow alerts** before relying on reminders. Android
+13 and newer asks for notification permission. Android 12 and newer may also
+require **Allow exact times**, which opens the operating-system setting for
+Mindfull. If either permission is unavailable, reminders still appear inside
+Today when the app next reconciles. Native schedules and permission state stay
+on the device and do not synchronize.
 
 Native CSS targets Chrome/WebView 101 so the minimum supported Android WebView
 receives conventional media-query syntax. Capacitor 8.4.2 is pinned with a

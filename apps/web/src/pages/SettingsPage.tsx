@@ -4,7 +4,7 @@ import {
 } from '@mindfull/domain';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAtomValue } from 'jotai';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Button, Form, Input, Label, TextField } from 'react-aria-components';
 
 import {
@@ -16,9 +16,12 @@ import {
   updateTheme,
 } from '../data/documents';
 import {
-  type BrowserNotificationPermission,
-  browserNotificationPermission,
-  requestBrowserNotificationPermission,
+  type DeviceNotificationPermission,
+  deviceNotificationPermission,
+  type ExactNotificationPermission,
+  exactNotificationPermission,
+  requestDeviceNotificationPermission,
+  requestExactNotificationPermission,
 } from '../data/notifications';
 import {
   configureSyncServer,
@@ -170,12 +173,12 @@ function ReminderSettings() {
   return <ReminderForm morning={morning} evening={evening} />;
 }
 
-const permissionText = (permission: BrowserNotificationPermission): string => {
+const permissionText = (permission: DeviceNotificationPermission): string => {
   if (permission === 'granted') {
-    return 'Browser alerts are allowed on this device.';
+    return 'System alerts are allowed on this device.';
   }
   if (permission === 'denied') {
-    return 'Browser alerts are blocked. In-app reminders still appear.';
+    return 'System alerts are blocked. In-app reminders still appear.';
   }
   if (permission === 'unsupported') {
     return 'This browser cannot show system alerts. In-app reminders still work.';
@@ -183,19 +186,83 @@ const permissionText = (permission: BrowserNotificationPermission): string => {
   return 'Allow system alerts on this device, or keep reminders inside Mindfull.';
 };
 
+const exactPermissionText = (
+  permission: ExactNotificationPermission,
+): string | null => {
+  if (permission === 'unsupported') return null;
+  if (permission === 'granted') {
+    return 'Android can deliver reminders at their exact times.';
+  }
+  if (permission === 'denied') {
+    return 'Exact timing is blocked in Android settings.';
+  }
+  return 'Allow exact timing so Android does not delay reminders.';
+};
+
 function NotificationPermissionSetting() {
-  const [permission, setPermission] = useState(browserNotificationPermission);
+  const [permission, setPermission] = useState<
+    DeviceNotificationPermission | 'loading'
+  >('loading');
+  const [exactPermission, setExactPermission] = useState<
+    ExactNotificationPermission | 'loading'
+  >('loading');
+
+  const refreshPermissions = useCallback(async () => {
+    const [display, exact] = await Promise.all([
+      deviceNotificationPermission(),
+      exactNotificationPermission(),
+    ]);
+    setPermission(display);
+    setExactPermission(exact);
+  }, []);
+
+  useEffect(() => {
+    const refresh = () => void refreshPermissions();
+    refresh();
+    window.addEventListener('focus', refresh);
+    return () => window.removeEventListener('focus', refresh);
+  }, [refreshPermissions]);
+
   const requestPermission = async () => {
-    setPermission(await requestBrowserNotificationPermission());
+    setPermission(await requestDeviceNotificationPermission());
+    setExactPermission(await exactNotificationPermission());
   };
+
+  const requestExactPermission = async () => {
+    setExactPermission(await requestExactNotificationPermission());
+  };
+
+  const canRequestDisplay =
+    permission === 'default' ||
+    permission === 'prompt' ||
+    permission === 'prompt-with-rationale';
+  const exactText =
+    exactPermission === 'loading' ? null : exactPermissionText(exactPermission);
 
   return (
     <div className={styles.permissionSetting}>
-      <p>{permissionText(permission)}</p>
-      {permission === 'default' ? (
-        <Button className={styles.quietButton} onPress={requestPermission}>
-          Allow alerts
-        </Button>
+      {permission !== 'loading' ? (
+        <div className={styles.permissionRow}>
+          <p>{permissionText(permission)}</p>
+          {canRequestDisplay ? (
+            <Button className={styles.quietButton} onPress={requestPermission}>
+              Allow alerts
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
+      {permission === 'granted' && exactText ? (
+        <div className={styles.permissionRow}>
+          <p>{exactText}</p>
+          {exactPermission !== 'granted' ? (
+            <Button
+              className={styles.quietButton}
+              onPress={requestExactPermission}
+            >
+              Allow exact times
+            </Button>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );

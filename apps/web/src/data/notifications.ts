@@ -1,7 +1,18 @@
+import { App as NativeApp } from '@capacitor/app';
+import type { PermissionState } from '@capacitor/core';
 import { nextReminderAt, type ReminderDocument } from '@mindfull/domain';
 
 import { database, type LocalNotificationState } from './database';
 import { documentsChanged } from './events';
+import {
+  hasNativeExactAlarms,
+  hasNativeNotifications,
+  nativeExactAlarmPermission,
+  nativeNotificationPermission,
+  reconcileNativeNotifications,
+  requestNativeExactAlarmPermission,
+  requestNativeNotificationPermission,
+} from './native-notifications';
 
 const maximumTimeoutMs = 2_147_000_000;
 
@@ -9,11 +20,17 @@ export type BrowserNotificationPermission =
   | NotificationPermission
   | 'unsupported';
 
+export type DeviceNotificationPermission =
+  | BrowserNotificationPermission
+  | PermissionState;
+
+export type ExactNotificationPermission = PermissionState | 'unsupported';
+
 export const browserNotificationPermission =
   (): BrowserNotificationPermission =>
     'Notification' in window ? Notification.permission : 'unsupported';
 
-const notificationCopy = async (
+export const notificationCopy = async (
   reminder: ReminderDocument,
 ): Promise<{ title: string; body: string }> => {
   const target = await database.documents.get(reminder.payload.targetId);
@@ -190,18 +207,48 @@ export const reconcileNotifications = async (): Promise<void> => {
         }),
       );
       armNextTimer(states, now);
+      try {
+        await reconcileNativeNotifications(reminders, notificationCopy);
+      } catch {
+        // In-app reminders remain available if native scheduling is interrupted.
+      }
     } while (shouldReconcileAgain);
   } finally {
     isReconciling = false;
   }
 };
 
-export const requestBrowserNotificationPermission = async () => {
-  if (!('Notification' in window)) return 'unsupported' as const;
-  const permission = await Notification.requestPermission();
+export const deviceNotificationPermission =
+  async (): Promise<DeviceNotificationPermission> => {
+    if (hasNativeNotifications()) {
+      return (await nativeNotificationPermission()).display;
+    }
+    return browserNotificationPermission();
+  };
+
+export const requestDeviceNotificationPermission = async () => {
+  const permission = hasNativeNotifications()
+    ? (await requestNativeNotificationPermission()).display
+    : 'Notification' in window
+      ? await Notification.requestPermission()
+      : ('unsupported' as const);
   await reconcileNotifications();
   return permission;
 };
+
+export const exactNotificationPermission =
+  async (): Promise<ExactNotificationPermission> => {
+    if (!hasNativeExactAlarms()) return 'unsupported' as const;
+    return (await nativeExactAlarmPermission()).exact_alarm;
+  };
+
+export const requestExactNotificationPermission =
+  async (): Promise<ExactNotificationPermission> => {
+    if (!hasNativeExactAlarms()) return 'unsupported' as const;
+    const permission = (await requestNativeExactAlarmPermission()).exact_alarm;
+    await reconcileNotifications();
+    return permission;
+  };
 
 export const dismissActiveReminder = async (
   reminderId: string,
@@ -224,12 +271,24 @@ export const startNotificationCoordinator = (): (() => void) => {
   window.addEventListener(documentsChanged, reconcile);
   window.addEventListener('focus', reconcile);
   document.addEventListener('visibilitychange', reconcileWhenVisible);
+  let removeNativeListener: (() => Promise<void>) | undefined;
+  let isStopped = false;
+  if (hasNativeNotifications()) {
+    void NativeApp.addListener('appStateChange', ({ isActive }) => {
+      if (isActive) reconcile();
+    }).then((listener) => {
+      if (isStopped) void listener.remove();
+      else removeNativeListener = listener.remove;
+    });
+  }
   reconcile();
 
   return () => {
+    isStopped = true;
     if (reminderTimer !== undefined) window.clearTimeout(reminderTimer);
     window.removeEventListener(documentsChanged, reconcile);
     window.removeEventListener('focus', reconcile);
     document.removeEventListener('visibilitychange', reconcileWhenVisible);
+    void removeNativeListener?.();
   };
 };

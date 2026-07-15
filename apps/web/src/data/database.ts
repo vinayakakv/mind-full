@@ -21,11 +21,19 @@ export type LocalNotificationState = {
   activeStatus: 'due' | 'notified' | null;
 };
 
+export type NativeNotificationState = {
+  key: string;
+  notificationId: number;
+  reminderId: string;
+  reminderUpdatedAt: string;
+};
+
 class MindfullDatabase extends Dexie {
   documents!: EntityTable<DomainDocument, 'id'>;
   syncState!: EntityTable<LocalSyncState, 'documentId'>;
   syncMeta!: EntityTable<LocalSyncMeta, 'key'>;
   notificationState!: EntityTable<LocalNotificationState, 'reminderId'>;
+  nativeNotificationState!: EntityTable<NativeNotificationState, 'key'>;
 
   constructor() {
     super('mindfull');
@@ -49,6 +57,15 @@ class MindfullDatabase extends Dexie {
       syncState: 'documentId',
       syncMeta: 'key',
       notificationState: 'reminderId, nextScheduledAt, activeStatus',
+    });
+
+    this.version(4).stores({
+      documents:
+        'id, type, occurredAt, parentId, sortKey, updatedAt, deletedAt, [type+deletedAt]',
+      syncState: 'documentId',
+      syncMeta: 'key',
+      notificationState: 'reminderId, nextScheduledAt, activeStatus',
+      nativeNotificationState: 'key, notificationId, reminderId',
     });
   }
 }

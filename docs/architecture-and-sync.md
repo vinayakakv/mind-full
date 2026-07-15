@@ -145,7 +145,9 @@ trip does not wait for the periodic interval.
 
 Reminder intent follows this same sync path. Device-local occurrence state is
 not synchronized: each installation records its next scheduled instant and any
-currently due in-app reminder in a separate IndexedDB store.
+currently due in-app reminder in a separate IndexedDB store. Android also keeps
+a stable local mapping from a reminder occurrence key to its native integer
+notification ID. That mapping is an adapter detail, not a domain document.
 
 ## Conflict resolution
 
@@ -166,11 +168,14 @@ Deletion tombstones participate in the same comparison.
 The browser PWA is the first target. Exact closed-app offline notifications are
 not assumed to be reliable in a pure browser installation.
 
-The Android milestone adds a Capacitor project at `apps/web/android` that reuses
-the web build and maps Reminder documents to native local notifications. Keeping
-the shell beside its web assets follows Capacitor's normal build and sync flow.
-The native adapter is behind a small capability interface so web and Android
-behavior differ without forking domain logic.
+The Android project at `apps/web/android` reuses the web build and maps Reminder
+documents to Capacitor local notifications. One-time reminders become exact
+alarms; recurring reminders become one native weekday schedule per selected
+day. Reconciliation uses stable notification IDs, replaces changed schedules,
+cancels stale ones, and relies on Capacitor's boot receiver to restore pending
+alarms. Keeping the shell beside its web assets follows Capacitor's normal build
+and sync flow. The adapter sits behind a small capability interface so web and
+Android behavior differ without forking domain logic.
 
 Each installation keeps its backend address locally. An empty address means the
 web application's own origin; packaged Android installations use an absolute
