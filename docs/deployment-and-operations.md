@@ -25,6 +25,25 @@ Ollama is part of the self-hosted stack but remains an optional capability from
 the application's perspective. Mindfull must start and work if Ollama is
 unavailable.
 
+## Container publishing
+
+GitHub Actions builds the container for `linux/amd64` and `linux/arm64`. Pull
+requests build without publishing. Pushes to `main`, version tags, and manual
+runs publish to `ghcr.io/vinayakakv/mind-full` with these tags:
+
+- `sha-<commit>` for an immutable deployment reference
+- the Git version tag for tags beginning with `v`
+- `latest` for the default branch
+
+Production should pin `sha-<commit>` so an update is deliberate and rollback is
+unambiguous. The image contains application code only; pairing credentials and
+SQLite data are supplied at runtime and remain in the Pi's persistent volume.
+
+GHCR initially creates a package as private even when its source repository is
+public. After the first successful publish, open the package settings on GitHub
+and change its visibility to public. Public images can then be pulled by the Pi
+without storing a GitHub credential.
+
 ## Internal scheduler
 
 All application schedules run inside the `mindfull` backend container.
