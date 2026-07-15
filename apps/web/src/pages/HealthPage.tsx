@@ -132,11 +132,9 @@ function HealthOverview({
                   )
                 : 'No entries'}
             </strong>
-            <small>
-              {change === null
-                ? 'Ready when you are'
-                : `${formatChange(change, metric.payload.preferredUnit)} from previous`}
-            </small>
+            {change === null ? null : (
+              <small>{`${formatChange(change, metric.payload.preferredUnit)} from previous`}</small>
+            )}
           </Button>
         );
       })}
