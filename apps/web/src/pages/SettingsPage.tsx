@@ -4,7 +4,7 @@ import {
 } from '@mindfull/domain';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAtomValue } from 'jotai';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Form, Input, Label, TextField } from 'react-aria-components';
 
 import {
@@ -274,10 +274,16 @@ export function SettingsPage() {
   const [serverAddress, setServerAddress] = useState(syncServerAddress);
   const [pairingCode, setPairingCode] = useState('');
   const [pairingError, setPairingError] = useState<string | null>(null);
+  const [isPairing, setIsPairing] = useState(false);
+  const pairingInProgress = useRef(false);
   const settings = useLiveQuery(() => ensureSettings());
 
   const pairDevice = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (pairingInProgress.current) return;
+
+    pairingInProgress.current = true;
+    setIsPairing(true);
     setPairingError(null);
 
     try {
@@ -294,6 +300,9 @@ export function SettingsPage() {
           ? error.message
           : 'Mindfull could not reach that server.',
       );
+    } finally {
+      pairingInProgress.current = false;
+      setIsPairing(false);
     }
   };
 
@@ -409,7 +418,11 @@ export function SettingsPage() {
           </Form>
         ) : (
           <Form className={styles.pairingForm} onSubmit={pairDevice}>
-            <TextField value={serverAddress} onChange={setServerAddress}>
+            <TextField
+              value={serverAddress}
+              onChange={setServerAddress}
+              isDisabled={isPairing}
+            >
               <Label>Backend address</Label>
               <Input
                 type="url"
@@ -422,15 +435,24 @@ export function SettingsPage() {
             <p className={styles.fieldHint}>
               Leave empty when the app and server share an address.
             </p>
-            <TextField value={pairingCode} onChange={setPairingCode} isRequired>
+            <TextField
+              value={pairingCode}
+              onChange={setPairingCode}
+              isRequired
+              isDisabled={isPairing}
+            >
               <Label>Pairing code</Label>
               <Input type="password" autoComplete="off" />
             </TextField>
             {pairingError ? (
               <p className={styles.error}>{pairingError}</p>
             ) : null}
-            <Button className={styles.syncButton} type="submit">
-              Pair device
+            <Button
+              className={styles.syncButton}
+              type="submit"
+              isDisabled={isPairing}
+            >
+              {isPairing ? 'Pairing…' : 'Pair device'}
             </Button>
           </Form>
         )}

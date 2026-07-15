@@ -10,6 +10,7 @@ import { applyRemoteDocuments } from './documents';
 const tokenKey = 'mindfull.sync-token';
 const serverAddressKey = 'mindfull.sync-server-address';
 const cursorKey = 'server-cursor';
+const pairingTimeoutMs = 10_000;
 const store = getDefaultStore();
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -69,16 +70,41 @@ export const pairWithServer = async (
   pairingCode: string,
   deviceName: string,
 ): Promise<void> => {
-  const response = await fetch(syncEndpoint('/api/pair'), {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({
-      pairingCode,
-      deviceId: getDeviceId(),
-      deviceName,
-    }),
-  });
-  const body: unknown = await response.json();
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), pairingTimeoutMs);
+  let response: Response;
+
+  try {
+    response = await fetch(syncEndpoint('/api/pair'), {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        pairingCode,
+        deviceId: getDeviceId(),
+        deviceName,
+      }),
+      signal: controller.signal,
+    });
+  } catch {
+    throw new Error(
+      controller.signal.aborted
+        ? 'Mindfull could not reach that server in time.'
+        : 'Mindfull could not reach that server.',
+    );
+  } finally {
+    window.clearTimeout(timeout);
+  }
+
+  if (response.status === 401) {
+    throw new Error('The pairing code was not accepted.');
+  }
+
+  let body: unknown;
+  try {
+    body = await response.json();
+  } catch {
+    throw new Error('That address does not appear to be a Mindfull server.');
+  }
 
   if (!response.ok || !isRecord(body) || typeof body.token !== 'string') {
     throw new Error('Mindfull could not pair this device.');
