@@ -94,8 +94,9 @@ type TaskPayload = {
 };
 ```
 
-Manual order is stored in the envelope's `sortKey`. New tasks are added at the
-bottom. Reordering updates only the documents whose positions need to change.
+Tasks retain creation order. The envelope's `sortKey` remains populated for
+stable ordering and synchronization compatibility, but there is no manual
+reordering interaction.
 
 ### Journal
 

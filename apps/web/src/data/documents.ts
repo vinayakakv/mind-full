@@ -610,38 +610,6 @@ export const migrateLegacyHabitReminders = async (): Promise<void> => {
   }
 };
 
-export const swapTaskOrder = async (
-  firstTaskId: string,
-  secondTaskId: string,
-): Promise<void> => {
-  const [firstTask, secondTask] = await Promise.all([
-    getTask(firstTaskId),
-    getTask(secondTaskId),
-  ]);
-  const now = nextDocumentTimestamp(
-    firstTask.updatedAt > secondTask.updatedAt
-      ? firstTask.updatedAt
-      : secondTask.updatedAt,
-    new Date().toISOString(),
-  );
-  const deviceId = getDeviceId();
-
-  await saveDocuments([
-    {
-      ...firstTask,
-      sortKey: secondTask.sortKey,
-      updatedAt: now,
-      updatedByDeviceId: deviceId,
-    },
-    {
-      ...secondTask,
-      sortKey: firstTask.sortKey,
-      updatedAt: now,
-      updatedByDeviceId: deviceId,
-    },
-  ]);
-};
-
 export const findCheckIn = async (
   kind: CheckInKind,
   localDate: string,

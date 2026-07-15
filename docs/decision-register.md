@@ -33,7 +33,8 @@ topic documents contain the detailed rationale and behavior.
 - Habits are done/not done, with weekdays and one reminder time.
 - An explanation for a missed habit is optional and only requested when the
   user opens that habit.
-- There is one manually ordered task list.
+- There is one task list in stable creation order; manual reordering is not
+  exposed.
 - Tasks may be manual or approved AI extractions.
 - AI task suggestions always require approval.
 - Tasks have no due dates or priorities.
@@ -87,7 +88,8 @@ topic documents contain the detailed rationale and behavior.
 - Dedicated light/dark themes, system following, and time-aware presentation.
 - Theme preference syncs; system resolution is device-local.
 - Motion is gentle and respects reduced-motion preferences.
-- Navigation is Today, Journal, Reflect, and Settings.
+- Primary navigation is Today, History, and Reflect. Settings is a utility icon,
+  and journal creation begins from Today.
 - The interface avoids a familiar dashboard appearance.
 - Repository guidance favors a functional core, immutable domain data, explicit
   side-effect boundaries, descriptive names, minimal dependencies, and a small

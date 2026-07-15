@@ -62,7 +62,7 @@ intentional, and free from unnecessary layers.
 - Morning and evening mindfulness check-ins
 - Binary habits with selected weekdays and exact-time reminders
 - Free-form Markdown journal entries
-- A single manually ordered task list
+- A single task list in stable creation order
 - Optional exact-time task reminders
 - AI task suggestions that always require approval
 - Personalized, one-time AI prompt candidates generated ahead of time
@@ -100,4 +100,3 @@ a macOS shell are possible later additions.
 - AI failures never block writing or check-ins.
 - A complete normal check-in can be finished in about two minutes.
 - The interface does not resemble a generic admin dashboard.
-

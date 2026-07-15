@@ -117,6 +117,10 @@ test('creates and completes a habit through an offline reload', async ({
   await expect(
     page.getByRole('button', { name: /Step into the morning light/ }),
   ).toHaveAttribute('aria-pressed', 'true');
+
+  await page.getByRole('link', { name: 'History' }).click();
+  await expect(page.getByText('Step into the morning light')).toBeVisible();
+  await expect(page.getByText('Completed', { exact: true })).toBeVisible();
 });
 
 test('keeps reminder settings through an offline reload', async ({
@@ -187,10 +191,12 @@ test('autosaves a journal offline and renders its markdown after reload', async 
   page,
 }) => {
   await prepareServiceWorker(page);
-  await page.goto('/journal');
   await context.setOffline(true);
 
-  await page.getByRole('button', { name: 'New entry' }).click();
+  await page.getByRole('button', { name: 'Write a journal entry' }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Journal', exact: true }),
+  ).toHaveCount(0);
   await page.getByLabel('Entry title').fill('A quiet afternoon');
   await page
     .getByLabel('Journal entry')
@@ -221,8 +227,10 @@ test('synchronizes a journal between two paired browsers', async ({
     await pairBrowser(firstPage);
     await pairBrowser(secondPage);
 
-    await firstPage.goto('/journal');
-    await firstPage.getByRole('button', { name: 'New entry' }).click();
+    await firstPage.goto('/');
+    await firstPage
+      .getByRole('button', { name: 'Write a journal entry' })
+      .click();
     await firstPage.getByLabel('Entry title').fill(title);
     await firstPage
       .getByLabel('Journal entry')
@@ -232,8 +240,8 @@ test('synchronizes a journal between two paired browsers', async ({
 
     await secondPage.goto('/settings');
     await secondPage.getByRole('button', { name: 'Sync now' }).click();
-    await secondPage.goto('/journal');
-    await secondPage.getByRole('button', { name: new RegExp(title) }).click();
+    await secondPage.goto('/history');
+    await secondPage.getByRole('link', { name: new RegExp(title) }).click();
     await expect(secondPage.getByText('clear', { exact: true })).toBeVisible();
   } finally {
     await Promise.all([firstContext.close(), secondContext.close()]);

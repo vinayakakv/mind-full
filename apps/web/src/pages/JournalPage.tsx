@@ -14,7 +14,7 @@ import {
   TextField,
 } from 'react-aria-components';
 import ReactMarkdown from 'react-markdown';
-import { useSearchParams } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 
 import {
   createJournal,
@@ -40,31 +40,6 @@ const entryHeading = (journal: JournalDocument): string =>
     journal.payload,
     formatLocalDate(journal.payload.localDate, 'long'),
   );
-
-const formatEntryTime = (journal: JournalDocument): string =>
-  new Intl.DateTimeFormat(undefined, {
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZone: journal.payload.timezone,
-  }).format(new Date(journal.occurredAt ?? journal.createdAt));
-
-const journalEntries = async (): Promise<JournalDocument[]> => {
-  const documents = await documentTable()
-    .where('type')
-    .equals('journal')
-    .toArray();
-
-  return documents
-    .filter(
-      (document): document is JournalDocument =>
-        document.type === 'journal' && !document.deletedAt,
-    )
-    .sort((left, right) =>
-      (right.occurredAt ?? right.createdAt).localeCompare(
-        left.occurredAt ?? left.createdAt,
-      ),
-    );
-};
 
 type JournalDraft = Pick<JournalPayload, 'title' | 'markdown'>;
 
@@ -231,90 +206,49 @@ function JournalReading({
   );
 }
 
-function JournalHistory({
-  entries,
-  selectedId,
-  onSelect,
-}: {
-  entries: JournalDocument[];
-  selectedId: string | null;
-  onSelect: (journalId: string) => void;
-}) {
-  if (entries.length === 0) {
-    return (
-      <div className={styles.emptyHistory}>
-        <p>Your entries will gather here, quietly and in order.</p>
-      </div>
-    );
-  }
-
-  return (
-    <section className={styles.history} aria-labelledby="journal-history">
-      <h2 id="journal-history">Earlier entries</h2>
-      <div className={styles.entryList}>
-        {entries.map((journal, index) => {
-          const previousEntry = entries[index - 1];
-          const beginsDateGroup =
-            previousEntry?.payload.localDate !== journal.payload.localDate;
-
-          return (
-            <div key={journal.id}>
-              {beginsDateGroup ? (
-                <h3 className={styles.entryDate}>
-                  {formatLocalDate(journal.payload.localDate, 'long')}
-                </h3>
-              ) : null}
-              <Button
-                className={styles.entryButton}
-                aria-current={selectedId === journal.id}
-                onPress={() => onSelect(journal.id)}
-              >
-                <span>{entryHeading(journal)}</span>
-                <time dateTime={journal.occurredAt ?? journal.createdAt}>
-                  {formatEntryTime(journal)}
-                </time>
-              </Button>
-            </div>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
 export function JournalPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const selectedId = searchParams.get('entry');
   const isWriting = searchParams.get('mode') === 'write';
-  const entries = useLiveQuery(journalEntries, []) ?? [];
-  const selectedJournal = entries.find(({ id }) => id === selectedId);
+  const selectedJournal = useLiveQuery(async () => {
+    if (!selectedId) return undefined;
+    const document = await documentTable().get(selectedId);
+    return document?.type === 'journal' && !document.deletedAt
+      ? document
+      : undefined;
+  }, [selectedId]);
 
   const beginEntry = async () => {
     const journal = await createJournal();
     setSearchParams({ entry: journal.id, mode: 'write' });
   };
 
-  const selectEntry = (journalId: string) => {
-    setSearchParams({ entry: journalId });
-  };
-
   const deleteSelected = async () => {
     if (!selectedJournal) return;
     await deleteJournal(selectedJournal.id);
-    setSearchParams({});
+    navigate('/history');
   };
 
   return (
     <section className={styles.page}>
-      <header className={styles.pageHeader}>
-        <div>
-          <p className={styles.eyebrow}>Write freely</p>
-          <h1>Journal</h1>
-        </div>
-        <Button className={styles.newEntryButton} onPress={beginEntry}>
-          New entry
-        </Button>
-      </header>
+      {!isWriting ? (
+        <header className={styles.pageHeader}>
+          <div>
+            <p className={styles.eyebrow}>Write freely</p>
+            <h1>Journal</h1>
+          </div>
+          {selectedJournal ? (
+            <Link className={styles.historyLink} to="/history">
+              Back to history
+            </Link>
+          ) : (
+            <Button className={styles.newEntryButton} onPress={beginEntry}>
+              New entry
+            </Button>
+          )}
+        </header>
+      ) : null}
 
       {selectedJournal && isWriting ? (
         <JournalEditor
@@ -334,17 +268,14 @@ export function JournalPage() {
         />
       ) : null}
 
-      {!selectedJournal && entries.length > 0 ? (
+      {!selectedId ? (
         <div className={styles.invitation}>
-          <p>Select an entry to read, or begin wherever you are now.</p>
+          <p>Begin wherever you are now, or return to your history.</p>
+          <Link className={styles.historyLink} to="/history">
+            View history
+          </Link>
         </div>
       ) : null}
-
-      <JournalHistory
-        entries={entries}
-        selectedId={selectedJournal?.id ?? null}
-        onSelect={selectEntry}
-      />
     </section>
   );
 }

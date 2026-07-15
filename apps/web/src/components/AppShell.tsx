@@ -9,9 +9,8 @@ import { SyncIndicator } from './SyncIndicator';
 
 const navItems = [
   { to: '/', label: 'Today', end: true },
-  { to: '/journal', label: 'Journal', end: false },
+  { to: '/history', label: 'History', end: false },
   { to: '/reflect', label: 'Reflect', end: false },
-  { to: '/settings', label: 'Settings', end: false },
 ] as const;
 
 export function AppShell() {
@@ -43,7 +42,21 @@ export function AppShell() {
             </NavLink>
           ))}
         </nav>
-        <SyncIndicator />
+        <div className={styles.utilities}>
+          <SyncIndicator />
+          <NavLink
+            to="/settings"
+            className={({ isActive }) =>
+              `${styles.settingsLink} ${isActive ? styles.settingsLinkActive : ''}`
+            }
+            aria-label="Settings"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 8.25a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5Z" />
+              <path d="M19.1 13.2a7.8 7.8 0 0 0 .05-1.2 7.8 7.8 0 0 0-.05-1.2l2-1.55-2-3.45-2.45 1a8 8 0 0 0-2.05-1.2L14.25 3h-4.5L9.4 5.6a8 8 0 0 0-2.05 1.2l-2.45-1-2 3.45 2 1.55a7.8 7.8 0 0 0-.05 1.2c0 .4.02.8.05 1.2l-2 1.55 2 3.45 2.45-1a8 8 0 0 0 2.05 1.2l.35 2.6h4.5l.35-2.6a8 8 0 0 0 2.05-1.2l2.45 1 2-3.45-2-1.55Z" />
+            </svg>
+          </NavLink>
+        </div>
       </header>
       <main className={styles.main}>
         <Outlet />

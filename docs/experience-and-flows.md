@@ -2,19 +2,24 @@
 
 ## Information architecture
 
-Mindfull has four primary destinations:
+Mindfull has three primary destinations:
 
 - **Today** — the relevant check-in, today's habits, available tasks, and at
   most one recent insight.
-- **Journal** — a plain Markdown writing surface and previous entries.
+- **History** — a chronological record of journals, completed check-ins, habit
+  completions, and explicitly recorded misses.
 - **Reflect** — weekly reviews, insights, themes, streaks, correlations, and
   semantic search.
-- **Settings** — schedules, reminders, theme preference, sync, devices, and AI
-  configuration.
 
-Mobile uses restrained bottom navigation. Desktop uses the same centered
-reading layout with a small top navigation. It should not grow a permanent
-sidebar.
+Settings remains a separate destination for schedules, reminders, theme, sync,
+devices, and AI configuration, but appears as a quiet gear icon rather than a
+primary named tab. Mobile uses restrained bottom navigation for Today, History,
+and Reflect. Desktop uses the same centered reading layout with a small top
+navigation. It should not grow a permanent sidebar.
+
+History records what happened; Reflect considers what it might mean. History
+is a human-readable projection of activity documents rather than a raw view of
+settings, reminders, or operational records.
 
 ## Today
 
@@ -27,9 +32,22 @@ The opening view contains:
 - Recently completed tasks, visually quiet and retained for seven days
 - At most one useful recent insight
 - A subtle sync state rather than a prominent connection dashboard
+- A quiet floating action for beginning a journal entry
 
 Tomorrow-only tasks are hidden from today's main list. An optional Tomorrow
 section lets the user review them early.
+
+## History
+
+- Entries are grouped by local day and shown newest first.
+- The initial filters are All, Journals, Check-ins, and Habits.
+- Journal entries open their existing reading/editing route.
+- Check-ins open their completed review flow.
+- Habit history includes recorded completions and explicitly recorded misses;
+  a calculated absence is not presented as a logged event.
+- Results are revealed in small pages with automatic continuation near the end
+  and an explicit Load more control as an accessible fallback.
+- Settings, reminders, drafts, and synchronization metadata do not appear.
 
 ## Check-in rules
 
@@ -101,13 +119,15 @@ Mindfull has one task list rather than projects or categories.
 A task contains:
 
 - Text
-- Manual position
 - Completion time, if completed
 - Optional time from which it becomes available
 - Optional exact reminder time
 - Source: manual, journal, or check-in
 
 Tasks do not have due dates, priorities, overdue states, or urgency colors.
+Incomplete tasks retain their creation order. Completed tasks move into a
+visually subdued group below incomplete tasks. There is no manual reordering
+interface.
 Incomplete tasks remain until completed or manually deleted. Completed tasks
 remain visible for seven days and are then automatically deleted from the
 visible domain through a deletion tombstone.
@@ -131,7 +151,7 @@ platform allows them.
 ## Suggestions
 
 Unresolved AI task suggestions appear in a shared Suggestions area reachable
-from Today and Journal.
+from Today and relevant History entries.
 
 Each suggestion shows:
 
@@ -167,4 +187,3 @@ timezone.
 Theme preference synchronizes, but a "follow system" choice resolves
 independently on each device. Morning and evening presentation may shift warmth
 and color while remaining within the selected light or dark theme.
-

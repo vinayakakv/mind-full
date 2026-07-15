@@ -24,6 +24,39 @@
   gap: clamp(0.75rem, 3vw, 1.75rem);
 }
 
+.utilities {
+  align-items: center;
+  display: flex;
+  gap: 0.8rem;
+  justify-self: end;
+}
+
+.settingsLink {
+  align-items: center;
+  border-radius: 50%;
+  color: var(--text-muted);
+  display: inline-flex;
+  height: 2.15rem;
+  justify-content: center;
+  width: 2.15rem;
+}
+
+.settingsLink svg {
+  fill: none;
+  height: 1.15rem;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.35;
+  width: 1.15rem;
+}
+
+.settingsLink:hover,
+.settingsLinkActive {
+  background: var(--surface-soft);
+  color: var(--text-primary);
+}
+
 @media (min-width: 36.01rem) {
   .header {
     display: grid;
@@ -56,7 +89,7 @@
 
 @media (max-width: 36rem) {
   .header {
-    align-items: flex-start;
+    align-items: center;
     gap: 1.5rem;
   }
 

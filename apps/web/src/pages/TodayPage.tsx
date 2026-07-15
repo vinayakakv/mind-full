@@ -5,13 +5,15 @@ import {
 } from '@mindfull/domain';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useSetAtom } from 'jotai';
+import { useState } from 'react';
 import { Button } from 'react-aria-components';
+import { useNavigate } from 'react-router';
 
 import { CheckInFlow, openCheckIn } from '../components/CheckInFlow';
 import { HabitList } from '../components/HabitList';
 import { ReminderNotices } from '../components/ReminderNotices';
 import { TaskList } from '../components/TaskList';
-import { ensureSettings, findCheckIn } from '../data/documents';
+import { createJournal, ensureSettings, findCheckIn } from '../data/documents';
 import { greetingFor, localDateFor, localTimeFor } from '../data/time';
 import { activeCheckInIdAtom } from '../state/check-in';
 import styles from './TodayPage.module.css';
@@ -57,6 +59,33 @@ function CheckInInvitation({
       </span>
       <span>{checkInLabel(kind, checkIn)}</span>
       <span aria-hidden="true">→</span>
+    </Button>
+  );
+}
+
+function JournalComposeAction() {
+  const navigate = useNavigate();
+  const [isCreating, setIsCreating] = useState(false);
+
+  const beginJournal = async () => {
+    if (isCreating) return;
+    setIsCreating(true);
+    const journal = await createJournal();
+    navigate(`/journal?entry=${encodeURIComponent(journal.id)}&mode=write`);
+  };
+
+  return (
+    <Button
+      className={styles.journalAction}
+      aria-label="Write a journal entry"
+      isDisabled={isCreating}
+      onPress={beginJournal}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="m5 19 3.7-.8L18.8 8.1a1.8 1.8 0 0 0 0-2.5l-.4-.4a1.8 1.8 0 0 0-2.5 0L5.8 15.3 5 19Z" />
+        <path d="m14.8 6.3 2.9 2.9" />
+      </svg>
+      <span>{isCreating ? 'Opening…' : 'Write'}</span>
     </Button>
   );
 }
@@ -113,6 +142,7 @@ export function TodayPage() {
       <HabitList />
       <TaskList />
       <CheckInFlow />
+      <JournalComposeAction />
     </>
   );
 }

@@ -38,7 +38,7 @@ Prove the hardest architectural promise:
 - Dexie document repository
 - Jotai state for the active check-in workflow
 - Today screen
-- Task creation, manual ordering, completion, and deletion
+- Task creation, completion, and deletion
 - Small morning check-in with skippable steps and persisted progress
 - Offline reload through the PWA application shell
 
@@ -92,6 +92,7 @@ Status: in progress as of July 15, 2026.
 - [x] Habits, schedules, optional miss reasons, and streaks
 - [x] Shared reminder documents and progressive browser notifications
 - [x] Journal writing and rendered reading mode
+- [x] History timeline, journal compose action, and simplified navigation
 - Shared task-suggestions area
 - Time-aware theme variations and polished gentle motion
 - Seven-day completed-task retention job
@@ -123,6 +124,12 @@ the configured timezone, uses service-worker notifications when permission is
 available, and retains a due reminder inside Today otherwise. Browser delivery
 is deliberately progressive: the app catches up while opening or returning to
 the foreground, but exact closed-app alerts remain an Android-native milestone.
+
+Navigation now separates Today, History, and Reflect. Journals begin from a
+quiet compose action on Today and completed entries join a chronological
+History alongside completed check-ins and recorded habit outcomes. Settings is
+a utility icon rather than a primary tab. Tasks retain creation order and move
+into a subdued completed group instead of exposing mobile reordering controls.
 
 ## Milestone 3 — Local AI and reflection
 

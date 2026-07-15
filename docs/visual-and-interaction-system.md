@@ -90,6 +90,13 @@ Contrast and focus visibility remain accessible even when colors are subtle.
 - Check-ins temporarily become the entire focus of the page.
 - Settings may be denser than reflection surfaces, but should use the same
   typography and rhythm.
+- Primary navigation contains Today, History, and Reflect. Settings uses a
+  consistently placed icon button with an accessible name and focus treatment.
+- On mobile, a journal compose action floats above the bottom navigation. On
+  wider screens it may include the short label Write.
+- A floating action should remain visually quiet: one action, no speed dial,
+  no attention-seeking pulse, and no collision with navigation or content.
+- History uses a single reading column grouped by date, not a dashboard grid.
 
 ## Motion
 
@@ -122,4 +129,3 @@ Avoid:
 - Medical or diagnostic interpretation
 
 Encouragement should be specific and grounded in recorded patterns.
-
