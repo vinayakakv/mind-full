@@ -1,0 +1,19 @@
+diff --git a/capacitor/src/main/java/com/getcapacitor/plugin/SystemBars.java b/capacitor/src/main/java/com/getcapacitor/plugin/SystemBars.java
+index fd71370945b645c9e9cb7ed1a5030c30bd08b8b7..81bd427ff81b3bf13de69f94f1d97d76dc2cdc91 100644
+--- a/capacitor/src/main/java/com/getcapacitor/plugin/SystemBars.java
++++ b/capacitor/src/main/java/com/getcapacitor/plugin/SystemBars.java
+@@ -261,12 +261,12 @@ public class SystemBars extends Plugin {
+                 String script = String.format(
+                     Locale.US,
+                     """
+-                    try {
++                    if (document.documentElement) {
+                       document.documentElement.style.setProperty("--safe-area-inset-top", "%dpx");
+                       document.documentElement.style.setProperty("--safe-area-inset-right", "%dpx");
+                       document.documentElement.style.setProperty("--safe-area-inset-bottom", "%dpx");
+                       document.documentElement.style.setProperty("--safe-area-inset-left", "%dpx");
+-                    } catch(e) { console.error('Error injecting safe area CSS:', e); }
++                    }
+                     """,
+                     (int) topPx,
+                     (int) rightPx,

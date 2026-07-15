@@ -179,6 +179,7 @@ Status: in progress as of July 15, 2026.
 - [x] Repeatable build, sync, open, and debug-APK commands
 - [x] Calm app identity, splash screen, system bars, safe areas, and back behavior
 - [ ] Configurable Pi address and pairing from the packaged application
+- [x] Android 13/WebView 101 emulator install and offline cold-start
 - [ ] Offline startup and IndexedDB persistence on a real Android device
 - [x] Web/PWA and Docker builds remain unchanged
 

@@ -128,6 +128,11 @@ the PWA service worker because the application shell is already packaged in the
 APK. Android cloud backup is disabled so journals and check-ins are not copied
 to an unrelated backup provider.
 
+Native CSS targets Chrome/WebView 101 so the minimum supported Android WebView
+receives conventional media-query syntax. Capacitor 8.4.2 is pinned with a
+small pnpm patch that guards its safe-area injection until the document root
+exists; remove the patch when an upstream release includes the same guard.
+
 ### macOS
 
 The first release uses the browser PWA. A Tauri shell for reliable closed-app

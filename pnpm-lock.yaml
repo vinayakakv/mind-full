@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@capacitor/android@8.4.2':
+    hash: 389ed9c943b616fa17d8e441c9dab76d543868ada86b20198be599012d5e2211
+    path: patches/@capacitor__android@8.4.2.patch
+
 importers:
 
   .:
@@ -53,7 +58,7 @@ importers:
     dependencies:
       '@capacitor/android':
         specifier: ^8.0.0
-        version: 8.4.2(@capacitor/core@8.4.2)
+        version: 8.4.2(patch_hash=389ed9c943b616fa17d8e441c9dab76d543868ada86b20198be599012d5e2211)(@capacitor/core@8.4.2)
       '@capacitor/app':
         specifier: ^8.0.0
         version: 8.1.1(@capacitor/core@8.4.2)
@@ -4755,7 +4760,7 @@ snapshots:
     dependencies:
       css-tree: 3.2.1
 
-  '@capacitor/android@8.4.2(@capacitor/core@8.4.2)':
+  '@capacitor/android@8.4.2(patch_hash=389ed9c943b616fa17d8e441c9dab76d543868ada86b20198be599012d5e2211)(@capacitor/core@8.4.2)':
     dependencies:
       '@capacitor/core': 8.4.2
 

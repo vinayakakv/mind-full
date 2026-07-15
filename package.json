@@ -9,7 +9,10 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "esbuild"
-    ]
+    ],
+    "patchedDependencies": {
+      "@capacitor/android@8.4.2": "patches/@capacitor__android@8.4.2.patch"
+    }
   },
   "scripts": {
     "android:apk": "pnpm --filter @mindfull/web android:apk",
