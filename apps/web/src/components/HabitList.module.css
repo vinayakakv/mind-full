@@ -53,9 +53,9 @@
 
 .backButton {
   color: var(--accent-strong);
-  font-size: 0.76rem;
-  margin: 0 0 0.5rem;
-  padding: 0;
+  font-size: 0.95rem;
+  margin: 0 0 0.35rem;
+  padding: 0.4rem 0;
 }
 
 .emptyToday,
@@ -400,28 +400,6 @@
 }
 
 @media (max-width: 36rem) {
-  .backdrop {
-    padding: 0;
-  }
-
-  .dialog {
-    border: 0;
-    border-radius: 0;
-    max-height: 100dvh;
-    min-height: 100dvh;
-    padding: max(1.25rem, env(safe-area-inset-top))
-      max(1.25rem, env(safe-area-inset-right))
-      max(1.25rem, env(safe-area-inset-bottom))
-      max(1.25rem, env(safe-area-inset-left));
-  }
-
-  .dialogHeader {
-    background: var(--surface-canvas);
-    position: sticky;
-    top: 0;
-    z-index: 1;
-  }
-
   .weekdayChoices {
     gap: 0.3rem;
   }

@@ -419,7 +419,7 @@ function HabitManager({
           <div>
             {isInsideHabit ? (
               <Button className={styles.backButton} onPress={returnToAllHabits}>
-                ← All habits
+                ← Back to all habits
               </Button>
             ) : (
               <p>Daily rhythm</p>
