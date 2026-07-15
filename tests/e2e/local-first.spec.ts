@@ -45,6 +45,27 @@ test('keeps navigation reachable on long pages', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'Settings' })).toBeVisible();
 });
 
+test('keeps the ambient background preference offline', async ({
+  context,
+  page,
+}) => {
+  await prepareServiceWorker(page);
+  await page.goto('/settings');
+  await context.setOffline(true);
+
+  await page.getByRole('button', { name: 'still', exact: true }).click();
+  await expect(page.locator('[data-motion="still"]')).toBeVisible();
+
+  await page.getByRole('button', { name: 'off', exact: true }).click();
+  await expect(page.locator('[data-motion]')).toHaveCount(0);
+  await page.reload();
+
+  await expect(
+    page.getByRole('button', { name: 'off', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('[data-motion]')).toHaveCount(0);
+});
+
 test('keeps tasks and a check-in draft through an offline reload', async ({
   context,
   page,

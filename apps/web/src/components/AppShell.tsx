@@ -1,9 +1,12 @@
+import { relevantCheckInKind } from '@mindfull/domain';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { NavLink, Outlet } from 'react-router';
 
 import { documentTable } from '../data/documents';
+import { localTimeFor } from '../data/time';
 import { useResolvedTheme } from '../hooks/use-resolved-theme';
 import { useSync } from '../hooks/use-sync';
+import { AmbientBackdrop } from './AmbientBackdrop';
 import styles from './AppShell.module.css';
 import { SyncIndicator } from './SyncIndicator';
 
@@ -40,9 +43,18 @@ export function AppShell() {
   });
 
   useResolvedTheme(settings?.payload.theme ?? 'system');
+  const period = relevantCheckInKind(
+    localTimeFor(new Date()),
+    settings?.payload.morningStartsAt ?? '05:00',
+    settings?.payload.eveningStartsAt ?? '18:00',
+  );
 
   return (
     <div className={styles.shell}>
+      <AmbientBackdrop
+        mode={settings?.payload.ambience ?? 'gentle'}
+        period={period}
+      />
       <div className={styles.headerFrame}>
         <header className={styles.header}>
           <NavLink

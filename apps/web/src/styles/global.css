@@ -17,6 +17,7 @@
   --on-accent: #f7f5ef;
   --shadow-soft: rgb(55 52 45 / 16%);
   --focus-ring: #60785a;
+  --ambient-opacity: 0.22;
   background: var(--surface-canvas);
   color: var(--text-primary);
   font-family: var(--font-control);
@@ -39,6 +40,7 @@
   --on-accent: #1f251f;
   --shadow-soft: rgb(0 0 0 / 30%);
   --focus-ring: #adc7a0;
+  --ambient-opacity: 0.2;
 }
 
 * {

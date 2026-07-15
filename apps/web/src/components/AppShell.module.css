@@ -1,5 +1,7 @@
 .shell {
+  isolation: isolate;
   min-height: 100dvh;
+  position: relative;
 }
 
 .headerFrame {

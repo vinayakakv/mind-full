@@ -11,6 +11,7 @@ import {
   ensureSettings,
   findReminder,
   setCheckInReminder,
+  updateAmbience,
   updateCheckInSchedule,
   updateTheme,
 } from '../data/documents';
@@ -27,6 +28,12 @@ const themes: Array<SettingsDocument['payload']['theme']> = [
   'system',
   'light',
   'dark',
+];
+
+const ambienceModes: Array<SettingsDocument['payload']['ambience']> = [
+  'gentle',
+  'still',
+  'off',
 ];
 
 function CheckInSchedule({ settings }: { settings: SettingsDocument }) {
@@ -217,19 +224,34 @@ export function SettingsPage() {
           <h2>Appearance</h2>
           <p>Choose a dedicated theme or follow this device.</p>
         </div>
-        <fieldset className={styles.themeChoices}>
-          <legend className="visually-hidden">Theme</legend>
-          {themes.map((theme) => (
-            <Button
-              key={theme}
-              className={styles.themeChoice}
-              aria-pressed={settings?.payload.theme === theme}
-              onPress={() => updateTheme(theme)}
-            >
-              {theme}
-            </Button>
-          ))}
-        </fieldset>
+        <div className={styles.appearanceChoices}>
+          <fieldset className={styles.themeChoices}>
+            <legend>Theme</legend>
+            {themes.map((theme) => (
+              <Button
+                key={theme}
+                className={styles.themeChoice}
+                aria-pressed={settings?.payload.theme === theme}
+                onPress={() => updateTheme(theme)}
+              >
+                {theme}
+              </Button>
+            ))}
+          </fieldset>
+          <fieldset className={styles.themeChoices}>
+            <legend>Ambience</legend>
+            {ambienceModes.map((mode) => (
+              <Button
+                key={mode}
+                className={styles.themeChoice}
+                aria-pressed={settings?.payload.ambience === mode}
+                onPress={() => updateAmbience(mode)}
+              >
+                {mode}
+              </Button>
+            ))}
+          </fieldset>
+        </div>
       </div>
       {settings ? (
         <div className={styles.setting}>

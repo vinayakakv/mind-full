@@ -20,6 +20,7 @@ const sourceSchema = z.discriminatedUnion('kind', [
 export const settingsPayloadSchema = z.object({
   timezone: timezoneSchema,
   theme: z.enum(['light', 'dark', 'system']),
+  ambience: z.enum(['gentle', 'still', 'off']).default('gentle'),
   morningStartsAt: z.string().regex(/^\d{2}:\d{2}$/),
   eveningStartsAt: z.string().regex(/^\d{2}:\d{2}$/),
   weeklyReviewDay: z.number().int().min(0).max(6),

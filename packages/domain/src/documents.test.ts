@@ -5,6 +5,7 @@ import {
   createHabitLogDocument,
   createJournalDocument,
   createReminderDocument,
+  createSettingsDocument,
   createTaskDocument,
   migrateDomainDocument,
   nextDocumentTimestamp,
@@ -29,6 +30,29 @@ const makeTask = (updatedAt = now, deviceId = 'phone') =>
   });
 
 describe('domain documents', () => {
+  it('gives older settings the gentle ambience default', () => {
+    const settings = createSettingsDocument({
+      id: 'settings',
+      now,
+      deviceId: 'phone',
+      payload: {
+        timezone: 'Asia/Kolkata',
+        theme: 'system',
+        ambience: 'gentle',
+        morningStartsAt: '05:00',
+        eveningStartsAt: '18:00',
+        weeklyReviewDay: 0,
+        weeklyReviewTime: '19:00',
+        completedTaskRetentionDays: 7,
+      },
+    });
+    const { ambience: _, ...olderPayload } = settings.payload;
+
+    expect(
+      migrateDomainDocument({ ...settings, payload: olderPayload }),
+    ).toMatchObject({ payload: { ambience: 'gentle' } });
+  });
+
   it('accepts a current document through the migration boundary', () => {
     expect(migrateDomainDocument(makeTask()).type).toBe('task');
   });

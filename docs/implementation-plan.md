@@ -94,7 +94,7 @@ Status: in progress as of July 15, 2026.
 - [x] Journal writing and rendered reading mode
 - [x] History timeline, journal compose action, and simplified navigation
 - Shared task-suggestions area
-- Time-aware theme variations and polished gentle motion
+- [x] Time-aware ambient color fields and polished gentle motion
 - Seven-day completed-task retention job
 
 Morning and evening check-ins are separate editable documents. Both use a

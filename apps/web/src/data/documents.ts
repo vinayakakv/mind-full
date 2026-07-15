@@ -147,7 +147,17 @@ export const ensureSettings = async (): Promise<SettingsDocument> => {
   const existingSettings = await database.documents.get(settingsId);
 
   if (existingSettings?.type === 'settings' && !existingSettings.deletedAt) {
-    return existingSettings;
+    const migratedSettings = parseDomainDocument(existingSettings);
+
+    if (migratedSettings.type !== 'settings') {
+      throw new Error('Could not read settings.');
+    }
+
+    if (!Object.hasOwn(existingSettings.payload, 'ambience')) {
+      await saveDocument(migratedSettings);
+    }
+
+    return migratedSettings;
   }
 
   const now = new Date().toISOString();
@@ -158,6 +168,7 @@ export const ensureSettings = async (): Promise<SettingsDocument> => {
     payload: {
       timezone: currentTimezone(),
       theme: 'system',
+      ambience: 'gentle',
       morningStartsAt: '05:00',
       eveningStartsAt: '18:00',
       weeklyReviewDay: 0,
@@ -179,6 +190,20 @@ export const updateTheme = async (
   await saveDocument({
     ...settings,
     payload: { ...settings.payload, theme },
+    updatedAt: now,
+    updatedByDeviceId: getDeviceId(),
+  });
+};
+
+export const updateAmbience = async (
+  ambience: SettingsDocument['payload']['ambience'],
+): Promise<void> => {
+  const settings = await ensureSettings();
+  const now = updatedNow(settings);
+
+  await saveDocument({
+    ...settings,
+    payload: { ...settings.payload, ambience },
     updatedAt: now,
     updatedByDeviceId: getDeviceId(),
   });

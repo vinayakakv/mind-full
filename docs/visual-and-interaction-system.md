@@ -80,6 +80,13 @@ Color tokens should be semantic rather than named after raw hues:
 
 Contrast and focus visibility remain accessible even when colors are subtle.
 
+An optional ambient color field can add a restrained psychedelic quality around
+the reading column. It shifts between warm morning and cooler evening palettes,
+never carries meaning, and remains behind solid or translucent reading surfaces.
+The synchronized setting offers Gentle, Still, and Off; Gentle is the default.
+Animation pauses during focused writing and check-ins, and reduced-motion always
+receives the still treatment.
+
 ## Layout
 
 - Mobile is the primary composition target.
@@ -113,6 +120,7 @@ Motion is gentle and functional:
 - Soft completion transitions
 - No bouncing, celebratory particles, or long blocking sequences
 - Respect `prefers-reduced-motion`
+- Ambient color movement uses long, quiet cycles and never pulses for attention
 
 Prefer CSS transitions. Add a motion library only when a defined interaction
 cannot remain clear and maintainable with CSS.
