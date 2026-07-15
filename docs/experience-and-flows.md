@@ -118,6 +118,13 @@ without approval.
   does not proactively interrogate missed habits.
 - Streaks count consecutive scheduled occurrences, not calendar days.
 - Notifications may offer a Mark complete action.
+- Today keeps a simple completion list in the chosen habit order. Ordering is
+  changed only from Manage habits.
+- Manage habits is a centered dialog on wider screens and a focused full-screen
+  surface on mobile. Its reorder actions remain open while a habit is moved so
+  repeated keyboard or touch moves do not require reopening the control.
+- Creating, editing, or viewing a habit provides an explicit return to the full
+  habit list without closing Manage habits.
 
 ## Tasks
 

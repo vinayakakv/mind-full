@@ -20,6 +20,7 @@ import {
   recordHabitMiss,
   rejectTaskSuggestion,
   removeExpiredCompletedTasks,
+  reorderHabits,
   saveDocument,
   setBodyMetricArchived,
   setCheckInReminder,
@@ -201,6 +202,37 @@ describe('local documents', () => {
     expect(
       await database.syncState.get(`reminder:habit:${habit.id}`),
     ).toMatchObject({ dirty: 1 });
+  });
+
+  it('persists the chosen habit order', async () => {
+    const first = await createHabit({
+      name: 'Step outside',
+      weekdays: [1, 3, 5],
+      reminderTime: null,
+    });
+    const second = await createHabit({
+      name: 'Read quietly',
+      weekdays: [1, 3, 5],
+      reminderTime: null,
+    });
+    const third = await createHabit({
+      name: 'Stretch',
+      weekdays: [1, 3, 5],
+      reminderTime: null,
+    });
+
+    await reorderHabits([third.id, first.id, second.id]);
+
+    const reordered = await database.documents.bulkGet([
+      third.id,
+      first.id,
+      second.id,
+    ]);
+    expect(reordered.map((habit) => habit?.sortKey)).toEqual([
+      'habit:000000',
+      'habit:000001',
+      'habit:000002',
+    ]);
   });
 
   it('persists a task completion as a new document version', async () => {

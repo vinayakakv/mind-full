@@ -63,6 +63,10 @@ type HabitPayload = {
 };
 ```
 
+The envelope's `sortKey` stores the user's habit order. The same order is used
+after filtering the habits scheduled for Today and synchronizes like any other
+local document change.
+
 ### Habit log
 
 ```ts

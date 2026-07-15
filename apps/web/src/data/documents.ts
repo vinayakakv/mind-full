@@ -427,10 +427,12 @@ export const createHabit = async (
   input: Pick<HabitPayload, 'name' | 'weekdays' | 'reminderTime'>,
 ): Promise<HabitDocument> => {
   const now = new Date().toISOString();
+  const id = createDocumentId();
   const habit = createHabitDocument({
-    id: createDocumentId(),
+    id,
     now,
     deviceId: getDeviceId(),
+    sortKey: `habit:${now}:${id}`,
     payload: { ...input, archivedAt: null },
   });
 
@@ -500,6 +502,36 @@ export const updateHabit = async (
   return updatedDocument;
 };
 
+export const reorderHabits = async (
+  orderedHabitIds: string[],
+): Promise<void> => {
+  if (new Set(orderedHabitIds).size !== orderedHabitIds.length) {
+    throw new Error('A habit cannot appear more than once in the order.');
+  }
+
+  const documents = await database.documents.bulkGet(orderedHabitIds);
+  const reorderedHabits = documents.map((document, index) => {
+    if (document?.type !== 'habit' || document.deletedAt) {
+      throw new Error(`Habit ${orderedHabitIds[index]} was not found.`);
+    }
+
+    const sortKey = `habit:${index.toString().padStart(6, '0')}`;
+    if (document.sortKey === sortKey) return document;
+
+    return {
+      ...document,
+      sortKey,
+      updatedAt: updatedNow(document),
+      updatedByDeviceId: getDeviceId(),
+    };
+  });
+  const changedHabits = reorderedHabits.filter(
+    (habit, index) => habit !== documents[index],
+  );
+
+  if (changedHabits.length) await saveDocuments(changedHabits);
+};
+
 export const setHabitArchived = async (
   habitId: string,
   isArchived: boolean,
@@ -510,6 +542,7 @@ export const setHabitArchived = async (
   const updatedHabit: HabitDocument = {
     ...habit,
     payload: { ...habit.payload, archivedAt: isArchived ? now : null },
+    sortKey: isArchived ? habit.sortKey : `habit:${now}:${habit.id}`,
     updatedAt: now,
     updatedByDeviceId: getDeviceId(),
   };

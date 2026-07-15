@@ -36,6 +36,7 @@
 }
 
 .manageButton,
+.backButton,
 .textButton,
 .noteButton,
 .archiveButton {
@@ -48,6 +49,13 @@
 
 .manageButton {
   padding: 0.5rem 0;
+}
+
+.backButton {
+  color: var(--accent-strong);
+  font-size: 0.76rem;
+  margin: 0 0 0.5rem;
+  padding: 0;
 }
 
 .emptyToday,
@@ -237,30 +245,96 @@
 
 .manageHabitList {
   border-top: 1px solid var(--border-subtle);
-  margin-top: 1.5rem;
+  list-style: none;
+  margin: 1.5rem 0 0;
+  padding: 0;
 }
 
-.manageHabitButton,
+.manageHabitItem,
+.archivedHabit {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.manageHabitItem[data-dragging="true"] {
+  opacity: 0.55;
+}
+
+.manageHabitRow,
 .archivedHabit {
   align-items: center;
   background: transparent;
-  border: 0;
-  border-bottom: 1px solid var(--border-subtle);
   color: var(--text-primary);
   display: flex;
   font: inherit;
-  justify-content: space-between;
+}
+
+.manageHabitRow {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+}
+
+.dragHandle,
+.reorderMenuButton,
+.reorderButton,
+.reorderDoneButton {
+  background: transparent;
+  border: 0;
+  color: var(--text-muted);
+  cursor: pointer;
+  font: inherit;
+}
+
+.dragHandle {
+  font-size: 1.15rem;
+  padding: 1rem 0.85rem 1rem 0;
+}
+
+.manageHabitButton {
+  background: transparent;
+  border: 0;
+  color: var(--text-primary);
+  cursor: pointer;
+  font: inherit;
   padding: 1rem 0;
   text-align: left;
   width: 100%;
 }
 
-.manageHabitButton {
-  cursor: pointer;
+.reorderMenuButton {
+  letter-spacing: 0.08em;
+  padding: 1rem 0 1rem 0.85rem;
+}
+
+.reorderActions {
+  align-items: center;
+  background: var(--surface-soft);
+  border: 0;
+  display: flex;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0.45rem 0.55rem;
+}
+
+.reorderButton,
+.reorderDoneButton {
+  border-radius: 2rem;
+  padding: 0.55rem 0.7rem;
+}
+
+.reorderButton[aria-disabled="true"] {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.reorderDoneButton {
+  color: var(--accent-strong);
+  margin-left: auto;
 }
 
 .archivedHabit {
   color: var(--text-muted);
+  justify-content: space-between;
+  padding: 1rem 0;
 }
 
 .detailHeading h3 {
@@ -326,6 +400,28 @@
 }
 
 @media (max-width: 36rem) {
+  .backdrop {
+    padding: 0;
+  }
+
+  .dialog {
+    border: 0;
+    border-radius: 0;
+    max-height: 100dvh;
+    min-height: 100dvh;
+    padding: max(1.25rem, env(safe-area-inset-top))
+      max(1.25rem, env(safe-area-inset-right))
+      max(1.25rem, env(safe-area-inset-bottom))
+      max(1.25rem, env(safe-area-inset-left));
+  }
+
+  .dialogHeader {
+    background: var(--surface-canvas);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
   .weekdayChoices {
     gap: 0.3rem;
   }
@@ -333,5 +429,15 @@
   .weekdayButton {
     height: 2.1rem;
     width: 2.1rem;
+  }
+}
+
+@media (hover: none) {
+  .manageHabitRow {
+    grid-template-columns: 1fr auto;
+  }
+
+  .dragHandle {
+    display: none;
   }
 }
