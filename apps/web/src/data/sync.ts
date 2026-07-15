@@ -39,73 +39,93 @@ export const pairWithServer = async (
   store.set(syncStatusAtom, 'idle');
 };
 
+let activeSynchronization: Promise<void> | null = null;
+let isSynchronizationRequested = false;
+
 const readCursor = async (): Promise<number> => {
   const storedCursor = await database.syncMeta.get(cursorKey);
   const cursor = Number.parseInt(storedCursor?.value ?? '0', 10);
   return Number.isFinite(cursor) ? cursor : 0;
 };
 
-export const synchronize = async (): Promise<void> => {
+const runSynchronization = async (): Promise<void> => {
   const token = window.localStorage.getItem(tokenKey);
 
   if (!token) {
+    isSynchronizationRequested = false;
     store.set(syncStatusAtom, 'unpaired');
     return;
   }
 
   if (!navigator.onLine) {
+    isSynchronizationRequested = false;
     store.set(syncStatusAtom, 'offline');
-    return;
-  }
-
-  if (store.get(syncStatusAtom) === 'syncing') {
     return;
   }
 
   store.set(syncStatusAtom, 'syncing');
 
   try {
-    const [cursor, dirtyStates] = await Promise.all([
-      readCursor(),
-      database.syncState.filter(({ dirty }) => dirty === 1).toArray(),
-    ]);
-    const localDocuments = (
-      await database.documents.bulkGet(
-        dirtyStates.map(({ documentId }) => documentId),
-      )
-    ).filter((document) => document !== undefined);
+    while (isSynchronizationRequested) {
+      isSynchronizationRequested = false;
+      const [cursor, dirtyStates] = await Promise.all([
+        readCursor(),
+        database.syncState.filter(({ dirty }) => dirty === 1).toArray(),
+      ]);
+      const localDocuments = (
+        await database.documents.bulkGet(
+          dirtyStates.map(({ documentId }) => documentId),
+        )
+      ).filter((document) => document !== undefined);
 
-    const response = await fetch('/api/sync', {
-      method: 'POST',
-      headers: {
-        authorization: `Bearer ${token}`,
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({ cursor, documents: localDocuments }),
-    });
+      const response = await fetch('/api/sync', {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${token}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ cursor, documents: localDocuments }),
+      });
 
-    if (response.status === 401) {
-      window.localStorage.removeItem(tokenKey);
-      store.set(syncStatusAtom, 'unpaired');
-      return;
+      if (response.status === 401) {
+        window.localStorage.removeItem(tokenKey);
+        isSynchronizationRequested = false;
+        store.set(syncStatusAtom, 'unpaired');
+        return;
+      }
+
+      const body: unknown = await response.json();
+
+      if (
+        !response.ok ||
+        !isRecord(body) ||
+        typeof body.cursor !== 'number' ||
+        !Array.isArray(body.documents)
+      ) {
+        throw new Error('Mindfull received an invalid sync response.');
+      }
+
+      const remoteDocuments = body.documents.map(parseDomainDocument);
+      await applyRemoteDocuments(remoteDocuments, body.cursor);
+      await database.syncMeta.put({
+        key: cursorKey,
+        value: String(body.cursor),
+      });
     }
 
-    const body: unknown = await response.json();
-
-    if (
-      !response.ok ||
-      !isRecord(body) ||
-      typeof body.cursor !== 'number' ||
-      !Array.isArray(body.documents)
-    ) {
-      throw new Error('Mindfull received an invalid sync response.');
-    }
-
-    const remoteDocuments = body.documents.map(parseDomainDocument);
-    await applyRemoteDocuments(remoteDocuments, body.cursor);
-    await database.syncMeta.put({ key: cursorKey, value: String(body.cursor) });
     store.set(syncStatusAtom, 'idle');
   } catch {
     store.set(syncStatusAtom, navigator.onLine ? 'error' : 'offline');
   }
+};
+
+export const synchronize = (): Promise<void> => {
+  isSynchronizationRequested = true;
+
+  if (activeSynchronization) return activeSynchronization;
+
+  activeSynchronization = runSynchronization().finally(() => {
+    activeSynchronization = null;
+  });
+  return activeSynchronization;
 };

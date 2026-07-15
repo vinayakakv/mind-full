@@ -1,0 +1,337 @@
+.section {
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 4.5rem;
+  padding-top: 2.25rem;
+}
+
+.sectionHeading,
+.dialogHeader,
+.detailHeading {
+  align-items: start;
+  display: flex;
+  justify-content: space-between;
+}
+
+.eyebrow,
+.dialogHeader p,
+.detailKicker {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.11em;
+  margin: 0 0 0.5rem;
+  text-transform: uppercase;
+}
+
+.sectionHeading h2,
+.dialogHeader h2,
+.detailHeading h3 {
+  font-family: var(--font-reflection);
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  margin: 0;
+}
+
+.sectionHeading h2 {
+  font-size: 2rem;
+}
+
+.manageButton,
+.textButton,
+.noteButton,
+.archiveButton {
+  background: transparent;
+  border: 0;
+  color: var(--text-muted);
+  cursor: pointer;
+  font: inherit;
+}
+
+.manageButton {
+  padding: 0.5rem 0;
+}
+
+.emptyToday,
+.emptyManager {
+  color: var(--text-muted);
+  font-family: var(--font-reflection);
+  margin: 1.5rem 0 0;
+}
+
+.todayList {
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 1.5rem;
+}
+
+.todayHabit {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: grid;
+  font: inherit;
+  gap: 0.85rem;
+  grid-template-columns: auto 1fr auto;
+  padding: 0.9rem 0;
+  text-align: left;
+  width: 100%;
+}
+
+.completionMark {
+  align-items: center;
+  border: 1px solid var(--border-subtle);
+  border-radius: 50%;
+  color: var(--on-accent);
+  display: flex;
+  font-size: 0.72rem;
+  height: 1.45rem;
+  justify-content: center;
+  width: 1.45rem;
+}
+
+.todayHabit[aria-pressed="true"] .completionMark {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
+.todayHabit[aria-pressed="true"] .habitName {
+  color: var(--text-muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--accent-calm);
+}
+
+.reminderTime {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.backdrop {
+  align-items: center;
+  background: color-mix(in srgb, var(--surface-canvas) 82%, transparent);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 1rem;
+  position: fixed;
+  z-index: 20;
+}
+
+.dialog {
+  background: var(--surface-canvas);
+  border: 1px solid var(--border-subtle);
+  border-radius: 1.25rem;
+  box-shadow: 0 2rem 5rem var(--shadow-soft);
+  max-height: calc(100dvh - 2rem);
+  max-width: 40rem;
+  min-height: min(35rem, calc(100dvh - 2rem));
+  overflow: auto;
+  padding: clamp(1.25rem, 5vw, 2.5rem);
+  width: 100%;
+}
+
+.dialogHeader h2 {
+  font-size: 2.5rem;
+}
+
+.closeButton {
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1.25rem;
+  height: 2.25rem;
+  width: 2.25rem;
+}
+
+.habitForm,
+.habitDetails,
+.managerList {
+  margin-top: 2.5rem;
+}
+
+.habitForm {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.habitForm label,
+.weekdayField legend,
+.reasonForm label {
+  color: var(--text-muted);
+  display: block;
+  font-size: 0.76rem;
+  margin-bottom: 0.45rem;
+}
+
+.habitForm input,
+.reasonForm textarea {
+  background: var(--surface-soft);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.65rem;
+  color: var(--text-primary);
+  padding: 0.7rem 0.8rem;
+  width: 100%;
+}
+
+.weekdayField {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.weekdayChoices {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.weekdayButton {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 50%;
+  color: var(--text-primary);
+  cursor: pointer;
+  height: 2.35rem;
+  width: 2.35rem;
+}
+
+.weekdayButton[aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent-calm);
+}
+
+.formHint {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  margin: 0.45rem 0 0;
+}
+
+.formActions,
+.managerActions,
+.reasonActions {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.primaryButton,
+.smallButton {
+  background: var(--accent-strong);
+  border: 1px solid var(--accent-strong);
+  border-radius: 2rem;
+  color: var(--on-accent);
+  cursor: pointer;
+  font: inherit;
+  padding: 0.7rem 1.05rem;
+}
+
+.smallButton {
+  font-size: 0.75rem;
+  padding: 0.5rem 0.8rem;
+}
+
+.textButton {
+  padding: 0.7rem 0.35rem;
+}
+
+.manageHabitList {
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 1.5rem;
+}
+
+.manageHabitButton,
+.archivedHabit {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  display: flex;
+  font: inherit;
+  justify-content: space-between;
+  padding: 1rem 0;
+  text-align: left;
+  width: 100%;
+}
+
+.manageHabitButton {
+  cursor: pointer;
+}
+
+.archivedHabit {
+  color: var(--text-muted);
+}
+
+.detailHeading h3 {
+  font-size: 2.25rem;
+}
+
+.streak {
+  color: var(--accent-strong);
+  font-family: var(--font-reflection);
+  margin: 1.25rem 0 2rem;
+}
+
+.occurrences {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.occurrence {
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 0.9rem 0;
+}
+
+.occurrenceSummary {
+  align-items: center;
+  display: grid;
+  font-size: 0.8rem;
+  gap: 0.75rem;
+  grid-template-columns: 1fr auto auto;
+}
+
+.occurrenceSummary > :nth-child(2) {
+  color: var(--text-muted);
+}
+
+.noteButton {
+  color: var(--accent-strong);
+  padding: 0.25rem;
+}
+
+.reason {
+  color: var(--text-muted);
+  font-family: var(--font-reflection);
+  font-size: 0.9rem;
+  margin: 0.65rem 0 0;
+}
+
+.reasonForm {
+  margin-top: 0.75rem;
+}
+
+.reasonForm textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+
+.reasonActions {
+  margin-top: 0.6rem;
+}
+
+.archiveButton {
+  color: #98554d;
+  margin-top: 2rem;
+  padding: 0.5rem 0;
+}
+
+@media (max-width: 36rem) {
+  .weekdayChoices {
+    gap: 0.3rem;
+  }
+
+  .weekdayButton {
+    height: 2.1rem;
+    width: 2.1rem;
+  }
+}

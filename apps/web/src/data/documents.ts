@@ -5,10 +5,17 @@ import {
   compareDocumentVersions,
   createCheckInDocument,
   createDocumentId,
+  createHabitDocument,
+  createHabitLogDocument,
   createJournalDocument,
   createSettingsDocument,
   createTaskDocument,
   type DomainDocument,
+  type HabitDocument,
+  type HabitLogDocument,
+  type HabitLogPayload,
+  type HabitPayload,
+  habitLogIdFor,
   isCheckInScheduleValid,
   type JournalDocument,
   type JournalPayload,
@@ -149,6 +156,152 @@ export const updateCheckInSchedule = async (
     payload: { ...settings.payload, morningStartsAt, eveningStartsAt },
     updatedAt: now,
     updatedByDeviceId: getDeviceId(),
+  });
+};
+
+export const createHabit = async (
+  input: Pick<HabitPayload, 'name' | 'weekdays' | 'reminderTime'>,
+): Promise<HabitDocument> => {
+  const now = new Date().toISOString();
+  const habit = createHabitDocument({
+    id: createDocumentId(),
+    now,
+    deviceId: getDeviceId(),
+    payload: { ...input, archivedAt: null },
+  });
+
+  await saveDocument(habit);
+  return habit;
+};
+
+const getHabit = async (habitId: string): Promise<HabitDocument> => {
+  const document = await database.documents.get(habitId);
+
+  if (document?.type !== 'habit') {
+    throw new Error(`Habit ${habitId} was not found.`);
+  }
+
+  return document;
+};
+
+export const updateHabit = async (
+  habitId: string,
+  update: Pick<HabitPayload, 'name' | 'weekdays' | 'reminderTime'>,
+): Promise<HabitDocument> => {
+  const habit = await getHabit(habitId);
+  const updatedDocument = parseDomainDocument({
+    ...habit,
+    payload: { ...habit.payload, ...update },
+    updatedAt: updatedNow(habit),
+    updatedByDeviceId: getDeviceId(),
+  });
+
+  if (updatedDocument.type !== 'habit') {
+    throw new Error('Expected an updated habit document.');
+  }
+
+  await saveDocument(updatedDocument);
+  return updatedDocument;
+};
+
+export const setHabitArchived = async (
+  habitId: string,
+  isArchived: boolean,
+): Promise<void> => {
+  const habit = await getHabit(habitId);
+  const now = updatedNow(habit);
+
+  await saveDocument({
+    ...habit,
+    payload: { ...habit.payload, archivedAt: isArchived ? now : null },
+    updatedAt: now,
+    updatedByDeviceId: getDeviceId(),
+  });
+};
+
+export const findHabitLog = async (
+  habitId: string,
+  localDate: string,
+): Promise<HabitLogDocument | undefined> => {
+  const document = await database.documents.get(
+    habitLogIdFor(habitId, localDate),
+  );
+
+  return document?.type === 'habit-log' && !document.deletedAt
+    ? document
+    : undefined;
+};
+
+const setHabitLog = async (
+  payload: HabitLogPayload,
+): Promise<HabitLogDocument> => {
+  const id = habitLogIdFor(payload.habitId, payload.localDate);
+  const existing = await database.documents.get(id);
+  const now = new Date().toISOString();
+  const document =
+    existing?.type === 'habit-log'
+      ? parseDomainDocument({
+          ...existing,
+          payload,
+          deletedAt: null,
+          updatedAt: updatedNow(existing),
+          updatedByDeviceId: getDeviceId(),
+        })
+      : createHabitLogDocument({
+          id,
+          now,
+          deviceId: getDeviceId(),
+          payload,
+        });
+
+  if (document.type !== 'habit-log') {
+    throw new Error('Expected a habit-log document.');
+  }
+
+  await saveDocument(document);
+  return document;
+};
+
+export const setHabitCompleted = async (
+  habitId: string,
+  localDate: string,
+  isCompleted: boolean,
+): Promise<void> => {
+  const id = habitLogIdFor(habitId, localDate);
+  const existing = await database.documents.get(id);
+
+  if (!isCompleted) {
+    if (existing?.type !== 'habit-log' || existing.deletedAt) return;
+    const now = updatedNow(existing);
+    await saveDocument({
+      ...existing,
+      deletedAt: now,
+      updatedAt: now,
+      updatedByDeviceId: getDeviceId(),
+    });
+    return;
+  }
+
+  await setHabitLog({
+    habitId,
+    localDate,
+    timezone: currentTimezone(),
+    outcome: 'completed',
+    reason: null,
+  });
+};
+
+export const recordHabitMiss = async (
+  habitId: string,
+  localDate: string,
+  reason: string | null,
+): Promise<void> => {
+  await setHabitLog({
+    habitId,
+    localDate,
+    timezone: currentTimezone(),
+    outcome: 'missed',
+    reason,
   });
 };
 

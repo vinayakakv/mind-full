@@ -76,20 +76,20 @@ Prove the hardest architectural promise:
 - Service-worker assets permit the installed app to open without the server.
 - The relevant typecheck, unit, integration, and end-to-end tests pass.
 
-The acceptance suite proves offline task, check-in, and journal work survives a
-service-worker-backed reload. It also verifies journal and task synchronization
-between paired browser contexts. The same multi-stage image used for Raspberry
-Pi deployment runs the domain, local-storage, and server integration suites
-while building.
+The acceptance suite proves offline task, check-in, habit, and journal work
+survives a service-worker-backed reload. It also verifies habit, journal, and
+task synchronization between paired browser contexts. The same multi-stage
+image used for Raspberry Pi deployment runs the domain, local-storage, and
+server integration suites while building.
 
 ## Milestone 2 — Complete daily experience
 
-Status: in progress as of July 14, 2026.
+Status: in progress as of July 15, 2026.
 
 - [x] Full morning and evening flows
 - [x] Rotating curated prompts and emotion vocabulary
 - [x] Time-aware flow selection and configurable daily boundaries
-- Habits, schedules, optional miss reasons, and streaks
+- [x] Habits, schedules, optional miss reasons, and streaks
 - Shared reminder documents
 - [x] Journal writing and rendered reading mode
 - Shared task-suggestions area
@@ -108,6 +108,12 @@ rest of the local-first domain. Writing autosaves to IndexedDB, survives an
 offline reload through its URL-addressed draft, and renders safely as Markdown
 when reading. Multiple entries per day appear in a chronological history and
 remain editable or deletable through synchronized tombstones.
+
+Habits now have weekday schedules, an optional future reminder time, archive
+and restore behavior, and deterministic per-day log documents. Today shows only
+the habits scheduled for the current local day and completion works entirely
+offline. Habit details calculate streaks across scheduled occurrences and let a
+past miss carry an optional, editable reason without requiring one.
 
 ## Milestone 3 — Local AI and reflection
 

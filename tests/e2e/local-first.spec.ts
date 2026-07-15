@@ -90,6 +90,79 @@ test('completes distinct morning and evening check-ins and edits an answer', asy
   );
 });
 
+const addHabit = async (page: Page, name: string): Promise<void> => {
+  await page.getByRole('button', { name: 'Manage' }).click();
+  await page.getByRole('button', { name: 'Add a habit' }).click();
+  await page.getByRole('textbox', { name: 'Habit' }).fill(name);
+  await page.getByRole('button', { name: 'Add habit' }).click();
+  await page.getByRole('button', { name: 'Close habit manager' }).click();
+};
+
+test('creates and completes a habit through an offline reload', async ({
+  context,
+  page,
+}) => {
+  await prepareServiceWorker(page);
+  await context.setOffline(true);
+  await addHabit(page, 'Step into the morning light');
+
+  const habit = page.getByRole('button', {
+    name: /Step into the morning light/,
+  });
+  await expect(habit).toHaveAttribute('aria-pressed', 'false');
+  await habit.click();
+  await expect(habit).toHaveAttribute('aria-pressed', 'true');
+
+  await page.reload();
+  await expect(
+    page.getByRole('button', { name: /Step into the morning light/ }),
+  ).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('synchronizes a completed habit between paired browsers', async ({
+  browser,
+}) => {
+  const firstContext = await browser.newContext();
+  const secondContext = await browser.newContext();
+  const name = `Pause and breathe ${Date.now()}`;
+
+  try {
+    const firstPage = await firstContext.newPage();
+    const secondPage = await secondContext.newPage();
+
+    await pairBrowser(firstPage);
+    await pairBrowser(secondPage);
+
+    let shouldDelayNextSync = true;
+    await firstPage.route('**/api/sync', async (route) => {
+      if (shouldDelayNextSync) {
+        shouldDelayNextSync = false;
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+      await route.continue();
+    });
+
+    await firstPage.goto('/');
+    await addHabit(firstPage, name);
+    await expect(firstPage.getByText('Syncing')).toBeVisible();
+    const firstHabit = firstPage.getByRole('button', {
+      name: new RegExp(name),
+    });
+    await firstHabit.click();
+    await expect(firstHabit).toHaveAttribute('aria-pressed', 'true');
+    await expect(firstPage.getByText('Synced')).toBeVisible();
+
+    await secondPage.goto('/settings');
+    await secondPage.getByRole('button', { name: 'Sync now' }).click();
+    await secondPage.goto('/');
+    await expect(
+      secondPage.getByRole('button', { name: new RegExp(name) }),
+    ).toHaveAttribute('aria-pressed', 'true');
+  } finally {
+    await Promise.all([firstContext.close(), secondContext.close()]);
+  }
+});
+
 test('autosaves a journal offline and renders its markdown after reload', async ({
   context,
   page,

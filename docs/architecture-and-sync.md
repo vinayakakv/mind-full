@@ -139,7 +139,9 @@ A sync cycle:
 
 Sync is attempted at launch, after local changes, when connectivity returns,
 when the app regains focus, periodically while open, and through a manual
-control.
+control. Requests arriving during an active sync coalesce into another pass
+before the client returns to idle, so a local write made during a network round
+trip does not wait for the periodic interval.
 
 ## Conflict resolution
 

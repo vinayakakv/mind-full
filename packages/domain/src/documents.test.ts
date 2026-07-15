@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  createHabitDocument,
+  createHabitLogDocument,
   createJournalDocument,
   createTaskDocument,
   migrateDomainDocument,
@@ -55,6 +57,35 @@ describe('domain documents', () => {
     });
 
     expect(migrateDomainDocument(journal)).toEqual(journal);
+  });
+
+  it('validates a habit and its occurrence log', () => {
+    const habit = createHabitDocument({
+      id: '01-habit',
+      now,
+      deviceId: 'phone',
+      payload: {
+        name: 'Take a walk',
+        weekdays: [1, 3, 5],
+        reminderTime: '17:30',
+        archivedAt: null,
+      },
+    });
+    const log = createHabitLogDocument({
+      id: 'habit-log:01-habit:2026-07-14',
+      now,
+      deviceId: 'phone',
+      payload: {
+        habitId: habit.id,
+        localDate: '2026-07-14',
+        timezone: 'Asia/Kolkata',
+        outcome: 'completed',
+        reason: null,
+      },
+    });
+
+    expect(migrateDomainDocument(habit).type).toBe('habit');
+    expect(migrateDomainDocument(log).type).toBe('habit-log');
   });
 
   it('selects the document with the later timestamp', () => {

@@ -3,11 +3,15 @@ import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { database } from './database';
 import {
   addTask,
+  createHabit,
   createJournal,
   deleteJournal,
   findCheckIn,
+  findHabitLog,
   getOrCreateCheckIn,
   getOrCreateMorningCheckIn,
+  recordHabitMiss,
+  setHabitCompleted,
   setTaskCompleted,
   updateCheckIn,
   updateJournal,
@@ -28,6 +32,35 @@ describe('local documents', () => {
     expect(await database.documents.get(task.id)).toEqual(task);
     expect(await database.syncState.get(task.id)).toMatchObject({
       dirty: 1,
+    });
+  });
+
+  it('uses one revivable log document for a habit occurrence', async () => {
+    const habit = await createHabit({
+      name: 'Step outside',
+      weekdays: [1, 3, 5],
+      reminderTime: null,
+    });
+    const localDate = '2026-07-15';
+
+    await setHabitCompleted(habit.id, localDate, true);
+    const firstLog = await findHabitLog(habit.id, localDate);
+    expect(firstLog?.payload.outcome).toBe('completed');
+
+    await setHabitCompleted(habit.id, localDate, false);
+    expect(await findHabitLog(habit.id, localDate)).toBeUndefined();
+
+    await setHabitCompleted(habit.id, localDate, true);
+    const restoredLog = await findHabitLog(habit.id, localDate);
+    expect(restoredLog?.id).toBe(firstLog?.id);
+
+    await recordHabitMiss(habit.id, localDate, 'The day became too full.');
+    expect(await findHabitLog(habit.id, localDate)).toMatchObject({
+      id: firstLog?.id,
+      payload: {
+        outcome: 'missed',
+        reason: 'The day became too full.',
+      },
     });
   });
 
