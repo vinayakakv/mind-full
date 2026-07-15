@@ -15,6 +15,22 @@ mean compressed; clever one-liners and hidden control flow are not simplicity.
   silently choosing one.
 - Make the smallest coherent change that completes the behavior.
 
+## Visual changes
+
+Before committing any change that affects layout, styling, copy placement, or
+interactive presentation:
+
+- Run the updated interface and capture screenshots of the relevant states.
+- Use a mobile browser viewport for mobile behavior; include a desktop viewport
+  when the change can affect wider layouts.
+- Exercise the interaction rather than reviewing only its resting state. For
+  example, open the dialog, expanded control, keyboard state, or error state
+  that changed.
+- View the final screenshots directly before committing. Do not rely only on
+  tests, DOM inspection, or screenshots captured before the last edit.
+- Correct visible spacing, clipping, overlap, hierarchy, and contrast problems
+  before the commit.
+
 ## Code shape
 
 Use a functional core with a small imperative shell.
