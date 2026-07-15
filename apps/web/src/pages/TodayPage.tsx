@@ -140,8 +140,8 @@ export function TodayPage() {
           />
         </div>
       </section>
-      <HealthCard />
       <ReminderNotices />
+      <HealthCard />
       <HabitList />
       <TaskSuggestions />
       <TaskList />

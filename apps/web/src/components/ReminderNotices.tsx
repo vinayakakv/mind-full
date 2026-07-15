@@ -49,7 +49,7 @@ export function ReminderNotices() {
     <section className={styles.notices} aria-label="Reminders">
       {notices.map(({ reminder, text }) => (
         <div className={styles.notice} key={reminder.id}>
-          <div>
+          <div className={styles.copy}>
             <p>Gentle reminder</p>
             <span>{text}</span>
           </div>
