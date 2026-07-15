@@ -141,12 +141,16 @@ function JournalEditor({
           onBlur={() => void persist()}
         />
       </TextField>
-      <div className={styles.editorFooter}>
-        <span>Markdown is welcome. Plain words are enough.</span>
-        <Button className={styles.primaryButton} onPress={finishWriting}>
-          Finish writing
-        </Button>
-      </div>
+      <Button
+        className={styles.finishAction}
+        aria-label="Finish writing"
+        onPress={finishWriting}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m5 12.5 4.2 4.2L19 7" />
+        </svg>
+        <span>Finish writing</span>
+      </Button>
     </article>
   );
 }
