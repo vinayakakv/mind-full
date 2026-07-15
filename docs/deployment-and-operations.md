@@ -44,6 +44,27 @@ public. After the first successful publish, open the package settings on GitHub
 and change its visibility to public. Public images can then be pulled by the Pi
 without storing a GitHub credential.
 
+The production Compose file and environment template live in `deployment/`.
+On the Pi, copy the template, choose a published immutable image tag and a
+private pairing code, then start the service:
+
+```sh
+cd deployment
+cp .env.example .env
+# Edit .env before continuing.
+docker compose pull
+docker compose up -d
+curl http://127.0.0.1:3001/api/health
+```
+
+The default port binding is loopback-only. Make it available inside the tailnet
+with HTTPS while leaving the container unavailable directly from the LAN:
+
+```sh
+sudo tailscale serve --bg http://127.0.0.1:3001
+tailscale serve status
+```
+
 ## Internal scheduler
 
 All application schedules run inside the `mindfull` backend container.
