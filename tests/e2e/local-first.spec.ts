@@ -263,6 +263,12 @@ test('autosaves a journal offline and renders its markdown after reload', async 
   );
 
   await page.getByRole('button', { name: 'Finish writing' }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Journal', exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole('link', { name: 'Back to history' }),
+  ).toBeVisible();
   await expect(page.getByText('soft', { exact: true })).toBeVisible();
 });
 

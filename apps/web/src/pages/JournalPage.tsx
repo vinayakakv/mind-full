@@ -165,9 +165,14 @@ function JournalReading({
 
   return (
     <article className={styles.reading}>
-      <p className={styles.readingDate}>
-        {formatLocalDate(journal.payload.localDate, 'long')}
-      </p>
+      <div className={styles.readingMeta}>
+        <p className={styles.readingDate}>
+          {formatLocalDate(journal.payload.localDate, 'long')}
+        </p>
+        <Link className={styles.historyLink} to="/history">
+          Back to history
+        </Link>
+      </div>
       <h2>{entryHeading(journal)}</h2>
       {markdown ? (
         <div className={styles.markdown}>
@@ -232,21 +237,15 @@ export function JournalPage() {
 
   return (
     <section className={styles.page}>
-      {!isWriting ? (
+      {!isWriting && !selectedId ? (
         <header className={styles.pageHeader}>
           <div>
             <p className={styles.eyebrow}>Write freely</p>
             <h1>Journal</h1>
           </div>
-          {selectedJournal ? (
-            <Link className={styles.historyLink} to="/history">
-              Back to history
-            </Link>
-          ) : (
-            <Button className={styles.newEntryButton} onPress={beginEntry}>
-              New entry
-            </Button>
-          )}
+          <Button className={styles.newEntryButton} onPress={beginEntry}>
+            New entry
+          </Button>
         </header>
       ) : null}
 

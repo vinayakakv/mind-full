@@ -71,6 +71,12 @@
   margin-bottom: 1.5rem;
 }
 
+.readingMeta {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
 .titleField input,
 .writingField textarea {
   background: transparent;
