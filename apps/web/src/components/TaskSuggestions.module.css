@@ -1,0 +1,93 @@
+.section {
+  margin-top: 4.5rem;
+}
+
+.section > header p {
+  color: var(--text-muted);
+  font-size: 0.73rem;
+  letter-spacing: 0.12em;
+  margin: 0 0 0.35rem;
+  text-transform: uppercase;
+}
+
+.section h2 {
+  font-family: var(--font-reflection);
+  font-size: 1.6rem;
+  font-weight: 500;
+  margin: 0 0 1.25rem;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.suggestion {
+  align-items: center;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  gap: 1.5rem;
+  justify-content: space-between;
+  padding: 1rem 0;
+}
+
+.proposedText {
+  font-family: var(--font-reflection);
+  font-size: 1.05rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.source {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  margin: 0.35rem 0 0;
+}
+
+.source a {
+  color: inherit;
+}
+
+.actions {
+  display: flex;
+  flex: none;
+  gap: 0.35rem;
+}
+
+.accept,
+.reject {
+  background: transparent;
+  border: 1px solid var(--border-control);
+  border-radius: 2rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.75rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.accept {
+  color: var(--accent-strong);
+}
+
+.accept[data-hovered],
+.reject[data-hovered] {
+  background: var(--accent-soft);
+  border-color: var(--accent-strong);
+  color: var(--text-primary);
+}
+
+.accept[data-disabled],
+.reject[data-disabled] {
+  cursor: default;
+  opacity: 0.55;
+}
+
+@media (max-width: 36rem) {
+  .suggestion {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+}

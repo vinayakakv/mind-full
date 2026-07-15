@@ -4,6 +4,7 @@ import { NavLink, Outlet } from 'react-router';
 
 import { documentTable } from '../data/documents';
 import { localTimeFor } from '../data/time';
+import { useHousekeeping } from '../hooks/use-housekeeping';
 import { useResolvedTheme } from '../hooks/use-resolved-theme';
 import { useSync } from '../hooks/use-sync';
 import { AmbientBackdrop } from './AmbientBackdrop';
@@ -37,6 +38,7 @@ function PrimaryNavigation({ className }: { className: string }) {
 
 export function AppShell() {
   useSync();
+  useHousekeeping();
   const settings = useLiveQuery(async () => {
     const document = await documentTable().get('settings');
     return document?.type === 'settings' ? document : undefined;

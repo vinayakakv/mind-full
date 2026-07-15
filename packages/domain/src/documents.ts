@@ -36,6 +36,24 @@ export const taskPayloadSchema = z.object({
   source: sourceSchema,
 });
 
+export const taskSuggestionPayloadSchema = z
+  .object({
+    proposedText: z.string().trim().min(1).max(500),
+    availableFrom: instantSchema.nullable(),
+    sourceDocumentId: z.string().min(1),
+    sourceContentHash: z.string().min(1),
+    state: z.enum(['pending', 'accepted', 'rejected', 'superseded']),
+    acceptedTaskId: z.string().min(1).nullable(),
+  })
+  .refine(
+    ({ state, acceptedTaskId }) =>
+      (state === 'accepted') === (acceptedTaskId !== null),
+    {
+      message: 'Only an accepted suggestion can name its task.',
+      path: ['acceptedTaskId'],
+    },
+  );
+
 export const journalPayloadSchema = z.object({
   title: z.string().trim().min(1).max(200).nullable(),
   markdown: z.string(),
@@ -142,6 +160,12 @@ export const taskDocumentSchema = z.object({
   payload: taskPayloadSchema,
 });
 
+export const taskSuggestionDocumentSchema = z.object({
+  ...envelopeFields,
+  type: z.literal('task-suggestion'),
+  payload: taskSuggestionPayloadSchema,
+});
+
 export const journalDocumentSchema = z.object({
   ...envelopeFields,
   type: z.literal('journal'),
@@ -175,6 +199,7 @@ export const checkInDocumentSchema = z.object({
 export const domainDocumentSchema = z.discriminatedUnion('type', [
   settingsDocumentSchema,
   taskDocumentSchema,
+  taskSuggestionDocumentSchema,
   journalDocumentSchema,
   habitDocumentSchema,
   habitLogDocumentSchema,
@@ -184,6 +209,7 @@ export const domainDocumentSchema = z.discriminatedUnion('type', [
 
 export type SettingsPayload = z.infer<typeof settingsPayloadSchema>;
 export type TaskPayload = z.infer<typeof taskPayloadSchema>;
+export type TaskSuggestionPayload = z.infer<typeof taskSuggestionPayloadSchema>;
 export type JournalPayload = z.infer<typeof journalPayloadSchema>;
 export type HabitPayload = z.infer<typeof habitPayloadSchema>;
 export type HabitLogPayload = z.infer<typeof habitLogPayloadSchema>;
@@ -191,6 +217,9 @@ export type ReminderPayload = z.infer<typeof reminderPayloadSchema>;
 export type CheckInPayload = z.infer<typeof checkInPayloadSchema>;
 export type SettingsDocument = z.infer<typeof settingsDocumentSchema>;
 export type TaskDocument = z.infer<typeof taskDocumentSchema>;
+export type TaskSuggestionDocument = z.infer<
+  typeof taskSuggestionDocumentSchema
+>;
 export type JournalDocument = z.infer<typeof journalDocumentSchema>;
 export type HabitDocument = z.infer<typeof habitDocumentSchema>;
 export type HabitLogDocument = z.infer<typeof habitLogDocumentSchema>;
@@ -246,6 +275,14 @@ export const createTaskDocument = (
   taskDocumentSchema.parse({
     ...createEnvelope(input),
     type: 'task',
+  });
+
+export const createTaskSuggestionDocument = (
+  input: NewDocument<TaskSuggestionPayload>,
+): TaskSuggestionDocument =>
+  taskSuggestionDocumentSchema.parse({
+    ...createEnvelope(input),
+    type: 'task-suggestion',
   });
 
 export const createJournalDocument = (

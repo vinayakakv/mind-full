@@ -3,6 +3,7 @@ import {
   type CheckInKind,
   type CheckInPayload,
   compareDocumentVersions,
+  completedTasksPastRetention,
   createCheckInDocument,
   createDocumentId,
   createHabitDocument,
@@ -11,6 +12,7 @@ import {
   createReminderDocument,
   createSettingsDocument,
   createTaskDocument,
+  createTaskSuggestionDocument,
   type DomainDocument,
   type HabitDocument,
   type HabitLogDocument,
@@ -28,6 +30,9 @@ import {
   type SettingsDocument,
   selectCuratedPrompts,
   type TaskDocument,
+  type TaskSuggestionDocument,
+  type TaskSuggestionPayload,
+  taskIdForSuggestion,
 } from '@mindfull/domain';
 import { database } from './database';
 import { getDeviceId } from './device';
@@ -458,6 +463,157 @@ export const addTask = async (
   }
   await saveDocuments(documents);
   return task;
+};
+
+export const addTaskSuggestion = async (
+  input: Pick<
+    TaskSuggestionPayload,
+    'proposedText' | 'availableFrom' | 'sourceDocumentId' | 'sourceContentHash'
+  >,
+): Promise<TaskSuggestionDocument> => {
+  const now = new Date().toISOString();
+  const suggestion = createTaskSuggestionDocument({
+    id: createDocumentId(),
+    now,
+    deviceId: getDeviceId(),
+    payload: {
+      ...input,
+      state: 'pending',
+      acceptedTaskId: null,
+    },
+  });
+
+  await saveDocument(suggestion);
+  return suggestion;
+};
+
+const getTaskSuggestion = async (
+  suggestionId: string,
+): Promise<TaskSuggestionDocument> => {
+  const document = await database.documents.get(suggestionId);
+
+  if (document?.type !== 'task-suggestion') {
+    throw new Error(`Task suggestion ${suggestionId} was not found.`);
+  }
+
+  return document;
+};
+
+export const acceptTaskSuggestion = async (
+  suggestionId: string,
+): Promise<TaskDocument> => {
+  const suggestion = await getTaskSuggestion(suggestionId);
+
+  if (suggestion.payload.state === 'accepted') {
+    const acceptedTask = suggestion.payload.acceptedTaskId
+      ? await database.documents.get(suggestion.payload.acceptedTaskId)
+      : undefined;
+    if (acceptedTask?.type === 'task') return acceptedTask;
+  }
+
+  if (suggestion.payload.state !== 'pending') {
+    throw new Error('This suggestion has already been resolved.');
+  }
+
+  const source = await database.documents.get(
+    suggestion.payload.sourceDocumentId,
+  );
+  if (source?.type !== 'journal' && source?.type !== 'check-in') {
+    throw new Error('The source reflection could not be found.');
+  }
+
+  const now = new Date().toISOString();
+  const task = createTaskDocument({
+    id: taskIdForSuggestion(suggestion.id),
+    now,
+    deviceId: getDeviceId(),
+    sortKey: nextTaskSortKey(),
+    payload: {
+      text: suggestion.payload.proposedText,
+      completedAt: null,
+      availableFrom: null,
+      reminderAt: null,
+      source: { kind: source.type, documentId: source.id },
+    },
+  });
+  const resolvedSuggestion: TaskSuggestionDocument = {
+    ...suggestion,
+    payload: {
+      ...suggestion.payload,
+      state: 'accepted',
+      acceptedTaskId: task.id,
+    },
+    updatedAt: nextDocumentTimestamp(suggestion.updatedAt, now),
+    updatedByDeviceId: getDeviceId(),
+  };
+
+  await saveDocuments([task, resolvedSuggestion]);
+  return task;
+};
+
+export const rejectTaskSuggestion = async (
+  suggestionId: string,
+): Promise<void> => {
+  const suggestion = await getTaskSuggestion(suggestionId);
+  if (suggestion.payload.state !== 'pending') return;
+
+  await saveDocument({
+    ...suggestion,
+    payload: { ...suggestion.payload, state: 'rejected' },
+    updatedAt: updatedNow(suggestion),
+    updatedByDeviceId: getDeviceId(),
+  });
+};
+
+export const removeExpiredCompletedTasks = async (
+  now = new Date(),
+): Promise<number> => {
+  const settings = await ensureSettings();
+  const documents = await database.documents
+    .where('type')
+    .equals('task')
+    .toArray();
+  const tasks = documents.filter(
+    (document): document is TaskDocument => document.type === 'task',
+  );
+  const expiredTasks = completedTasksPastRetention(
+    tasks,
+    now.toISOString(),
+    settings.payload.completedTaskRetentionDays,
+  );
+
+  if (expiredTasks.length === 0) return 0;
+
+  const tombstones = await Promise.all(
+    expiredTasks.map(async (task): Promise<DomainDocument[]> => {
+      const deletedAt = nextDocumentTimestamp(
+        task.updatedAt,
+        now.toISOString(),
+      );
+      const deletedTask: TaskDocument = {
+        ...task,
+        deletedAt,
+        updatedAt: deletedAt,
+        updatedByDeviceId: getDeviceId(),
+      };
+      const reminder = await reminderFor('task', task.id);
+
+      return reminder
+        ? [
+            deletedTask,
+            {
+              ...reminder,
+              deletedAt,
+              updatedAt: deletedAt,
+              updatedByDeviceId: getDeviceId(),
+            },
+          ]
+        : [deletedTask];
+    }),
+  );
+
+  await saveDocuments(tombstones.flat());
+  return expiredTasks.length;
 };
 
 export const createJournal = async (

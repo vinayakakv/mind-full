@@ -13,6 +13,7 @@ import { CheckInFlow, openCheckIn } from '../components/CheckInFlow';
 import { HabitList } from '../components/HabitList';
 import { ReminderNotices } from '../components/ReminderNotices';
 import { TaskList } from '../components/TaskList';
+import { TaskSuggestions } from '../components/TaskSuggestions';
 import { createJournal, ensureSettings, findCheckIn } from '../data/documents';
 import { greetingFor, localDateFor, localTimeFor } from '../data/time';
 import { activeCheckInIdAtom } from '../state/check-in';
@@ -140,6 +141,7 @@ export function TodayPage() {
       </section>
       <ReminderNotices />
       <HabitList />
+      <TaskSuggestions />
       <TaskList />
       <CheckInFlow />
       <JournalComposeAction />

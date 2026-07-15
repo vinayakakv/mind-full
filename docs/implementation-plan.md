@@ -84,7 +84,7 @@ server integration suites while building.
 
 ## Milestone 2 — Complete daily experience
 
-Status: in progress as of July 15, 2026.
+Status: complete as of July 15, 2026.
 
 - [x] Full morning and evening flows
 - [x] Rotating curated prompts and emotion vocabulary
@@ -93,9 +93,9 @@ Status: in progress as of July 15, 2026.
 - [x] Shared reminder documents and progressive browser notifications
 - [x] Journal writing and rendered reading mode
 - [x] History timeline, journal compose action, and simplified navigation
-- Shared task-suggestions area
+- [x] Shared task-suggestions area
 - [x] Time-aware ambient color fields and polished gentle motion
-- Seven-day completed-task retention job
+- [x] Seven-day completed-task retention job
 
 Morning and evening check-ins are separate editable documents. Both use a
 resumable, fully skippable flow with named states, emotion words, stable prompt
@@ -130,6 +130,20 @@ quiet compose action on Today and completed entries join a chronological
 History alongside completed check-ins and recorded habit outcomes. Settings is
 a utility icon rather than a primary tab. Tasks retain creation order and move
 into a subdued completed group instead of exposing mobile reordering controls.
+
+AI-proposed tasks now have their own synchronized document type and a shared
+Suggestions area on Today and History. A proposal appears only after its
+availability time, names its reflection source, and can only become a normal
+task through explicit acceptance. Dismissal is permanent, while acceptance
+keeps journal or check-in provenance on the created task. Accepted task IDs are
+derived from suggestion IDs so simultaneous offline approvals converge instead
+of creating duplicates.
+
+Completed tasks remain visible for the configured seven days. Local
+housekeeping runs at launch, after synchronized document changes, and whenever
+the app returns to the foreground; expired tasks and their reminders become
+ordinary dirty tombstones. Cleanup therefore works without the backend, catches
+up after downtime, synchronizes across devices, and remains idempotent.
 
 ## Milestone 3 — Local AI and reflection
 

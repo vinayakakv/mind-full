@@ -7,6 +7,7 @@ import {
   createReminderDocument,
   createSettingsDocument,
   createTaskDocument,
+  createTaskSuggestionDocument,
   migrateDomainDocument,
   nextDocumentTimestamp,
   selectWinningDocument,
@@ -64,6 +65,42 @@ describe('domain documents', () => {
       migrateDomainDocument({
         ...task,
         payload: { ...task.payload, text: '  ' },
+      }),
+    ).toThrow();
+  });
+
+  it('keeps task suggestions separate from accepted tasks', () => {
+    const suggestion = createTaskSuggestionDocument({
+      id: '01-suggestion',
+      now,
+      deviceId: 'phone',
+      payload: {
+        proposedText: 'Call Mum',
+        availableFrom: null,
+        sourceDocumentId: '01-journal',
+        sourceContentHash: 'content-hash',
+        state: 'pending',
+        acceptedTaskId: null,
+      },
+    });
+
+    expect(migrateDomainDocument(suggestion)).toEqual(suggestion);
+  });
+
+  it('requires an accepted suggestion to name its task', () => {
+    expect(() =>
+      createTaskSuggestionDocument({
+        id: '01-suggestion',
+        now,
+        deviceId: 'phone',
+        payload: {
+          proposedText: 'Call Mum',
+          availableFrom: null,
+          sourceDocumentId: '01-journal',
+          sourceContentHash: 'content-hash',
+          state: 'accepted',
+          acceptedTaskId: null,
+        },
       }),
     ).toThrow();
   });

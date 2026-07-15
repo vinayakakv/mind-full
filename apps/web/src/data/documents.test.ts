@@ -2,7 +2,9 @@ import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { database } from './database';
 import {
+  acceptTaskSuggestion,
   addTask,
+  addTaskSuggestion,
   applyRemoteDocuments,
   createHabit,
   createJournal,
@@ -13,6 +15,9 @@ import {
   getOrCreateCheckIn,
   getOrCreateMorningCheckIn,
   recordHabitMiss,
+  rejectTaskSuggestion,
+  removeExpiredCompletedTasks,
+  saveDocument,
   setCheckInReminder,
   setHabitCompleted,
   setTaskCompleted,
@@ -125,6 +130,64 @@ describe('local documents', () => {
       expect(completedTask.payload.completedAt).not.toBeNull();
       expect(task.payload.completedAt).toBeNull();
     }
+  });
+
+  it('turns an approved suggestion into a sourced task', async () => {
+    const journal = await createJournal(new Date('2026-07-14T12:00:00.000Z'));
+    const suggestion = await addTaskSuggestion({
+      proposedText: 'Call Mum',
+      availableFrom: null,
+      sourceDocumentId: journal.id,
+      sourceContentHash: 'journal-hash',
+    });
+
+    const task = await acceptTaskSuggestion(suggestion.id);
+
+    expect(task.payload).toMatchObject({
+      text: 'Call Mum',
+      source: { kind: 'journal', documentId: journal.id },
+    });
+    expect(await database.documents.get(suggestion.id)).toMatchObject({
+      payload: { state: 'accepted', acceptedTaskId: task.id },
+    });
+  });
+
+  it('permanently resolves a dismissed suggestion', async () => {
+    const journal = await createJournal();
+    const suggestion = await addTaskSuggestion({
+      proposedText: 'Plan a walk',
+      availableFrom: null,
+      sourceDocumentId: journal.id,
+      sourceContentHash: 'journal-hash',
+    });
+
+    await rejectTaskSuggestion(suggestion.id);
+    await rejectTaskSuggestion(suggestion.id);
+
+    expect(await database.documents.get(suggestion.id)).toMatchObject({
+      payload: { state: 'rejected', acceptedTaskId: null },
+    });
+  });
+
+  it('tombstones completed tasks after the configured retention period', async () => {
+    const task = await addTask('Return a book', '2026-07-02T09:00:00.000Z');
+    await saveDocument({
+      ...task,
+      payload: { ...task.payload, completedAt: '2026-07-08T12:00:00.000Z' },
+      updatedAt: '2026-07-08T12:00:00.000Z',
+    });
+
+    expect(
+      await removeExpiredCompletedTasks(new Date('2026-07-15T12:00:00.000Z')),
+    ).toBe(1);
+    expect(await removeExpiredCompletedTasks()).toBe(0);
+    expect(await database.documents.get(task.id)).toMatchObject({
+      deletedAt: '2026-07-15T12:00:00.000Z',
+    });
+    expect(await findReminder('task', task.id)).toMatchObject({
+      deletedAt: '2026-07-15T12:00:00.000Z',
+    });
+    expect(await database.syncState.get(task.id)).toMatchObject({ dirty: 1 });
   });
 
   it('autosaves and tombstones a journal locally', async () => {

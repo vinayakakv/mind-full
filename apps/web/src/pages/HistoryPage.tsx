@@ -6,6 +6,7 @@ import { Button } from 'react-aria-components';
 import { Link } from 'react-router';
 
 import { CheckInFlow } from '../components/CheckInFlow';
+import { TaskSuggestions } from '../components/TaskSuggestions';
 import { documentTable } from '../data/documents';
 import {
   filterHistoryEntries,
@@ -163,6 +164,8 @@ export function HistoryPage() {
           </Button>
         ))}
       </fieldset>
+
+      <TaskSuggestions />
 
       {entries && visibleEntries.length === 0 ? (
         <p className={styles.empty}>
