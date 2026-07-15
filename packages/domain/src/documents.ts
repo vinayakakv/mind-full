@@ -54,6 +54,32 @@ export const taskSuggestionPayloadSchema = z
     },
   );
 
+const bodyMetricKindSchema = z.enum(['mass', 'circumference']);
+const bodyUnitSchema = z.enum(['kg', 'lb', 'cm', 'in']);
+
+export const bodyMetricPayloadSchema = z
+  .object({
+    name: z.string().trim().min(1).max(100),
+    kind: bodyMetricKindSchema,
+    preferredUnit: bodyUnitSchema,
+    archivedAt: instantSchema.nullable(),
+  })
+  .refine(
+    ({ kind, preferredUnit }) =>
+      kind === 'mass'
+        ? preferredUnit === 'kg' || preferredUnit === 'lb'
+        : preferredUnit === 'cm' || preferredUnit === 'in',
+    {
+      message: 'The preferred unit must match the metric kind.',
+      path: ['preferredUnit'],
+    },
+  );
+
+export const bodyMeasurementPayloadSchema = z.object({
+  metricId: z.string().min(1),
+  value: z.number().positive(),
+});
+
 export const journalPayloadSchema = z.object({
   title: z.string().trim().min(1).max(200).nullable(),
   markdown: z.string(),
@@ -166,6 +192,18 @@ export const taskSuggestionDocumentSchema = z.object({
   payload: taskSuggestionPayloadSchema,
 });
 
+export const bodyMetricDocumentSchema = z.object({
+  ...envelopeFields,
+  type: z.literal('body-metric'),
+  payload: bodyMetricPayloadSchema,
+});
+
+export const bodyMeasurementDocumentSchema = z.object({
+  ...envelopeFields,
+  type: z.literal('body-measurement'),
+  payload: bodyMeasurementPayloadSchema,
+});
+
 export const journalDocumentSchema = z.object({
   ...envelopeFields,
   type: z.literal('journal'),
@@ -200,6 +238,8 @@ export const domainDocumentSchema = z.discriminatedUnion('type', [
   settingsDocumentSchema,
   taskDocumentSchema,
   taskSuggestionDocumentSchema,
+  bodyMetricDocumentSchema,
+  bodyMeasurementDocumentSchema,
   journalDocumentSchema,
   habitDocumentSchema,
   habitLogDocumentSchema,
@@ -210,6 +250,10 @@ export const domainDocumentSchema = z.discriminatedUnion('type', [
 export type SettingsPayload = z.infer<typeof settingsPayloadSchema>;
 export type TaskPayload = z.infer<typeof taskPayloadSchema>;
 export type TaskSuggestionPayload = z.infer<typeof taskSuggestionPayloadSchema>;
+export type BodyMetricPayload = z.infer<typeof bodyMetricPayloadSchema>;
+export type BodyMeasurementPayload = z.infer<
+  typeof bodyMeasurementPayloadSchema
+>;
 export type JournalPayload = z.infer<typeof journalPayloadSchema>;
 export type HabitPayload = z.infer<typeof habitPayloadSchema>;
 export type HabitLogPayload = z.infer<typeof habitLogPayloadSchema>;
@@ -219,6 +263,10 @@ export type SettingsDocument = z.infer<typeof settingsDocumentSchema>;
 export type TaskDocument = z.infer<typeof taskDocumentSchema>;
 export type TaskSuggestionDocument = z.infer<
   typeof taskSuggestionDocumentSchema
+>;
+export type BodyMetricDocument = z.infer<typeof bodyMetricDocumentSchema>;
+export type BodyMeasurementDocument = z.infer<
+  typeof bodyMeasurementDocumentSchema
 >;
 export type JournalDocument = z.infer<typeof journalDocumentSchema>;
 export type HabitDocument = z.infer<typeof habitDocumentSchema>;
@@ -283,6 +331,22 @@ export const createTaskSuggestionDocument = (
   taskSuggestionDocumentSchema.parse({
     ...createEnvelope(input),
     type: 'task-suggestion',
+  });
+
+export const createBodyMetricDocument = (
+  input: NewDocument<BodyMetricPayload>,
+): BodyMetricDocument =>
+  bodyMetricDocumentSchema.parse({
+    ...createEnvelope({ ...input, occurredAt: null }),
+    type: 'body-metric',
+  });
+
+export const createBodyMeasurementDocument = (
+  input: NewDocument<BodyMeasurementPayload>,
+): BodyMeasurementDocument =>
+  bodyMeasurementDocumentSchema.parse({
+    ...createEnvelope(input),
+    type: 'body-measurement',
   });
 
 export const createJournalDocument = (

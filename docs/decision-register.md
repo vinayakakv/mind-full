@@ -104,6 +104,7 @@ topic documents contain the detailed rationale and behavior.
 - React Aria Components plus app-owned CSS Modules.
 - Jotai for transient workflow/UI state.
 - Dexie/IndexedDB for durable local state.
+- Recharts is isolated to the lazy-loaded Health route.
 - Soft serif for reflections and sans-serif for controls.
 - Dedicated light/dark themes, system following, and time-aware presentation.
 - Theme preference syncs; system resolution is device-local.

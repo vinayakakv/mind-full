@@ -26,6 +26,13 @@ const router = createBrowserRouter([
         },
       },
       {
+        path: 'health',
+        lazy: async () => {
+          const { HealthPage } = await import('./pages/HealthPage');
+          return { Component: HealthPage };
+        },
+      },
+      {
         path: 'reflect',
         element: (
           <PlaceholderPage eyebrow="Look back gently" title="Reflect">

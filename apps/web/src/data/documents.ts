@@ -1,9 +1,15 @@
 import {
+  type BodyMeasurementDocument,
+  type BodyMetricDocument,
+  type BodyMetricKind,
+  type BodyUnit,
   type CheckInDocument,
   type CheckInKind,
   type CheckInPayload,
   compareDocumentVersions,
   completedTasksPastRetention,
+  createBodyMeasurementDocument,
+  createBodyMetricDocument,
   createCheckInDocument,
   createDocumentId,
   createHabitDocument,
@@ -14,6 +20,7 @@ import {
   createTaskDocument,
   createTaskSuggestionDocument,
   type DomainDocument,
+  defaultBodyMetrics,
   type HabitDocument,
   type HabitLogDocument,
   type HabitLogPayload,
@@ -33,6 +40,7 @@ import {
   type TaskSuggestionDocument,
   type TaskSuggestionPayload,
   taskIdForSuggestion,
+  toCanonicalBodyValue,
 } from '@mindfull/domain';
 import { database } from './database';
 import { getDeviceId } from './device';
@@ -54,6 +62,7 @@ const markDirty = async (documentId: string): Promise<void> => {
 };
 
 const allWeekdays = [0, 1, 2, 3, 4, 5, 6];
+const defaultBodyMetricCreatedAt = '2026-01-01T00:00:00.000Z';
 
 const reminderFor = async (
   targetType: ReminderPayload['targetType'],
@@ -228,6 +237,182 @@ export const updateCheckInSchedule = async (
   await saveDocument({
     ...settings,
     payload: { ...settings.payload, morningStartsAt, eveningStartsAt },
+    updatedAt: now,
+    updatedByDeviceId: getDeviceId(),
+  });
+};
+
+const bodyMetricsFrom = (documents: DomainDocument[]): BodyMetricDocument[] =>
+  documents
+    .filter(
+      (document): document is BodyMetricDocument =>
+        document.type === 'body-metric' && !document.deletedAt,
+    )
+    .sort(
+      (left, right) =>
+        (left.sortKey ?? '').localeCompare(right.sortKey ?? '') ||
+        left.payload.name.localeCompare(right.payload.name),
+    );
+
+export const ensureDefaultBodyMetrics = async (): Promise<
+  BodyMetricDocument[]
+> => {
+  const existingDocuments = await database.documents
+    .where('type')
+    .equals('body-metric')
+    .toArray();
+  const existingIds = new Set(existingDocuments.map(({ id }) => id));
+  const missingMetrics = defaultBodyMetrics.flatMap((metric, index) =>
+    existingIds.has(metric.id)
+      ? []
+      : [
+          createBodyMetricDocument({
+            id: metric.id,
+            now: defaultBodyMetricCreatedAt,
+            deviceId: getDeviceId(),
+            sortKey: `default:${index.toString().padStart(2, '0')}`,
+            payload: {
+              name: metric.name,
+              kind: metric.kind,
+              preferredUnit: metric.preferredUnit,
+              archivedAt: null,
+            },
+          }),
+        ],
+  );
+
+  if (missingMetrics.length) await saveDocuments(missingMetrics);
+  return bodyMetricsFrom([...existingDocuments, ...missingMetrics]);
+};
+
+export const createBodyMetric = async (
+  name: string,
+  kind: BodyMetricKind,
+  preferredUnit: BodyUnit,
+): Promise<BodyMetricDocument> => {
+  const now = new Date().toISOString();
+  const metric = createBodyMetricDocument({
+    id: createDocumentId(),
+    now,
+    deviceId: getDeviceId(),
+    sortKey: `custom:${now}:${createDocumentId()}`,
+    payload: { name, kind, preferredUnit, archivedAt: null },
+  });
+
+  await saveDocument(metric);
+  return metric;
+};
+
+const getBodyMetric = async (metricId: string): Promise<BodyMetricDocument> => {
+  const document = await database.documents.get(metricId);
+  if (document?.type !== 'body-metric' || document.deletedAt) {
+    throw new Error(`Body metric ${metricId} was not found.`);
+  }
+  return document;
+};
+
+export const updateBodyMetric = async (
+  metricId: string,
+  update: Pick<BodyMetricDocument['payload'], 'name' | 'preferredUnit'>,
+): Promise<BodyMetricDocument> => {
+  const metric = await getBodyMetric(metricId);
+  const updatedMetric = parseDomainDocument({
+    ...metric,
+    payload: { ...metric.payload, ...update },
+    updatedAt: updatedNow(metric),
+    updatedByDeviceId: getDeviceId(),
+  });
+
+  if (updatedMetric.type !== 'body-metric') {
+    throw new Error('Expected an updated body metric document.');
+  }
+  await saveDocument(updatedMetric);
+  return updatedMetric;
+};
+
+export const setBodyMetricArchived = async (
+  metricId: string,
+  isArchived: boolean,
+): Promise<void> => {
+  const metric = await getBodyMetric(metricId);
+  const now = updatedNow(metric);
+  await saveDocument({
+    ...metric,
+    payload: { ...metric.payload, archivedAt: isArchived ? now : null },
+    updatedAt: now,
+    updatedByDeviceId: getDeviceId(),
+  });
+};
+
+export const addBodyMeasurement = async (
+  metricId: string,
+  valueInPreferredUnit: number,
+  recordedAt = new Date(),
+): Promise<BodyMeasurementDocument> => {
+  const metric = await getBodyMetric(metricId);
+  const now = recordedAt.toISOString();
+  const measurement = createBodyMeasurementDocument({
+    id: createDocumentId(),
+    now,
+    deviceId: getDeviceId(),
+    occurredAt: now,
+    payload: {
+      metricId,
+      value: toCanonicalBodyValue(
+        valueInPreferredUnit,
+        metric.payload.preferredUnit,
+      ),
+    },
+  });
+
+  await saveDocument(measurement);
+  return measurement;
+};
+
+const getBodyMeasurement = async (
+  measurementId: string,
+): Promise<BodyMeasurementDocument> => {
+  const document = await database.documents.get(measurementId);
+  if (document?.type !== 'body-measurement' || document.deletedAt) {
+    throw new Error(`Body measurement ${measurementId} was not found.`);
+  }
+  return document;
+};
+
+export const updateBodyMeasurement = async (
+  measurementId: string,
+  valueInPreferredUnit: number,
+): Promise<BodyMeasurementDocument> => {
+  const measurement = await getBodyMeasurement(measurementId);
+  const metric = await getBodyMetric(measurement.payload.metricId);
+  const updatedMeasurement = parseDomainDocument({
+    ...measurement,
+    payload: {
+      ...measurement.payload,
+      value: toCanonicalBodyValue(
+        valueInPreferredUnit,
+        metric.payload.preferredUnit,
+      ),
+    },
+    updatedAt: updatedNow(measurement),
+    updatedByDeviceId: getDeviceId(),
+  });
+
+  if (updatedMeasurement.type !== 'body-measurement') {
+    throw new Error('Expected an updated body measurement document.');
+  }
+  await saveDocument(updatedMeasurement);
+  return updatedMeasurement;
+};
+
+export const deleteBodyMeasurement = async (
+  measurementId: string,
+): Promise<void> => {
+  const measurement = await getBodyMeasurement(measurementId);
+  const now = updatedNow(measurement);
+  await saveDocument({
+    ...measurement,
+    deletedAt: now,
     updatedAt: now,
     updatedByDeviceId: getDeviceId(),
   });

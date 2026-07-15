@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  createBodyMetricDocument,
   createHabitDocument,
   createHabitLogDocument,
   createJournalDocument,
@@ -56,6 +57,22 @@ describe('domain documents', () => {
 
   it('accepts a current document through the migration boundary', () => {
     expect(migrateDomainDocument(makeTask()).type).toBe('task');
+  });
+
+  it('keeps a body metric aligned with its unit family', () => {
+    expect(() =>
+      createBodyMetricDocument({
+        id: 'body-metric:weight',
+        now,
+        deviceId: 'phone',
+        payload: {
+          name: 'Weight',
+          kind: 'mass',
+          preferredUnit: 'cm',
+          archivedAt: null,
+        },
+      }),
+    ).toThrow();
   });
 
   it('rejects an empty task', () => {

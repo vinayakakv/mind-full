@@ -3,12 +3,15 @@ import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { database } from './database';
 import {
   acceptTaskSuggestion,
+  addBodyMeasurement,
   addTask,
   addTaskSuggestion,
   applyRemoteDocuments,
   createHabit,
   createJournal,
+  deleteBodyMeasurement,
   deleteJournal,
+  ensureDefaultBodyMetrics,
   findCheckIn,
   findHabitLog,
   findReminder,
@@ -18,9 +21,12 @@ import {
   rejectTaskSuggestion,
   removeExpiredCompletedTasks,
   saveDocument,
+  setBodyMetricArchived,
   setCheckInReminder,
   setHabitCompleted,
   setTaskCompleted,
+  updateBodyMeasurement,
+  updateBodyMetric,
   updateCheckIn,
   updateJournal,
 } from './documents';
@@ -41,6 +47,68 @@ describe('local documents', () => {
     expect(await database.documents.get(task.id)).toEqual(task);
     expect(await database.syncState.get(task.id)).toMatchObject({
       dirty: 1,
+    });
+  });
+
+  it('creates stable body metrics without replacing local preferences', async () => {
+    const metrics = await ensureDefaultBodyMetrics();
+    const weight = metrics.find(({ id }) => id === 'body-metric:weight');
+    expect(metrics).toHaveLength(7);
+    expect(weight).toMatchObject({
+      createdAt: '2026-01-01T00:00:00.000Z',
+      payload: { name: 'Weight', preferredUnit: 'kg' },
+    });
+
+    if (!weight) throw new Error('Expected the default Weight metric.');
+    await updateBodyMetric(weight.id, {
+      name: 'Body weight',
+      preferredUnit: 'lb',
+    });
+
+    const ensuredAgain = await ensureDefaultBodyMetrics();
+    expect(ensuredAgain).toHaveLength(7);
+    expect(ensuredAgain.find(({ id }) => id === weight.id)).toMatchObject({
+      payload: { name: 'Body weight', preferredUnit: 'lb' },
+    });
+  });
+
+  it('stores body measurements canonically and tombstones deleted entries', async () => {
+    const metrics = await ensureDefaultBodyMetrics();
+    const weight = metrics.find(({ id }) => id === 'body-metric:weight');
+    if (!weight) throw new Error('Expected the default Weight metric.');
+    await updateBodyMetric(weight.id, {
+      name: weight.payload.name,
+      preferredUnit: 'lb',
+    });
+
+    const measurement = await addBodyMeasurement(
+      weight.id,
+      220.46,
+      new Date('2026-07-15T08:30:00.000Z'),
+    );
+    expect(measurement.payload.value).toBeCloseTo(100, 2);
+
+    const updated = await updateBodyMeasurement(measurement.id, 176.37);
+    expect(updated.payload.value).toBeCloseTo(80, 2);
+    expect(updated.occurredAt).toBe(measurement.occurredAt);
+
+    await deleteBodyMeasurement(measurement.id);
+    expect(await database.documents.get(measurement.id)).toMatchObject({
+      deletedAt: expect.any(String),
+    });
+    expect(await database.syncState.get(measurement.id)).toMatchObject({
+      dirty: 1,
+    });
+  });
+
+  it('archives a body metric without deleting its definition', async () => {
+    const [weight] = await ensureDefaultBodyMetrics();
+    if (!weight) throw new Error('Expected a default body metric.');
+
+    await setBodyMetricArchived(weight.id, true);
+    expect(await database.documents.get(weight.id)).toMatchObject({
+      deletedAt: null,
+      payload: { archivedAt: expect.any(String) },
     });
   });
 

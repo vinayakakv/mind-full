@@ -332,3 +332,66 @@ test('synchronizes a task between two paired browsers', async ({ browser }) => {
     await Promise.all([firstContext.close(), secondContext.close()]);
   }
 });
+
+test('records and reviews a body measurement offline', async ({
+  context,
+  page,
+}) => {
+  await prepareServiceWorker(page);
+  await page.goto('/health');
+  await context.setOffline(true);
+
+  await expect(page.getByRole('heading', { name: 'Health' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Weight/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Manage metrics' }).click();
+  await page.getByLabel('Name').fill('Neck');
+  await page.getByRole('button', { name: 'Add metric' }).click();
+  await expect(
+    page
+      .getByRole('dialog', { name: 'Body metrics' })
+      .getByText('Neck', { exact: true }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Close metric manager' }).click();
+  await expect(page.getByRole('button', { name: /Neck/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Add measurement' }).click();
+  await page.getByLabel('Value').fill('72.4');
+  await page.getByRole('button', { name: 'Save measurement' }).click();
+
+  await expect(page.getByText('72.4 kg').first()).toBeVisible();
+  await page.reload();
+  await expect(page.getByText('72.4 kg').first()).toBeVisible();
+
+  await page.goto('/');
+  await expect(page.getByText(/Weight · 72.4 kg/)).toBeVisible();
+});
+
+test('synchronizes a body measurement between paired browsers', async ({
+  browser,
+}) => {
+  const firstContext = await browser.newContext();
+  const secondContext = await browser.newContext();
+  const value = (70 + (Date.now() % 1_000) / 100).toFixed(2);
+
+  try {
+    const firstPage = await firstContext.newPage();
+    const secondPage = await secondContext.newPage();
+
+    await pairBrowser(firstPage);
+    await pairBrowser(secondPage);
+
+    await firstPage.goto('/health');
+    await firstPage.getByRole('button', { name: 'Add measurement' }).click();
+    await firstPage.getByLabel('Value').fill(value);
+    await firstPage.getByRole('button', { name: 'Save measurement' }).click();
+    await expect(firstPage.getByText('Synced')).toBeVisible();
+
+    await secondPage.goto('/settings');
+    await secondPage.getByRole('button', { name: 'Sync now' }).click();
+    await secondPage.goto('/health');
+    await expect(
+      secondPage.getByText(`${Number(value)} kg`).first(),
+    ).toBeVisible();
+  } finally {
+    await Promise.all([firstContext.close(), secondContext.close()]);
+  }
+});

@@ -66,6 +66,8 @@ One metric is charted at a time. The chart connects actual values with a gentle
 line and uses no goals, target bands, judgmental colors, or good/bad language.
 Selecting or focusing a point reveals only its exact timestamp and value. Edit
 and delete actions belong to the measurement list rather than the chart.
+Recharts is lazy-loaded with the Health route; the rest of the daily interface
+does not carry the visualization dependency.
 
 ## Recording flow
 

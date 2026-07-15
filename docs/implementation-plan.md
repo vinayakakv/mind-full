@@ -147,19 +147,27 @@ up after downtime, synchronizes across devices, and remains idempotent.
 
 ## Milestone 2.5 — Body measurements
 
-- Typed `body-metric` and `body-measurement` documents
-- Pure canonical-unit conversion and trend calculations
-- Deterministic creation of the seven default metrics
-- Offline measurement creation, editing, deletion, and synchronization
-- Metric rename, preferred-unit selection, archive, and restore
-- Dedicated Health page with latest-value overview and measurement history
-- Accessible single-metric chart with five time ranges and exact timestamps
-- Latest-measurement card on Today and utility Health icon beside Settings
-- Focused domain, repository, offline reload, and two-browser sync tests
+Status: complete as of July 15, 2026.
+
+- [x] Typed `body-metric` and `body-measurement` documents
+- [x] Pure canonical-unit conversion and trend calculations
+- [x] Deterministic creation of the seven default metrics
+- [x] Offline measurement creation, editing, deletion, and synchronization
+- [x] Metric rename, preferred-unit selection, archive, and restore
+- [x] Dedicated Health page with latest-value overview and measurement history
+- [x] Accessible single-metric chart with five time ranges and exact timestamps
+- [x] Latest-measurement card on Today and utility Health icon beside Settings
+- [x] Focused domain, repository, offline reload, and two-browser sync tests
 
 The slice is complete when recording and reviewing measurements works with the
 backend stopped, unit changes do not rewrite canonical history, deleted entries
 synchronize as tombstones, and charts have an equivalent textual history.
+
+Values are stored canonically as kilograms or centimetres while each body
+metric synchronizes its preferred display unit. Stable default IDs and an old
+initial version timestamp let independently initialized browsers converge
+without overwriting later customization. Health remains outside primary bottom
+navigation and History; its chart dependency is isolated to the lazy route.
 
 ## Milestone 3 — Local AI and reflection
 

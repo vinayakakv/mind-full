@@ -47,7 +47,7 @@
   justify-self: end;
 }
 
-.settingsLink {
+.utilityLink {
   align-items: center;
   border-radius: 50%;
   color: var(--text-muted);
@@ -57,7 +57,7 @@
   width: 2.15rem;
 }
 
-.settingsLink svg {
+.utilityLink svg {
   fill: none;
   height: 1.15rem;
   stroke: currentColor;
@@ -67,8 +67,8 @@
   width: 1.15rem;
 }
 
-.settingsLink:hover,
-.settingsLinkActive {
+.utilityLink:hover,
+.utilityLinkActive {
   background: var(--surface-soft);
   color: var(--text-primary);
 }

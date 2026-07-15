@@ -1,0 +1,445 @@
+.page {
+  animation: arrive 300ms ease both;
+}
+
+.pageHeader {
+  align-items: end;
+  display: flex;
+  gap: 2rem;
+  justify-content: space-between;
+  margin-bottom: 3rem;
+}
+
+.eyebrow,
+.trendHeading p,
+.dialogHeading p {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.11em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.pageHeader h1 {
+  font-family: var(--font-reflection);
+  font-size: clamp(3.5rem, 11vw, 6rem);
+  font-weight: 400;
+  letter-spacing: -0.06em;
+  line-height: 0.9;
+  margin: 1rem 0 1.35rem;
+}
+
+.pageHeader > div:first-child > p:last-child {
+  color: var(--text-muted);
+  font-family: var(--font-reflection);
+  line-height: 1.6;
+  margin: 0;
+  max-width: 28rem;
+}
+
+.headerActions,
+.formActions,
+.rowActions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.headerActions {
+  align-items: flex-end;
+  flex-direction: column;
+  flex: none;
+}
+
+.primaryButton,
+.smallButton {
+  background: var(--accent-strong);
+  border: 1px solid var(--accent-strong);
+  border-radius: 2rem;
+  color: var(--on-accent);
+  cursor: pointer;
+  font: inherit;
+  padding: 0.7rem 1rem;
+}
+
+.smallButton {
+  font-size: 0.76rem;
+  padding: 0.5rem 0.8rem;
+}
+
+.primaryButton[data-disabled],
+.smallButton[data-disabled] {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.textButton,
+.archiveButton,
+.deleteButton,
+.showArchivedButton {
+  background: transparent;
+  border: 0;
+  color: var(--text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  padding: 0.55rem 0.25rem;
+}
+
+.textButton[data-hovered],
+.showArchivedButton[data-hovered] {
+  color: var(--text-primary);
+}
+
+.archiveButton,
+.deleteButton {
+  color: var(--text-danger);
+}
+
+.overview {
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+}
+
+.metricCard {
+  align-items: start;
+  background: color-mix(in srgb, var(--surface-soft) 70%, transparent);
+  border: 1px solid var(--border-control);
+  border-radius: 0.9rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  display: grid;
+  font: inherit;
+  gap: 0.3rem;
+  min-height: 7rem;
+  padding: 0.9rem;
+  text-align: left;
+}
+
+.metricCard[aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent-strong);
+}
+
+.metricCard > span,
+.metricCard small {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+}
+
+.metricCard strong {
+  font-family: var(--font-reflection);
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.trend,
+.history {
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 4rem;
+  padding-top: 2rem;
+}
+
+.trendHeading {
+  align-items: end;
+  display: flex;
+  gap: 1.5rem;
+  justify-content: space-between;
+}
+
+.trendHeading h2,
+.history h2,
+.dialogHeading h2 {
+  font-family: var(--font-reflection);
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  margin: 0.35rem 0 0;
+}
+
+.trendHeading h2,
+.history h2 {
+  font-size: 2rem;
+}
+
+.rangeChoices {
+  border: 0;
+  display: flex;
+  gap: 0.25rem;
+  margin: 0;
+  overflow-x: auto;
+  padding: 0;
+}
+
+.rangeButton {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 2rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  flex: none;
+  font: inherit;
+  font-size: 0.7rem;
+  padding: 0.4rem 0.6rem;
+}
+
+.rangeButton[aria-pressed="true"],
+.rangeButton[data-hovered] {
+  background: var(--accent-soft);
+  border-color: var(--border-control);
+  color: var(--text-primary);
+}
+
+.chart {
+  margin-top: 1.5rem;
+  min-height: 270px;
+  width: 100%;
+}
+
+.chartEmpty,
+.emptyHistory {
+  color: var(--text-muted);
+  font-family: var(--font-reflection);
+  font-style: italic;
+  margin: 2rem 0;
+}
+
+.history ol,
+.metricList {
+  list-style: none;
+  margin: 1.25rem 0 0;
+  padding: 0;
+}
+
+.history li,
+.metricRow,
+.archivedMetric {
+  align-items: center;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  min-height: 3.7rem;
+  padding: 0.65rem 0;
+}
+
+.measurementSummary,
+.metricSummary {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.measurementSummary span,
+.metricSummary span,
+.archivedMetric {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.history li strong,
+.metricRow strong {
+  font-family: var(--font-reflection);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.modalOverlay {
+  align-items: center;
+  background: color-mix(in srgb, var(--surface-canvas) 80%, transparent);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 1rem;
+  position: fixed;
+  z-index: 30;
+}
+
+.modal {
+  max-height: calc(100dvh - 2rem);
+  max-width: 32rem;
+  width: 100%;
+}
+
+.managerModal {
+  max-width: 40rem;
+}
+
+.dialog {
+  background: var(--surface-canvas);
+  border: 1px solid var(--border-control);
+  border-radius: 1.2rem;
+  box-shadow: 0 2rem 5rem var(--shadow-soft);
+  max-height: calc(100dvh - 2rem);
+  overflow: auto;
+  padding: clamp(1.25rem, 5vw, 2.25rem);
+}
+
+.dialog:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.dialogHeading {
+  align-items: start;
+  display: flex;
+  justify-content: space-between;
+}
+
+.dialogHeading h2 {
+  font-size: 2.25rem;
+}
+
+.closeButton {
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1.3rem;
+  height: 2.25rem;
+  width: 2.25rem;
+}
+
+.measurementForm,
+.newMetricForm,
+.metricEditForm {
+  display: grid;
+  gap: 1.2rem;
+  margin-top: 2rem;
+}
+
+.measurementForm label,
+.newMetricForm label,
+.metricEditForm label,
+.nativeField > span {
+  color: var(--text-muted);
+  display: block;
+  font-size: 0.75rem;
+  margin-bottom: 0.4rem;
+}
+
+.measurementForm input,
+.newMetricForm input,
+.metricEditForm input,
+.nativeField select {
+  background: var(--surface-soft);
+  border: 1px solid var(--border-control);
+  border-radius: 0.65rem;
+  color: var(--text-primary);
+  font: inherit;
+  padding: 0.7rem 0.8rem;
+  width: 100%;
+}
+
+.valueField {
+  align-items: center;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  position: relative;
+}
+
+.valueField input {
+  padding-right: 3.5rem;
+}
+
+.valueField span {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  padding-right: 0.8rem;
+  position: absolute;
+  right: 0;
+}
+
+.error {
+  color: var(--text-danger);
+  font-size: 0.75rem;
+  margin: -0.5rem 0 0;
+}
+
+.metricEditForm {
+  margin: 0;
+  padding: 0.65rem 0;
+  width: 100%;
+}
+
+.archivedMetric {
+  color: var(--text-faint);
+}
+
+.showArchivedButton {
+  margin-top: 1rem;
+}
+
+.newMetricForm {
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 2rem;
+  padding-top: 2rem;
+}
+
+.newMetricForm h3 {
+  font-family: var(--font-reflection);
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translateY(0.4rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 36rem) {
+  .pageHeader,
+  .trendHeading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .headerActions {
+    align-items: flex-start;
+    flex-direction: row;
+  }
+
+  .overview {
+    display: flex;
+    margin-right: -1.25rem;
+    overflow-x: auto;
+    padding-right: 1.25rem;
+  }
+
+  .metricCard {
+    flex: 0 0 9.5rem;
+  }
+
+  .modalOverlay {
+    align-items: end;
+    padding: 0;
+  }
+
+  .modal,
+  .managerModal {
+    max-height: 92dvh;
+    max-width: none;
+  }
+
+  .dialog {
+    border-bottom: 0;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    max-height: 92dvh;
+    padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page {
+    animation: none;
+  }
+}
