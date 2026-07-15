@@ -11,6 +11,11 @@ Mindfull has three primary destinations:
 - **Reflect** — weekly reviews, insights, themes, streaks, correlations, and
   semantic search.
 
+Health is a dedicated secondary destination reached from a restrained card on
+Today and a utility icon beside Settings. It does not occupy a permanent
+bottom-navigation position and individual measurements do not enter the general
+History timeline.
+
 Settings remains a separate destination for schedules, reminders, theme, sync,
 devices, and AI configuration, but appears as a quiet gear icon rather than a
 primary named tab. Mobile uses restrained bottom navigation for Today, History,
@@ -33,6 +38,8 @@ The opening view contains:
 - At most one useful recent insight
 - A subtle sync state rather than a prominent connection dashboard
 - A quiet floating action for beginning a journal entry
+- A restrained Health card showing the latest body measurement and its change
+  from the preceding reading of the same metric
 
 Tomorrow-only tasks are hidden from today's main list. An optional Tomorrow
 section lets the user review them early.
@@ -177,6 +184,25 @@ Reflect includes:
 Semantic search initially returns matching passages with dates, context, and
 links to their source. It does not synthesize a conversational answer in the
 first release.
+
+## Health
+
+Health presents a compact latest-value overview and one selected metric's trend
+chart. The user can switch among 1 month, 3 months, 6 months, 1 year, and All
+without combining unlike metrics on one chart.
+
+Adding a measurement is a small modal or mobile drawer: select a metric, enter
+one value in its preferred unit, and save. The value is converted to kilograms
+or centimetres before local persistence. Multiple same-day readings remain
+independent and preserve exact timestamps.
+
+The textual measurement list supports editing and deletion. Selecting or
+focusing a chart point reveals its exact value and timestamp, but chart points
+do not carry editing actions. Metric management supports custom mass and
+circumference metrics plus rename, archive, restore, and preferred-unit changes.
+
+Health uses factual absolute changes without targets, percentages, medical
+interpretation, reminders, correlations, or AI commentary.
 
 ## Timezones and themes
 

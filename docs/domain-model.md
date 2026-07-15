@@ -223,21 +223,47 @@ mirror for habits created before Reminder documents existed. On startup, the
 web client creates a missing Reminder from that field; notification scheduling
 uses the Reminder document.
 
-## Future documents
-
-Future types, including body measurements, follow the same envelope and schema
-registry. For example:
+### Body metric
 
 ```ts
-type BodyMeasurementPayload = {
-  metric: "weight" | "waist";
-  value: number;
-  unit: "kg" | "cm";
-  note: string | null;
+type BodyMetricPayload = {
+  name: string;
+  kind: "mass" | "circumference";
+  preferredUnit: "kg" | "lb" | "cm" | "in";
+  archivedAt: string | null;
 };
 ```
 
-New payload types may avoid SQL table changes, but they still require payload
+The schema requires a mass metric to use kg or lb and a circumference metric to
+use cm or in. Built-in metrics use deterministic IDs such as
+`body-metric:weight`, allowing offline devices to converge while creating the
+defaults. Custom metrics use normal client-generated IDs.
+
+Metric documents hold synchronized definition and presentation preferences,
+not recorded values. A metric may be renamed, archived, or restored. It remains
+available for resolving historical entries even while archived.
+
+### Body measurement
+
+```ts
+type BodyMeasurementPayload = {
+  metricId: string;
+  value: number;
+};
+```
+
+The envelope's `occurredAt` is the exact measurement time. `value` is canonical:
+kilograms for mass and centimetres for circumference. Preferred-unit conversion
+is a pure presentation/input concern and never rewrites existing measurement
+documents. Multiple entries for a metric may share a local date.
+
+Deleting a measurement creates a normal tombstone. Metric definitions are
+archived rather than deleted while any measurement references them.
+
+## Future documents
+
+Additional document types follow the same envelope and schema registry. New
+payload types may avoid SQL table changes, but they still require payload
 versioning and application migrations.
 
 ## Backend-only operational tables

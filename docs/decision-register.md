@@ -55,6 +55,25 @@ topic documents contain the detailed rationale and behavior.
 - Missed scheduled reviews run after backend restart.
 - Semantic search initially returns passages and source links, not chat answers.
 
+## Health
+
+- Health tracks body measurements for awareness and long-term trends only.
+- Initial metrics are Weight, Waist, Belly, Hips, Chest, Upper arm, and Thigh.
+- Custom metrics are limited to mass or circumference.
+- Values are stored canonically in kilograms or centimetres and rendered in
+  each metric's preferred unit.
+- Recording is manual, one metric at a time, with exact automatic timestamps.
+- Multiple entries per metric and day are allowed.
+- Metrics can be renamed, archived, and restored; measurements can be edited
+  and deleted.
+- Health has a dedicated page, a restrained Today card, and a utility icon
+  beside Settings, but no permanent bottom-navigation item.
+- Charts show one metric at a time over 1 month, 3 months, 6 months, 1 year, or
+  all history.
+- Health does not include goals, reminders, medical interpretation, BMI,
+  correlations, AI commentary, or device integrations.
+- Individual measurements stay out of the general History timeline.
+
 ## Local first and sync
 
 - Android and macOS desktop browsers are primary platforms.
@@ -73,7 +92,8 @@ topic documents contain the detailed rationale and behavior.
 
 - User-domain entities are typed documents distinguished by type.
 - Documents carry schema versions and validated payloads.
-- New types such as body measurements can be added later.
+- Body metrics and measurements use the existing typed-document envelope and
+  generic synchronization path.
 - Backend operational data remains in dedicated relational tables.
 - Independently updated concerns use separate documents to reduce whole-document
   conflicts.
@@ -113,7 +133,7 @@ topic documents contain the detailed rationale and behavior.
 
 - Browser-local inference
 - Chat-based exploration of personal history
-- Body measurements and additional personal-data documents
+- Additional personal-data document types
 - macOS Tauri wrapper
 - Data import/export UI
 - Attachments or voice journaling

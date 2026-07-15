@@ -74,6 +74,7 @@ intentional, and free from unnecessary layers.
 - Synchronization through a self-hosted Raspberry Pi backend
 - Android native shell after the web/backend milestone
 - Theme toggle with dedicated light and dark themes plus system following
+- Manual body measurements with a dedicated Health area and long-term charts
 
 ## Explicitly out of scope for the first release
 
@@ -88,13 +89,13 @@ intentional, and free from unnecessary layers.
 - Data import/export UI
 - macOS native shell in the first milestone
 
-Conversational exploration, body measurements, additional document types, and
-a macOS shell are possible later additions.
+Conversational exploration, additional personal-data document types, and a
+macOS shell are possible later additions.
 
 ## Success criteria
 
-- A check-in, journal entry, habit completion, and task update all work with the
-  backend stopped.
+- A check-in, journal entry, habit completion, task update, and body measurement
+  all work with the backend stopped.
 - The installed app reopens into usable local data without a network.
 - Sync resumes without manual recovery when the Pi returns.
 - AI failures never block writing or check-ins.

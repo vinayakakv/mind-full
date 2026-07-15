@@ -2,8 +2,8 @@
 
 Mindfull is a private, calm, local-first mindfulness tracker for one person. It
 combines short morning and evening check-ins, binary habits, Markdown
-journaling, a simple task list, reminders, reflective insights, and optional
-local AI.
+journaling, a simple task list, reminders, body-measurement trends, reflective
+insights, and optional local AI.
 
 These documents are the current source of truth for product and technical
 decisions. They should be updated when an implementation decision changes.
@@ -20,6 +20,8 @@ defaults.
   user journeys.
 - [Domain model](./domain-model.md) — typed documents, lifecycle rules, and
   operational records.
+- [Health tracking](./health-tracking.md) — body metrics, canonical units,
+  recording flows, and trend presentation.
 - [Architecture and sync](./architecture-and-sync.md) — frontend, backend,
   local-first storage, conflict resolution, and native shells.
 - [AI system](./ai-system.md) — provider boundary, asynchronous analysis,

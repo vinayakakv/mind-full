@@ -145,6 +145,22 @@ the app returns to the foreground; expired tasks and their reminders become
 ordinary dirty tombstones. Cleanup therefore works without the backend, catches
 up after downtime, synchronizes across devices, and remains idempotent.
 
+## Milestone 2.5 — Body measurements
+
+- Typed `body-metric` and `body-measurement` documents
+- Pure canonical-unit conversion and trend calculations
+- Deterministic creation of the seven default metrics
+- Offline measurement creation, editing, deletion, and synchronization
+- Metric rename, preferred-unit selection, archive, and restore
+- Dedicated Health page with latest-value overview and measurement history
+- Accessible single-metric chart with five time ranges and exact timestamps
+- Latest-measurement card on Today and utility Health icon beside Settings
+- Focused domain, repository, offline reload, and two-browser sync tests
+
+The slice is complete when recording and reviewing measurements works with the
+backend stopped, unit changes do not rewrite canonical history, deleted entries
+synchronize as tombstones, and charts have an equivalent textual history.
+
 ## Milestone 3 — Local AI and reflection
 
 - Optional Ollama Compose service
