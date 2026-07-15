@@ -79,6 +79,12 @@ Color tokens should be semantic rather than named after raw hues:
 ```
 
 Contrast and focus visibility remain accessible even when colors are subtle.
+Normal-sized secondary text and interactive hover colors maintain at least a
+4.5:1 contrast ratio across the canvas, reading surfaces, and the strongest
+allowed ambient field. Decorative accent colors are not used as text colors.
+Decorative dividers may remain quieter, while control outlines, selected-state
+borders, focus rings, and progress indicators maintain at least 3:1 contrast
+against adjacent colors.
 
 An optional ambient color field draws from the calm, graphic character of the
 Zune desktop software: broad asymmetric gradient planes, richer coral, plum,

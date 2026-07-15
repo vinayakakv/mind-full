@@ -193,7 +193,7 @@
 }
 
 .deleteButton {
-  color: #98554d;
+  color: var(--text-danger);
 }
 
 @keyframes arrive {

@@ -80,7 +80,7 @@
 
 .completionMark {
   align-items: center;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-control);
   border-radius: 50%;
   color: var(--on-accent);
   display: flex;
@@ -119,7 +119,7 @@
 
 .dialog {
   background: var(--surface-canvas);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-control);
   border-radius: 1.25rem;
   box-shadow: 0 2rem 5rem var(--shadow-soft);
   max-height: calc(100dvh - 2rem);
@@ -168,7 +168,7 @@
 .habitForm input,
 .reasonForm textarea {
   background: var(--surface-soft);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-control);
   border-radius: 0.65rem;
   color: var(--text-primary);
   padding: 0.7rem 0.8rem;
@@ -188,7 +188,7 @@
 
 .weekdayButton {
   background: transparent;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-control);
   border-radius: 50%;
   color: var(--text-primary);
   cursor: pointer;
@@ -198,7 +198,7 @@
 
 .weekdayButton[aria-pressed="true"] {
   background: var(--accent-soft);
-  border-color: var(--accent-calm);
+  border-color: var(--accent-strong);
 }
 
 .formHint {
@@ -320,7 +320,7 @@
 }
 
 .archiveButton {
-  color: #98554d;
+  color: var(--text-danger);
   margin-top: 2rem;
   padding: 0.5rem 0;
 }

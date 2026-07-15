@@ -16,7 +16,7 @@
 }
 
 .status[data-status="idle"] {
-  color: var(--accent-calm);
+  color: var(--accent-strong);
 }
 
 .status[data-status="syncing"] > span {

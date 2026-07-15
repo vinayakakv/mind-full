@@ -51,7 +51,7 @@
 .filter,
 .loadMore {
   background: transparent;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-control);
   border-radius: 2rem;
   color: var(--text-muted);
   cursor: pointer;
@@ -65,7 +65,7 @@
 .filter[data-hovered],
 .loadMore[data-hovered] {
   background: var(--accent-soft);
-  border-color: var(--accent-calm);
+  border-color: var(--accent-strong);
   color: var(--text-primary);
 }
 

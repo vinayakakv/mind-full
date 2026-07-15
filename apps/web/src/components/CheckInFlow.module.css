@@ -56,7 +56,7 @@
 }
 
 .progress span {
-  background: var(--accent-calm);
+  background: var(--accent-strong);
   display: block;
   height: 100%;
   transition: width 240ms ease;
@@ -192,7 +192,7 @@
 
 .choice {
   background: transparent;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-control);
   border-radius: 2rem;
   color: var(--text-primary);
   padding: 0.65rem 1rem;
@@ -201,13 +201,13 @@
 .choice[data-hovered],
 .choice[aria-pressed="true"] {
   background: var(--accent-soft);
-  border-color: var(--accent-calm);
+  border-color: var(--accent-strong);
 }
 
 .reflection {
   background: transparent;
   border: 0;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-control);
   color: var(--text-primary);
   font-family: var(--font-reflection);
   font-size: 1.15rem;
@@ -220,7 +220,7 @@
 }
 
 .reflection:focus-visible {
-  border-color: var(--accent-calm);
+  border-color: var(--accent-strong);
 }
 
 .reflection::placeholder,

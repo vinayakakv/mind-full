@@ -57,7 +57,7 @@
 
 .themeChoice {
   background: transparent;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-control);
   border-radius: 2rem;
   color: var(--text-primary);
   cursor: pointer;
@@ -69,7 +69,7 @@
 .themeChoice[data-hovered],
 .themeChoice[aria-pressed="true"] {
   background: var(--accent-soft);
-  border-color: var(--accent-calm);
+  border-color: var(--accent-strong);
 }
 
 .pairingForm,
@@ -90,7 +90,7 @@
 .pairingForm input,
 .scheduleForm input {
   background: var(--surface-soft);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-control);
   border-radius: 0.65rem;
   color: var(--text-primary);
   padding: 0.65rem 0.75rem;
@@ -129,7 +129,7 @@
 }
 
 .setting p.error {
-  color: #9b4d45;
+  color: var(--text-danger);
   font-family: var(--font-control);
   font-size: 0.75rem;
 }
@@ -155,7 +155,7 @@
 
 .quietButton {
   background: transparent;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-control);
   border-radius: 2rem;
   color: var(--text-primary);
   cursor: pointer;

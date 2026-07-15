@@ -31,7 +31,7 @@
 .checkInButton {
   align-items: center;
   background: var(--surface-soft);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-control);
   border-radius: 1rem;
   color: var(--text-primary);
   cursor: pointer;
