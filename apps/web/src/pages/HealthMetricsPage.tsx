@@ -11,30 +11,12 @@ import { Link } from 'react-router';
 
 import {
   createBodyMetric,
-  documentTable,
   ensureDefaultBodyMetrics,
+  loadBodyMetrics,
   setBodyMetricArchived,
   updateBodyMetric,
-} from '../data/documents';
+} from '../data/health';
 import styles from './HealthMetricsPage.module.css';
-
-const loadBodyMetrics = async (): Promise<BodyMetricDocument[]> => {
-  const documents = await documentTable()
-    .where('type')
-    .equals('body-metric')
-    .toArray();
-
-  return documents
-    .filter(
-      (document): document is BodyMetricDocument =>
-        document.type === 'body-metric' && !document.deletedAt,
-    )
-    .sort(
-      (left, right) =>
-        (left.sortKey ?? '').localeCompare(right.sortKey ?? '') ||
-        left.payload.name.localeCompare(right.payload.name),
-    );
-};
 
 function MetricRow({ metric }: { metric: BodyMetricDocument }) {
   const [isEditing, setIsEditing] = useState(false);

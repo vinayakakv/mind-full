@@ -1,5 +1,4 @@
 import {
-  type BodyMeasurementDocument,
   type BodyMetricDocument,
   changeFromPreviousMeasurement,
   displayedBodyValue,
@@ -9,7 +8,7 @@ import {
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link } from 'react-router';
 
-import { documentTable } from '../data/documents';
+import { loadHealthDocuments } from '../data/health';
 import styles from './HealthCard.module.css';
 
 const formatChange = (
@@ -28,15 +27,7 @@ const formatChange = (
 
 export function HealthCard() {
   const health = useLiveQuery(async () => {
-    const documents = await documentTable().toArray();
-    const metrics = documents.filter(
-      (document): document is BodyMetricDocument =>
-        document.type === 'body-metric' && !document.deletedAt,
-    );
-    const measurements = documents.filter(
-      (document): document is BodyMeasurementDocument =>
-        document.type === 'body-measurement' && !document.deletedAt,
-    );
+    const { metrics, measurements } = await loadHealthDocuments();
     const latest = latestBodyMeasurements(measurements)[0];
     const metric = latest
       ? metrics.find(({ id }) => id === latest.payload.metricId)

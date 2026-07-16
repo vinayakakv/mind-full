@@ -6,15 +6,6 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useAtomValue } from 'jotai';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Form, Input, Label, TextField } from 'react-aria-components';
-
-import {
-  ensureSettings,
-  findReminder,
-  setCheckInReminder,
-  updateAmbience,
-  updateCheckInSchedule,
-  updateTheme,
-} from '../data/documents';
 import {
   type DeviceNotificationPermission,
   deviceNotificationPermission,
@@ -23,6 +14,13 @@ import {
   requestDeviceNotificationPermission,
   requestExactNotificationPermission,
 } from '../data/notifications';
+import { findReminder, setCheckInReminder } from '../data/reminders';
+import {
+  ensureSettings,
+  updateAmbience,
+  updateCheckInSchedule,
+  updateTheme,
+} from '../data/settings';
 import {
   configureSyncServer,
   hasPairingToken,

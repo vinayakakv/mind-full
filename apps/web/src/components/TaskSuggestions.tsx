@@ -11,9 +11,9 @@ import { Link } from 'react-router';
 
 import {
   acceptTaskSuggestion,
-  documentTable,
+  loadTaskSuggestionContext,
   rejectTaskSuggestion,
-} from '../data/documents';
+} from '../data/tasks';
 import styles from './TaskSuggestions.module.css';
 
 type SuggestionSource = JournalDocument | CheckInDocument;
@@ -77,7 +77,7 @@ function Source({ source }: { source: SuggestionSource | undefined }) {
 }
 
 export function TaskSuggestions() {
-  const documents = useLiveQuery(() => documentTable().toArray(), []);
+  const documents = useLiveQuery(loadTaskSuggestionContext, []);
   const [now, setNow] = useState(() => new Date().toISOString());
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const suggestions = documents

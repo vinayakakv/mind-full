@@ -5,7 +5,7 @@ import { syncStatusAtom } from '../state/sync';
 import { database } from './database';
 import { getDeviceId } from './device';
 import { dirtyDocumentsForSync } from './document-ownership';
-import { applyRemoteDocuments } from './documents';
+import { applyRemoteDocuments } from './document-store';
 
 const tokenKey = 'mindfull.sync-token';
 const serverAddressKey = 'mindfull.sync-server-address';

@@ -16,9 +16,9 @@ import {
 import {
   addTask,
   deleteTask,
-  documentTable,
+  loadTasks,
   setTaskCompleted,
-} from '../data/documents';
+} from '../data/tasks';
 import styles from './TaskList.module.css';
 
 const visibleTasks = (documents: Awaited<ReturnType<typeof loadTasks>>) => {
@@ -36,16 +36,6 @@ const visibleTasks = (documents: Awaited<ReturnType<typeof loadTasks>>) => {
         Number(Boolean(right.payload.completedAt));
       return completionOrder || left.createdAt.localeCompare(right.createdAt);
     });
-};
-
-const loadTasks = async (): Promise<TaskDocument[]> => {
-  const documents = await documentTable()
-    .where('type')
-    .equals('task')
-    .toArray();
-  return documents.filter(
-    (document): document is TaskDocument => document.type === 'task',
-  );
 };
 
 export function TaskList() {

@@ -5,7 +5,7 @@ import { Button } from 'react-aria-components';
 import ReactMarkdown from 'react-markdown';
 import { Link, useLocation, useNavigate, useParams } from 'react-router';
 
-import { deleteCheckIn, documentTable } from '../data/documents';
+import { deleteCheckIn, loadCheckIn } from '../data/check-ins';
 import { localDateFor } from '../data/time';
 import styles from './CheckInPage.module.css';
 
@@ -56,10 +56,7 @@ export function CheckInPage() {
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const checkIn = useLiveQuery(async () => {
     if (!checkInId) return null;
-    const document = await documentTable().get(checkInId);
-    return document?.type === 'check-in' && !document.deletedAt
-      ? document
-      : null;
+    return (await loadCheckIn(checkInId)) ?? null;
   }, [checkInId]);
   const returnsToToday = location.state?.returnTo === 'today';
   const returnPath = returnsToToday ? '/' : '/history';

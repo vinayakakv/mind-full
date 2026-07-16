@@ -15,10 +15,10 @@ import {
 } from 'react-aria-components';
 
 import {
-  documentTable,
   getOrCreateCheckIn,
+  loadCheckIn,
   updateCheckIn,
-} from '../data/documents';
+} from '../data/check-ins';
 import { activeCheckInIdAtom } from '../state/check-in';
 import styles from './CheckInFlow.module.css';
 
@@ -435,7 +435,7 @@ export function CheckInFlow() {
   const [activeCheckInId, setActiveCheckInId] = useAtom(activeCheckInIdAtom);
   const stepFrameRef = useRef<HTMLDivElement>(null);
   const activeDocument = useLiveQuery(
-    async () => (activeCheckInId ? documentTable().get(activeCheckInId) : null),
+    async () => (activeCheckInId ? loadCheckIn(activeCheckInId) : null),
     [activeCheckInId],
   );
   const checkIn =

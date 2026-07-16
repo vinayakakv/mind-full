@@ -19,13 +19,13 @@ import { Link } from 'react-router';
 
 import {
   createHabit,
-  documentTable,
+  loadHabitDocuments,
   recordHabitMiss,
   reorderHabits,
   setHabitArchived,
   setHabitCompleted,
   updateHabit,
-} from '../data/documents';
+} from '../data/habits';
 import { localDateFor } from '../data/time';
 import styles from './HabitList.module.css';
 
@@ -38,36 +38,6 @@ const weekdays = [
   { value: 5, short: 'F', name: 'Friday' },
   { value: 6, short: 'S', name: 'Saturday' },
 ] as const;
-
-const habitOrder = (habit: HabitDocument): string =>
-  habit.sortKey ?? `habit:${habit.createdAt}:${habit.id}`;
-
-export const loadHabitDocuments = async (): Promise<{
-  habits: HabitDocument[];
-  logs: HabitLogDocument[];
-}> => {
-  const [habitResults, logResults] = await Promise.all([
-    documentTable().where('type').equals('habit').toArray(),
-    documentTable().where('type').equals('habit-log').toArray(),
-  ]);
-
-  return {
-    habits: habitResults
-      .filter(
-        (document): document is HabitDocument =>
-          document.type === 'habit' && !document.deletedAt,
-      )
-      .sort(
-        (left, right) =>
-          habitOrder(left).localeCompare(habitOrder(right)) ||
-          left.id.localeCompare(right.id),
-      ),
-    logs: logResults.filter(
-      (document): document is HabitLogDocument =>
-        document.type === 'habit-log' && !document.deletedAt,
-    ),
-  };
-};
 
 const startedOn = (habit: HabitDocument): string =>
   localDateFor(new Date(habit.createdAt));

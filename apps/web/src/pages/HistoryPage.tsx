@@ -5,12 +5,11 @@ import { Button } from 'react-aria-components';
 import { Link } from 'react-router';
 
 import { TaskSuggestions } from '../components/TaskSuggestions';
-import { documentTable } from '../data/documents';
 import {
   filterHistoryEntries,
   type HistoryEntry,
   type HistoryFilter,
-  historyEntriesFrom,
+  loadHistoryEntries,
 } from '../data/history';
 import styles from './HistoryPage.module.css';
 
@@ -112,10 +111,7 @@ function HabitHistoryEntry({
 }
 
 export function HistoryPage() {
-  const entries = useLiveQuery(
-    async () => historyEntriesFrom(await documentTable().toArray()),
-    [],
-  );
+  const entries = useLiveQuery(loadHistoryEntries, []);
   const [filter, setFilter] = useState<HistoryFilter>('all');
   const [visibleCount, setVisibleCount] = useState(pageSize);
   const continuation = useRef<HTMLDivElement>(null);

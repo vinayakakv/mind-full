@@ -5,6 +5,8 @@ import type {
   JournalDocument,
 } from '@mindfull/domain';
 
+import { documentTable } from './document-store';
+
 export type HistoryFilter = 'all' | 'journal' | 'check-in' | 'habit';
 
 export type HistoryEntry =
@@ -105,3 +107,19 @@ export const filterHistoryEntries = (
   filter: HistoryFilter,
 ): HistoryEntry[] =>
   filter === 'all' ? entries : entries.filter((entry) => entry.kind === filter);
+
+export const loadHistoryEntries = async (): Promise<HistoryEntry[]> => {
+  const [journals, checkIns, habits, habitLogs] = await Promise.all([
+    documentTable().where('type').equals('journal').toArray(),
+    documentTable().where('type').equals('check-in').toArray(),
+    documentTable().where('type').equals('habit').toArray(),
+    documentTable().where('type').equals('habit-log').toArray(),
+  ]);
+
+  return historyEntriesFrom([
+    ...journals,
+    ...checkIns,
+    ...habits,
+    ...habitLogs,
+  ]);
+};

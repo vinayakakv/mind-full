@@ -36,10 +36,10 @@ import {
 import {
   addBodyMeasurement,
   deleteBodyMeasurement,
-  documentTable,
   ensureDefaultBodyMetrics,
+  loadHealthDocuments,
   updateBodyMeasurement,
-} from '../data/documents';
+} from '../data/health';
 import styles from './HealthPage.module.css';
 
 const healthRanges: Array<{ value: HealthRange; label: string }> = [
@@ -49,31 +49,6 @@ const healthRanges: Array<{ value: HealthRange; label: string }> = [
   { value: '1y', label: '1 year' },
   { value: 'all', label: 'All' },
 ];
-
-const loadHealth = async (): Promise<{
-  metrics: BodyMetricDocument[];
-  measurements: BodyMeasurementDocument[];
-}> => {
-  const [metricDocuments, measurementDocuments] = await Promise.all([
-    documentTable().where('type').equals('body-metric').toArray(),
-    documentTable().where('type').equals('body-measurement').toArray(),
-  ]);
-  const metrics = metricDocuments
-    .filter(
-      (document): document is BodyMetricDocument =>
-        document.type === 'body-metric' && !document.deletedAt,
-    )
-    .sort(
-      (left, right) =>
-        (left.sortKey ?? '').localeCompare(right.sortKey ?? '') ||
-        left.payload.name.localeCompare(right.payload.name),
-    );
-  const measurements = measurementDocuments.filter(
-    (document): document is BodyMeasurementDocument =>
-      document.type === 'body-measurement' && !document.deletedAt,
-  );
-  return { metrics, measurements };
-};
 
 const formatTimestamp = (timestamp: string): string =>
   new Intl.DateTimeFormat(undefined, {
@@ -438,7 +413,7 @@ function MeasurementHistory({
 }
 
 export function HealthPage() {
-  const health = useLiveQuery(loadHealth, []);
+  const health = useLiveQuery(loadHealthDocuments, []);
   const [selectedId, setSelectedId] = useState('body-metric:weight');
   const [range, setRange] = useState<HealthRange>('3m');
   const [isAdding, setIsAdding] = useState(false);

@@ -2,7 +2,7 @@ import { relevantCheckInKind } from '@mindfull/domain';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { NavLink, Outlet } from 'react-router';
 
-import { documentTable } from '../data/documents';
+import { loadSettings } from '../data/settings';
 import { localTimeFor } from '../data/time';
 import { useHousekeeping } from '../hooks/use-housekeeping';
 import { useResolvedTheme } from '../hooks/use-resolved-theme';
@@ -39,10 +39,7 @@ function PrimaryNavigation({ className }: { className: string }) {
 export function AppShell() {
   useSync();
   useHousekeeping();
-  const settings = useLiveQuery(async () => {
-    const document = await documentTable().get('settings');
-    return document?.type === 'settings' ? document : undefined;
-  });
+  const settings = useLiveQuery(loadSettings);
 
   useResolvedTheme(settings?.payload.theme ?? 'system');
   const period = relevantCheckInKind(

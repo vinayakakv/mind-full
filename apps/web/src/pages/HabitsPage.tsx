@@ -1,7 +1,8 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link } from 'react-router';
 
-import { HabitManagement, loadHabitDocuments } from '../components/HabitList';
+import { HabitManagement } from '../components/HabitList';
+import { loadHabitDocuments } from '../data/habits';
 import { localDateFor } from '../data/time';
 import styles from './HabitsPage.module.css';
 

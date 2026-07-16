@@ -20,9 +20,9 @@ import {
   completeJournal,
   createJournal,
   deleteJournal,
-  documentTable,
+  loadJournal,
   updateJournal,
-} from '../data/documents';
+} from '../data/journals';
 import styles from './JournalPage.module.css';
 
 const formatLocalDate = (localDate: string, style: 'long' | 'short'): string =>
@@ -225,10 +225,7 @@ export function JournalPage() {
   const selectedId = searchParams.get('entry');
   const selectedJournal = useLiveQuery(async () => {
     if (!selectedId) return undefined;
-    const document = await documentTable().get(selectedId);
-    return document?.type === 'journal' && !document.deletedAt
-      ? document
-      : undefined;
+    return loadJournal(selectedId);
   }, [selectedId]);
   const isDraft = selectedJournal?.payload.status === 'draft';
 

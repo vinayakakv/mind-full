@@ -2,8 +2,9 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { App } from './App';
-import { ensureSettings, migrateLegacyHabitReminders } from './data/documents';
 import { startNotificationCoordinator } from './data/notifications';
+import { migrateLegacyHabitReminders } from './data/reminders';
+import { ensureSettings } from './data/settings';
 import './styles/global.css';
 
 const start = async () => {

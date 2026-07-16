@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
-
-import { removeExpiredCompletedTasks } from '../data/documents';
 import { documentsChanged } from '../data/events';
+import { removeExpiredCompletedTasks } from '../data/tasks';
 
 export const useHousekeeping = (): void => {
   useEffect(() => {
