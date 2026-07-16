@@ -852,6 +852,8 @@ export const createJournal = async (
       markdown: '',
       localDate: localDateFor(date),
       timezone: currentTimezone(),
+      status: 'draft',
+      completedAt: null,
     },
   });
 
@@ -874,6 +876,11 @@ export const updateJournal = async (
   update: Pick<JournalPayload, 'title' | 'markdown'>,
 ): Promise<JournalDocument> => {
   const journal = await getJournal(journalId);
+
+  if (journal.payload.status !== 'draft') {
+    throw new Error('A completed journal cannot be changed.');
+  }
+
   const updatedDocument = parseDomainDocument({
     ...journal,
     payload: { ...journal.payload, ...update },
@@ -883,6 +890,35 @@ export const updateJournal = async (
 
   if (updatedDocument.type !== 'journal') {
     throw new Error('Expected an updated journal document.');
+  }
+
+  await saveDocument(updatedDocument);
+  return updatedDocument;
+};
+
+export const completeJournal = async (
+  journalId: string,
+  date = new Date(),
+): Promise<JournalDocument> => {
+  const journal = await getJournal(journalId);
+
+  if (journal.payload.status !== 'draft') {
+    return journal;
+  }
+
+  const updatedDocument = parseDomainDocument({
+    ...journal,
+    payload: {
+      ...journal.payload,
+      status: 'completed',
+      completedAt: date.toISOString(),
+    },
+    updatedAt: updatedNow(journal),
+    updatedByDeviceId: getDeviceId(),
+  });
+
+  if (updatedDocument.type !== 'journal') {
+    throw new Error('Expected a completed journal document.');
   }
 
   await saveDocument(updatedDocument);
@@ -1089,6 +1125,10 @@ export const updateCheckIn = async (
     throw new Error(`Check-in ${checkInId} was not found.`);
   }
 
+  if (document.payload.status === 'completed') {
+    throw new Error('A completed check-in cannot be changed.');
+  }
+
   const updatedDocument = parseDomainDocument({
     ...document,
     payload: update(document.payload),
@@ -1102,6 +1142,22 @@ export const updateCheckIn = async (
 
   await saveDocument(updatedDocument);
   return updatedDocument;
+};
+
+export const deleteCheckIn = async (checkInId: string): Promise<void> => {
+  const document = await database.documents.get(checkInId);
+
+  if (document?.type !== 'check-in') {
+    throw new Error(`Check-in ${checkInId} was not found.`);
+  }
+
+  const deletedAt = updatedNow(document);
+  await saveDocument({
+    ...document,
+    deletedAt,
+    updatedAt: deletedAt,
+    updatedByDeviceId: getDeviceId(),
+  });
 };
 
 export const documentTable = () => database.documents;

@@ -85,6 +85,8 @@ export const journalPayloadSchema = z.object({
   markdown: z.string(),
   localDate: localDateSchema,
   timezone: timezoneSchema,
+  status: z.enum(['draft', 'completed']).default('completed'),
+  completedAt: instantSchema.nullable().default(null),
 });
 
 export const habitPayloadSchema = z.object({
@@ -429,3 +431,27 @@ export const selectWinningDocument = <TDocument extends DomainDocument>(
 
   return compareDocumentVersions(left, right) >= 0 ? left : right;
 };
+
+const isCompletedLog = (document: DomainDocument): boolean =>
+  (document.type === 'journal' && document.payload.status === 'completed') ||
+  (document.type === 'check-in' && document.payload.status === 'completed');
+
+const immutableLogContent = (document: DomainDocument): string =>
+  JSON.stringify({
+    type: document.type,
+    schemaVersion: document.schemaVersion,
+    payload: document.payload,
+    occurredAt: document.occurredAt,
+    parentId: document.parentId,
+    sortKey: document.sortKey,
+    createdAt: document.createdAt,
+  });
+
+export const canReplaceDocument = (
+  stored: DomainDocument,
+  incoming: DomainDocument,
+): boolean =>
+  !isCompletedLog(stored) ||
+  (immutableLogContent(stored) === immutableLogContent(incoming) &&
+    (stored.deletedAt === incoming.deletedAt ||
+      (stored.deletedAt === null && incoming.deletedAt !== null)));

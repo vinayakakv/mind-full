@@ -7,9 +7,11 @@ import {
   addTask,
   addTaskSuggestion,
   applyRemoteDocuments,
+  completeJournal,
   createHabit,
   createJournal,
   deleteBodyMeasurement,
+  deleteCheckIn,
   deleteJournal,
   ensureDefaultBodyMetrics,
   findCheckIn,
@@ -307,7 +309,7 @@ describe('local documents', () => {
     expect(await database.syncState.get(task.id)).toMatchObject({ dirty: 1 });
   });
 
-  it('autosaves and tombstones a journal locally', async () => {
+  it('autosaves, completes, and tombstones a journal locally', async () => {
     const journal = await createJournal(new Date('2026-07-14T12:00:00.000Z'));
 
     const updated = await updateJournal(journal.id, {
@@ -319,6 +321,21 @@ describe('local documents', () => {
     expect(await database.syncState.get(journal.id)).toMatchObject({
       dirty: 1,
     });
+
+    const completed = await completeJournal(
+      journal.id,
+      new Date('2026-07-14T12:05:00.000Z'),
+    );
+    expect(completed.payload).toMatchObject({
+      status: 'completed',
+      completedAt: '2026-07-14T12:05:00.000Z',
+    });
+    await expect(
+      updateJournal(journal.id, {
+        title: 'A revised title',
+        markdown: 'A revised memory.',
+      }),
+    ).rejects.toThrow('completed journal');
 
     await deleteJournal(journal.id);
     expect(
@@ -336,6 +353,27 @@ describe('local documents', () => {
     const resumedCheckIn = await getOrCreateMorningCheckIn();
     expect(resumedCheckIn.id).toBe(checkIn.id);
     expect(resumedCheckIn.payload.currentStep).toBe(2);
+  });
+
+  it('does not reopen a completed check-in for changes', async () => {
+    const checkIn = await getOrCreateMorningCheckIn();
+    await updateCheckIn(checkIn.id, (payload) => ({
+      ...payload,
+      status: 'completed',
+      completedAt: '2026-07-14T12:05:00.000Z',
+    }));
+
+    await expect(
+      updateCheckIn(checkIn.id, (payload) => ({
+        ...payload,
+        mood: 'Light',
+      })),
+    ).rejects.toThrow('completed check-in');
+
+    await deleteCheckIn(checkIn.id);
+    expect(await database.documents.get(checkIn.id)).toMatchObject({
+      deletedAt: expect.any(String),
+    });
   });
 
   it('keeps morning and evening check-ins independent', async () => {

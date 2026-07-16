@@ -1,7 +1,11 @@
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { createReminderDocument, createTaskDocument } from '@mindfull/domain';
+import {
+  createJournalDocument,
+  createReminderDocument,
+  createTaskDocument,
+} from '@mindfull/domain';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { buildServer } from './server.js';
@@ -130,6 +134,63 @@ describe('Mindfull server', () => {
         payload: expect.objectContaining({ text: 'Take a slow, quiet walk' }),
       }),
     );
+
+    await server.close();
+  });
+
+  it('rejects changes to a completed journal but accepts its tombstone', async () => {
+    const server = await createTestServer();
+    const token = await pairDevice(server, 'phone');
+    const journal = createJournalDocument({
+      id: '01-journal',
+      now: '2026-07-14T12:00:00.000Z',
+      deviceId: 'phone',
+      payload: {
+        title: null,
+        markdown: 'The rain arrived softly.',
+        localDate: '2026-07-14',
+        timezone: 'Asia/Kolkata',
+        status: 'completed',
+        completedAt: '2026-07-14T12:00:00.000Z',
+      },
+    });
+
+    const firstSync = await server.inject({
+      method: 'POST',
+      url: '/api/sync',
+      headers: { authorization: `Bearer ${token}` },
+      payload: { cursor: 0, documents: [journal] },
+    });
+    expect(firstSync.statusCode).toBe(200);
+
+    const editedSync = await server.inject({
+      method: 'POST',
+      url: '/api/sync',
+      headers: { authorization: `Bearer ${token}` },
+      payload: {
+        cursor: 0,
+        documents: [
+          {
+            ...journal,
+            payload: { ...journal.payload, markdown: 'Rewritten.' },
+            updatedAt: '2026-07-14T12:05:00.000Z',
+          },
+        ],
+      },
+    });
+    expect(editedSync.statusCode).toBe(400);
+
+    const deletedAt = '2026-07-14T12:06:00.000Z';
+    const deleteSync = await server.inject({
+      method: 'POST',
+      url: '/api/sync',
+      headers: { authorization: `Bearer ${token}` },
+      payload: {
+        cursor: 0,
+        documents: [{ ...journal, deletedAt, updatedAt: deletedAt }],
+      },
+    });
+    expect(deleteSync.statusCode).toBe(200);
 
     await server.close();
   });

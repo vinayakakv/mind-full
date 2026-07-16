@@ -17,6 +17,7 @@ import ReactMarkdown from 'react-markdown';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 
 import {
+  completeJournal,
   createJournal,
   deleteJournal,
   documentTable,
@@ -65,12 +66,12 @@ function JournalEditor({
   latestDraft.current = { title: title.trim() || null, markdown };
 
   const persist = useCallback(
-    async (draft = latestDraft.current): Promise<void> => {
+    async (draft = latestDraft.current): Promise<boolean> => {
       if (
         draft.title === lastSaved.current.title &&
         draft.markdown === lastSaved.current.markdown
       ) {
-        return;
+        return true;
       }
 
       setSaveState('saving');
@@ -84,8 +85,10 @@ function JournalEditor({
       try {
         await saveQueue.current;
         setSaveState('saved');
+        return true;
       } catch {
         setSaveState('error');
+        return false;
       }
     },
     [journal.id],
@@ -105,8 +108,14 @@ function JournalEditor({
   );
 
   const finishWriting = async () => {
-    await persist();
-    onDone();
+    if (!(await persist())) return;
+
+    try {
+      await completeJournal(journal.id);
+      onDone();
+    } catch {
+      setSaveState('error');
+    }
   };
 
   return (
@@ -157,11 +166,9 @@ function JournalEditor({
 
 function JournalReading({
   journal,
-  onEdit,
   onDelete,
 }: {
   journal: JournalDocument;
-  onEdit: () => void;
   onDelete: () => Promise<void>;
 }) {
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
@@ -186,9 +193,6 @@ function JournalReading({
         <p className={styles.emptyEntry}>This entry is still quiet.</p>
       )}
       <div className={styles.readingActions}>
-        <Button className={styles.primaryButton} onPress={onEdit}>
-          Continue writing
-        </Button>
         {isConfirmingDelete ? (
           <div className={styles.confirmDelete}>
             <span>Delete this entry?</span>
@@ -219,7 +223,6 @@ export function JournalPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const selectedId = searchParams.get('entry');
-  const isWriting = searchParams.get('mode') === 'write';
   const selectedJournal = useLiveQuery(async () => {
     if (!selectedId) return undefined;
     const document = await documentTable().get(selectedId);
@@ -227,6 +230,7 @@ export function JournalPage() {
       ? document
       : undefined;
   }, [selectedId]);
+  const isDraft = selectedJournal?.payload.status === 'draft';
 
   const beginEntry = async () => {
     const journal = await createJournal();
@@ -241,7 +245,7 @@ export function JournalPage() {
 
   return (
     <section className={styles.page}>
-      {!isWriting && !selectedId ? (
+      {!selectedId ? (
         <header className={styles.pageHeader}>
           <div>
             <p className={styles.eyebrow}>Write freely</p>
@@ -253,7 +257,7 @@ export function JournalPage() {
         </header>
       ) : null}
 
-      {selectedJournal && isWriting ? (
+      {selectedJournal && isDraft ? (
         <JournalEditor
           key={selectedJournal.id}
           journal={selectedJournal}
@@ -261,14 +265,8 @@ export function JournalPage() {
         />
       ) : null}
 
-      {selectedJournal && !isWriting ? (
-        <JournalReading
-          journal={selectedJournal}
-          onEdit={() =>
-            setSearchParams({ entry: selectedJournal.id, mode: 'write' })
-          }
-          onDelete={deleteSelected}
-        />
+      {selectedJournal && !isDraft ? (
+        <JournalReading journal={selectedJournal} onDelete={deleteSelected} />
       ) : null}
 
       {!selectedId ? (

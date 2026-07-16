@@ -132,10 +132,35 @@ describe('domain documents', () => {
         markdown: '# A small moment\n\nTea by the window.',
         localDate: '2026-07-14',
         timezone: 'Asia/Kolkata',
+        status: 'completed',
+        completedAt: now,
       },
     });
 
     expect(migrateDomainDocument(journal)).toEqual(journal);
+  });
+
+  it('treats journals from before completion state as completed logs', () => {
+    const journal = createJournalDocument({
+      id: '01-journal',
+      now,
+      deviceId: 'phone',
+      payload: {
+        title: null,
+        markdown: 'Tea by the window.',
+        localDate: '2026-07-14',
+        timezone: 'Asia/Kolkata',
+        status: 'completed',
+        completedAt: null,
+      },
+    });
+    const { status: _, completedAt: __, ...olderPayload } = journal.payload;
+
+    expect(
+      migrateDomainDocument({ ...journal, payload: olderPayload }),
+    ).toMatchObject({
+      payload: { status: 'completed', completedAt: null },
+    });
   });
 
   it('validates a habit and its occurrence log', () => {

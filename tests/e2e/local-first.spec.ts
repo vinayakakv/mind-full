@@ -143,12 +143,12 @@ const completeCheckInBySkipping = async (
   }
 
   await expect(
-    page.getByRole('button', { name: 'Return to today' }),
+    page.getByRole('button', { name: 'Close', exact: true }),
   ).toBeVisible();
-  await page.getByRole('button', { name: 'Return to today' }).click();
+  await page.getByRole('button', { name: 'Close', exact: true }).click();
 };
 
-test('completes distinct morning and evening check-ins and edits an answer', async ({
+test('keeps completed morning and evening check-ins as read-only summaries', async ({
   page,
 }) => {
   await page.goto('/');
@@ -163,22 +163,35 @@ test('completes distinct morning and evening check-ins and edits an answer', asy
   ).toBeVisible();
 
   await page.getByRole('button', { name: 'Review morning check-in' }).click();
-  await page.getByRole('button', { name: 'Review answers' }).click();
-  await page.getByRole('button', { name: 'Steady' }).click();
-  await page.getByRole('button', { name: 'Light' }).click();
-  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  const morningSummary = page.getByRole('dialog', {
+    name: 'Morning check-in',
+  });
+  await expect(
+    morningSummary.getByRole('heading', { name: 'This morning' }),
+  ).toBeVisible();
+  await expect(morningSummary.getByRole('textbox')).toHaveCount(0);
+  await expect(
+    morningSummary.getByRole('button', { name: 'Review answers' }),
+  ).toHaveCount(0);
   await page.getByRole('button', { name: 'Close check-in' }).click();
 
-  await page.getByRole('button', { name: 'Review morning check-in' }).click();
-  await page.getByRole('button', { name: 'Review answers' }).click();
-  await expect(page.getByRole('button', { name: 'Steady' })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
-  await expect(page.getByRole('button', { name: 'Light' })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
+  await page.getByRole('button', { name: 'Review evening check-in' }).click();
+  const eveningSummary = page.getByRole('dialog', {
+    name: 'Evening check-in',
+  });
+  await expect(
+    eveningSummary.getByRole('heading', { name: 'This evening' }),
+  ).toBeVisible();
+  await expect(eveningSummary.getByRole('textbox')).toHaveCount(0);
+  await expect(
+    eveningSummary.getByRole('button', { name: 'Back' }),
+  ).toHaveCount(0);
+  await expect(
+    eveningSummary.getByRole('button', { name: 'Continue' }),
+  ).toHaveCount(0);
+  await expect(
+    eveningSummary.getByRole('button', { name: 'Skip' }),
+  ).toHaveCount(0);
 });
 
 const addHabit = async (page: Page, name: string): Promise<void> => {
@@ -308,6 +321,11 @@ test('autosaves a journal offline and renders its markdown after reload', async 
     page.getByRole('link', { name: 'Back to history' }),
   ).toBeVisible();
   await expect(page.getByText('soft', { exact: true })).toBeVisible();
+  await expect(page.getByLabel('Entry title')).toHaveCount(0);
+  await expect(page.getByLabel('Journal entry')).toHaveCount(0);
+  await expect(
+    page.getByRole('button', { name: 'Continue writing' }),
+  ).toHaveCount(0);
 });
 
 test('synchronizes a journal between two paired browsers', async ({

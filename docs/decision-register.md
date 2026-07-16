@@ -18,8 +18,8 @@ topic documents contain the detailed rationale and behavior.
 
 ## Check-ins and prompts
 
-- One editable morning and one editable evening check-in may exist per local
-  date.
+- One morning and one evening check-in may exist per local date. Each remains
+  editable only while it is a draft and becomes immutable on completion.
 - Morning/evening boundaries are configurable.
 - Prompt selection rotates.
 - AI may introduce new questions based on history.
@@ -48,10 +48,13 @@ topic documents contain the detailed rationale and behavior.
 
 - Journal content is Markdown without attachments.
 - Editing is plain text; rendering happens in reading mode.
+- Journals remain editable drafts until Finish writing is chosen; completed
+  journals and check-ins are immutable logs that may still be deleted.
+- Summary screens are read-only editorial surfaces. Further reflection creates
+  a new journal rather than editing the source or summary.
 - Titles are optional; there are no tags initially.
 - Analysis status may be shown subtly.
-- Weekly reviews are generated snapshots with a separate editable personal
-  reflection.
+- Weekly reviews are read-only generated snapshots.
 - Missed scheduled reviews run after backend restart.
 - Semantic search initially returns passages and source links, not chat answers.
 

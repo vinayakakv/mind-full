@@ -110,11 +110,18 @@ type JournalPayload = {
   markdown: string;
   localDate: string;
   timezone: string;
+  status: "draft" | "completed";
+  completedAt: string | null;
 };
 ```
 
 AI status is not embedded in the journal because the backend and client may
 update those concerns independently.
+
+Journal drafts remain editable. Completing an entry makes its content an
+immutable historical record. Deletion remains available and synchronizes as a
+tombstone; a correction or continuation is recorded as a new journal rather
+than rewriting the completed entry.
 
 ### Check-in
 
@@ -143,6 +150,10 @@ type CheckInPayload = {
 
 Prompt text is snapshotted into the response so later prompt-library changes do
 not alter history.
+
+Completed check-ins are immutable. Their completion view is a read-only
+summary of the recorded answers rather than a route back into the question
+flow. They may still be permanently deleted through a synchronized tombstone.
 
 ### Prompt candidate
 
@@ -193,7 +204,6 @@ type WeeklyReviewPayload = {
   weekStart: string;
   weekEnd: string;
   generatedMarkdown: string;
-  personalReflectionMarkdown: string | null;
   sourceDocumentIds: string[];
   generatedAt: string;
   provider: string;
@@ -202,7 +212,8 @@ type WeeklyReviewPayload = {
 ```
 
 Generated content is a snapshot and is not silently regenerated. Personal
-reflection remains independently editable within the review document.
+reflection prompted by a review is written as a separate journal entry so the
+review itself remains a read-only summary.
 
 ### Reminder
 

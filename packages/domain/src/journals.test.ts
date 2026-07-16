@@ -7,6 +7,8 @@ const entry = {
   markdown: '',
   localDate: '2026-07-14',
   timezone: 'Asia/Kolkata',
+  status: 'completed' as const,
+  completedAt: '2026-07-14T12:00:00.000Z',
 };
 
 describe('journal heading', () => {

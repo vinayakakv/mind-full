@@ -1,4 +1,5 @@
 import {
+  canReplaceDocument,
   compareDocumentVersions,
   type DomainDocument,
   parseDomainDocument,
@@ -93,6 +94,10 @@ const acceptDocument = (
   }
 
   if (compareDocumentVersions(incomingDocument, storedDocument) > 0) {
+    if (!canReplaceDocument(storedDocument, incomingDocument)) {
+      throw new Error('A completed log cannot be changed.');
+    }
+
     storeDocument(database, incomingDocument);
     return incomingDocument;
   }

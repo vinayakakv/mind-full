@@ -48,8 +48,9 @@ section lets the user review them early.
 
 - Entries are grouped by local day and shown newest first.
 - The initial filters are All, Journals, Check-ins, and Habits.
-- Journal entries open their existing reading/editing route.
-- Check-ins open their completed review flow.
+- Completed journal entries open a typographic reading surface without edit
+  controls.
+- Check-ins open a read-only summary of what was recorded.
 - Habit history includes recorded completions and explicitly recorded misses;
   a calculated absence is not presented as a logged event.
 - Results are revealed in small pages with automatic continuation near the end
@@ -59,7 +60,8 @@ section lets the user review them early.
 ## Check-in rules
 
 - There is at most one morning and one evening check-in per local date.
-- Both remain editable afterward.
+- Drafts remain editable until completion. Completed check-ins are immutable
+  historical records.
 - The morning/evening time boundaries are customizable.
 - The app offers the relevant flow automatically, while either flow remains
   manually accessible.
@@ -157,6 +159,9 @@ platform allows them.
 - A title is optional. Without one, the date and first line form the display
   heading.
 - Entries autosave locally.
+- Entries remain editable drafts until Finish writing is chosen.
+- Finished entries are immutable. They may be read or permanently deleted, but
+  not reopened in the editor.
 - Multiple entries per day are allowed.
 - AI analysis is asynchronous and never interrupts writing.
 - Analysis state may appear as a subtle status such as Waiting for Mindfull,
@@ -180,8 +185,7 @@ suggestion permanently. AI never bypasses this review.
 
 Reflect includes:
 
-- Weekly-review snapshots
-- A separate editable personal reflection for each review
+- Read-only weekly-review snapshots
 - Habit consistency and correlations
 - Recurring journal and check-in themes
 - Unfinished commitments
@@ -191,6 +195,10 @@ Reflect includes:
 Semantic search initially returns matching passages with dates, context, and
 links to their source. It does not synthesize a conversational answer in the
 first release.
+
+Summary surfaces are editorial reading views. They show generated or recorded
+content without text fields, disabled form controls, or inline editing. A new
+journal entry is used when a summary inspires further reflection.
 
 ## Health
 

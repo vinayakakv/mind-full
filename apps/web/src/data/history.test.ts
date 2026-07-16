@@ -43,6 +43,8 @@ describe('history entries', () => {
         markdown: 'The rain arrived.',
         localDate: '2026-07-15',
         timezone: 'Asia/Kolkata',
+        status: 'completed',
+        completedAt: now,
       },
     });
     const emptyJournal = createJournalDocument({
@@ -53,8 +55,19 @@ describe('history entries', () => {
         markdown: '',
         localDate: '2026-07-15',
         timezone: 'Asia/Kolkata',
+        status: 'completed',
+        completedAt: now,
       },
     });
+    const draftJournal = {
+      ...journal,
+      id: 'journal-draft',
+      payload: {
+        ...journal.payload,
+        status: 'draft' as const,
+        completedAt: null,
+      },
+    };
     const task = createTaskDocument({
       ...envelope,
       id: 'task',
@@ -73,6 +86,7 @@ describe('history entries', () => {
       emptyJournal,
       habit,
       journal,
+      draftJournal,
     ]);
 
     expect(entries.map(({ id }) => id)).toEqual(['journal', habitLog.id]);

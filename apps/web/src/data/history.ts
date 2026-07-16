@@ -32,6 +32,7 @@ export type HistoryEntry =
     };
 
 const isWrittenJournal = (document: JournalDocument): boolean =>
+  document.payload.status !== 'draft' &&
   Boolean(document.payload.title || document.payload.markdown.trim());
 
 export const historyEntriesFrom = (

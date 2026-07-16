@@ -13,8 +13,10 @@ import {
   ModalOverlay,
   TextArea,
 } from 'react-aria-components';
+import ReactMarkdown from 'react-markdown';
 
 import {
+  deleteCheckIn,
   documentTable,
   getOrCreateCheckIn,
   updateCheckIn,
@@ -376,33 +378,101 @@ function ReflectionStep({ checkIn }: { checkIn: CheckInDocument }) {
 function CompletionStep({
   checkIn,
   onClose,
+  onDelete,
 }: {
   checkIn: CheckInDocument;
   onClose: () => void;
+  onDelete: () => Promise<void>;
 }) {
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const isMorning = checkIn.payload.kind === 'morning';
+  const observations = [
+    isMorning
+      ? { label: 'Energy', value: checkIn.payload.energy }
+      : { label: 'Stress', value: checkIn.payload.stress },
+    { label: 'Mood', value: checkIn.payload.mood },
+    {
+      label: 'Emotions',
+      value: checkIn.payload.emotions.length
+        ? checkIn.payload.emotions.join(' · ')
+        : null,
+    },
+  ].filter(
+    (observation): observation is { label: string; value: string } =>
+      observation.value !== null,
+  );
+  const answers = checkIn.payload.responses.filter(
+    (response) => !response.skipped && response.answer,
+  );
+  const hasSummary =
+    observations.length > 0 ||
+    answers.length > 0 ||
+    Boolean(checkIn.payload.reflectionMarkdown);
 
   return (
-    <div className={styles.step}>
-      <p className={styles.kicker}>{isMorning ? 'For today' : 'For tonight'}</p>
-      <h2 tabIndex={-1}>
-        {isMorning ? 'You have made a little room.' : 'The day can rest here.'}
-      </h2>
+    <div className={`${styles.step} ${styles.summary}`}>
+      <p className={styles.kicker}>What you noticed</p>
+      <h2 tabIndex={-1}>{isMorning ? 'This morning' : 'This evening'}</h2>
       <p className={styles.supporting}>
         {isMorning
-          ? 'Carry forward only what deserves your attention.'
-          : 'What was good mattered. What was hard can be held gently.'}
+          ? 'A small record of how the day began.'
+          : 'A small record of how the day came to rest.'}
       </p>
+      {observations.length ? (
+        <dl className={styles.summaryFacts}>
+          {observations.map(({ label, value }) => (
+            <div key={label}>
+              <dt>{label}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : null}
+      {answers.map((response) => (
+        <section className={styles.summaryAnswer} key={response.promptId}>
+          <h3>{response.promptText}</h3>
+          {response.source === 'ai' ? (
+            <p className={styles.aiLabel}>Asked by Mindfull</p>
+          ) : null}
+          <p>{response.answer}</p>
+        </section>
+      ))}
+      {checkIn.payload.reflectionMarkdown ? (
+        <section className={styles.summaryAnswer}>
+          <h3>Reflection</h3>
+          <div className={styles.summaryMarkdown}>
+            <ReactMarkdown>{checkIn.payload.reflectionMarkdown}</ReactMarkdown>
+          </div>
+        </section>
+      ) : null}
+      {!hasSummary ? (
+        <p className={styles.emptySummary}>Nothing needed words this time.</p>
+      ) : null}
       <div className={styles.actions}>
         <Button className={styles.primaryButton} onPress={onClose}>
-          Return to today
+          Close
         </Button>
-        <Button
-          className={styles.textButton}
-          onPress={() => moveToStep(checkIn, 1)}
-        >
-          Review answers
-        </Button>
+        {isConfirmingDelete ? (
+          <div className={styles.confirmDelete}>
+            <span>Delete this check-in?</span>
+            <Button className={styles.deleteButton} onPress={onDelete}>
+              Delete
+            </Button>
+            <Button
+              className={styles.textButton}
+              onPress={() => setIsConfirmingDelete(false)}
+            >
+              Keep it
+            </Button>
+          </div>
+        ) : (
+          <Button
+            className={styles.textButton}
+            onPress={() => setIsConfirmingDelete(true)}
+          >
+            Delete check-in
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -411,21 +481,29 @@ function CompletionStep({
 function ActiveStep({
   checkIn,
   onClose,
+  onDelete,
 }: {
   checkIn: CheckInDocument;
   onClose: () => void;
+  onDelete: () => Promise<void>;
 }) {
   const { currentStep, responses } = checkIn.payload;
   const firstPromptStep = 3;
   const reflectionStep = firstPromptStep + responses.length;
 
+  if (checkIn.payload.status === 'completed')
+    return (
+      <CompletionStep checkIn={checkIn} onClose={onClose} onDelete={onDelete} />
+    );
   if (currentStep === 0) return <ArrivalStep checkIn={checkIn} />;
   if (currentStep === 1) return <FeelingStep checkIn={checkIn} />;
   if (currentStep === 2) return <EmotionsStep checkIn={checkIn} />;
   if (currentStep === reflectionStep)
     return <ReflectionStep checkIn={checkIn} />;
   if (currentStep >= completionStepFor(checkIn))
-    return <CompletionStep checkIn={checkIn} onClose={onClose} />;
+    return (
+      <CompletionStep checkIn={checkIn} onClose={onClose} onDelete={onDelete} />
+    );
 
   return (
     <PromptStep
@@ -450,7 +528,9 @@ export function CheckInFlow() {
     if (currentStep === undefined) return;
 
     const frame = requestAnimationFrame(() => {
-      stepFrameRef.current?.querySelector<HTMLElement>('h2')?.focus();
+      stepFrameRef.current
+        ?.querySelector<HTMLElement>('h2')
+        ?.focus({ preventScroll: true });
     });
 
     return () => cancelAnimationFrame(frame);
@@ -459,6 +539,11 @@ export function CheckInFlow() {
   if (!activeCheckInId) return null;
 
   const close = () => setActiveCheckInId(null);
+  const deleteActiveCheckIn = async () => {
+    if (!checkIn) return;
+    await deleteCheckIn(checkIn.id);
+    close();
+  };
   const label = checkIn
     ? `${kindName(checkIn.payload.kind)} check-in`
     : 'Check-in';
@@ -496,7 +581,11 @@ export function CheckInFlow() {
               key={`${checkIn.id}:${currentStep}`}
               className={styles.stepFrame}
             >
-              <ActiveStep checkIn={checkIn} onClose={close} />
+              <ActiveStep
+                checkIn={checkIn}
+                onClose={close}
+                onDelete={deleteActiveCheckIn}
+              />
             </div>
           ) : (
             <p className={styles.loading}>Opening a quiet space…</p>
@@ -512,15 +601,5 @@ export const openCheckIn = async (
   setActiveCheckInId: (id: string) => void,
 ): Promise<void> => {
   const checkIn = await getOrCreateCheckIn(kind);
-  const completionStep = completionStepFor(checkIn);
-  const document =
-    checkIn.payload.status === 'completed' &&
-    checkIn.payload.currentStep !== completionStep
-      ? await updateCheckIn(checkIn.id, (payload) => ({
-          ...payload,
-          currentStep: completionStep,
-        }))
-      : checkIn;
-
-  setActiveCheckInId(document.id);
+  setActiveCheckInId(checkIn.id);
 };
