@@ -60,7 +60,8 @@ The Health page opens with:
 - A selected metric and its responsive line chart
 - Range choices for 1 month, 3 months, 6 months, 1 year, and All
 - An Add measurement action
-- Access to archived metrics and metric management
+- A link to the dedicated `/health/metrics` management page, including archived
+  metrics
 
 One metric is charted at a time. The chart connects actual values with a gentle
 line and uses no goals, target bands, judgmental colors, or good/bad language.

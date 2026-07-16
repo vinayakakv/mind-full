@@ -33,10 +33,26 @@ const router = createBrowserRouter([
         },
       },
       {
+        path: 'habits',
+        lazy: async () => {
+          const { HabitsPage } = await import('./pages/HabitsPage');
+          return { Component: HabitsPage };
+        },
+      },
+      {
         path: 'health',
         lazy: async () => {
           const { HealthPage } = await import('./pages/HealthPage');
           return { Component: HealthPage };
+        },
+      },
+      {
+        path: 'health/metrics',
+        lazy: async () => {
+          const { HealthMetricsPage } = await import(
+            './pages/HealthMetricsPage'
+          );
+          return { Component: HealthMetricsPage };
         },
       },
       {

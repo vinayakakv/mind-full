@@ -105,6 +105,8 @@ Avoid vague names such as `processData`, `handleThing`, `manager`, `utils`,
 - AI never creates tasks without approval.
 - Never log journal text, check-in answers, prompts, or tokens.
 - Use semantic HTML and React Aria behavior before recreating interactions.
+- Reserve modals for short, bounded actions. Use routed pages for collection
+  management, reordering, long reading, and workflows with nested states.
 - Preserve keyboard access, focus visibility, contrast, and reduced-motion
   support.
 - Self-host daily-use assets; do not depend on third-party CDNs.

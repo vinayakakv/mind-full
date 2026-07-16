@@ -126,11 +126,11 @@ without approval.
 - Notifications may offer a Mark complete action.
 - Today keeps a simple completion list in the chosen habit order. Ordering is
   changed only from Manage habits.
-- Manage habits remains a bounded, rounded dialog on both wider and mobile
-  screens. Its reorder actions remain open while a habit is moved so repeated
-  keyboard or touch moves do not require reopening the control.
+- Manage habits opens the dedicated `/habits` page. Its reorder actions remain
+  open while a habit is moved so repeated keyboard or touch moves do not
+  require reopening the control.
 - Creating, editing, or viewing a habit provides an explicit return to the full
-  habit list without closing Manage habits.
+  habit list. Returning to Today is a separate page action.
 
 ## Tasks
 
@@ -218,7 +218,8 @@ independent and preserve exact timestamps.
 The textual measurement list supports editing and deletion. Selecting or
 focusing a chart point reveals its exact value and timestamp, but chart points
 do not carry editing actions. Metric management supports custom mass and
-circumference metrics plus rename, archive, restore, and preferred-unit changes.
+circumference metrics plus rename, archive, restore, and preferred-unit changes
+on the dedicated `/health/metrics` page.
 
 Health uses factual absolute changes without targets, percentages, medical
 interpretation, reminders, correlations, or AI commentary.

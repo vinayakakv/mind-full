@@ -5,7 +5,6 @@
 }
 
 .sectionHeading,
-.dialogHeader,
 .detailHeading {
   align-items: start;
   display: flex;
@@ -13,7 +12,6 @@
 }
 
 .eyebrow,
-.dialogHeader p,
 .detailKicker {
   color: var(--text-muted);
   font-size: 0.72rem;
@@ -23,7 +21,6 @@
 }
 
 .sectionHeading h2,
-.dialogHeader h2,
 .detailHeading h3 {
   font-family: var(--font-reflection);
   font-weight: 400;
@@ -48,7 +45,9 @@
 }
 
 .manageButton {
+  display: inline-block;
   padding: 0.5rem 0;
+  text-decoration: none;
 }
 
 .backButton {
@@ -114,49 +113,13 @@
   font-size: 0.72rem;
 }
 
-.backdrop {
-  align-items: center;
-  background: color-mix(in srgb, var(--surface-canvas) 82%, transparent);
-  display: flex;
-  inset: 0;
-  justify-content: center;
-  padding: 1rem;
-  position: fixed;
-  z-index: 20;
-}
-
-.dialog {
-  background: var(--surface-canvas);
-  border: 1px solid var(--border-control);
-  border-radius: 1.25rem;
-  box-shadow: 0 2rem 5rem var(--shadow-soft);
-  max-height: calc(100dvh - 2rem);
-  max-width: 40rem;
-  min-height: min(35rem, calc(100dvh - 2rem));
-  overflow: auto;
-  padding: clamp(1.25rem, 5vw, 2.5rem);
-  width: 100%;
-}
-
-.dialogHeader h2 {
-  font-size: 2.5rem;
-}
-
-.closeButton {
-  background: transparent;
-  border: 0;
-  border-radius: 50%;
-  color: var(--text-muted);
-  cursor: pointer;
-  font-size: 1.25rem;
-  height: 2.25rem;
-  width: 2.25rem;
-}
-
 .habitForm,
-.habitDetails,
-.managerList {
-  margin-top: 2.5rem;
+.habitDetails {
+  margin-top: 1.5rem;
+}
+
+.management {
+  max-width: 40rem;
 }
 
 .habitForm {

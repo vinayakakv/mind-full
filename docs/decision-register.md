@@ -54,6 +54,10 @@ topic documents contain the detailed rationale and behavior.
   a new journal rather than editing the source or summary.
 - Active check-ins use a focused modal; completed check-ins use a dedicated
   reading page with normal document scrolling.
+- Modals are limited to short, bounded contextual actions. Collection
+  management, reordering, long reading, and nested workflows use routed pages;
+  habit management is `/habits` and body-metric management is
+  `/health/metrics`.
 - Titles are optional; there are no tags initially.
 - Analysis status may be shown subtly.
 - Weekly reviews are read-only generated snapshots.

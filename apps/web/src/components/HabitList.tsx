@@ -15,6 +15,7 @@ import {
   TextArea,
   TextField,
 } from 'react-aria-components';
+import { Link } from 'react-router';
 
 import {
   createHabit,
@@ -41,7 +42,7 @@ const weekdays = [
 const habitOrder = (habit: HabitDocument): string =>
   habit.sortKey ?? `habit:${habit.createdAt}:${habit.id}`;
 
-const habitDocuments = async (): Promise<{
+export const loadHabitDocuments = async (): Promise<{
   habits: HabitDocument[];
   logs: HabitLogDocument[];
 }> => {
@@ -309,16 +310,14 @@ function HabitDetails({
   );
 }
 
-function HabitManager({
+export function HabitManagement({
   habits,
   logs,
   today,
-  onClose,
 }: {
   habits: HabitDocument[];
   logs: HabitLogDocument[];
   today: string;
-  onClose: () => void;
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -330,8 +329,6 @@ function HabitManager({
   const selectedHabit = habits.find(({ id }) => id === selectedId);
   const activeHabits = habits.filter(({ payload }) => !payload.archivedAt);
   const archivedHabits = habits.filter(({ payload }) => payload.archivedAt);
-  const isInsideHabit = isEditing || Boolean(selectedHabit);
-
   const startNewHabit = () => {
     setSelectedId(null);
     setIsEditing(true);
@@ -408,181 +405,157 @@ function HabitManager({
   };
 
   return (
-    <div className={styles.backdrop} role="presentation">
-      <section
-        className={styles.dialog}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Manage habits"
-      >
-        <div className={styles.dialogHeader}>
-          <div>
-            {isInsideHabit ? (
-              <Button className={styles.backButton} onPress={returnToAllHabits}>
-                ← Back to all habits
+    <section className={styles.management} aria-label="Manage habits">
+      {isEditing || selectedHabit ? (
+        <Button className={styles.backButton} onPress={returnToAllHabits}>
+          ← Back to all habits
+        </Button>
+      ) : null}
+
+      {isEditing ? (
+        <HabitForm
+          habit={selectedHabit}
+          onSaved={(habitId) => {
+            setSelectedId(habitId);
+            setIsEditing(false);
+          }}
+          onCancel={() => setIsEditing(false)}
+        />
+      ) : selectedHabit ? (
+        <HabitDetails
+          habit={selectedHabit}
+          logs={logs}
+          today={today}
+          onEdit={() => setIsEditing(true)}
+          onClose={() => setSelectedId(null)}
+        />
+      ) : (
+        <div className={styles.managerList}>
+          <div className={styles.managerActions}>
+            <Button className={styles.primaryButton} onPress={startNewHabit}>
+              Add a habit
+            </Button>
+            {habits.some(({ payload }) => payload.archivedAt) ? (
+              <Button
+                className={styles.textButton}
+                onPress={() => setShowArchived((visible) => !visible)}
+              >
+                {showArchived ? 'Hide archived' : 'Show archived'}
               </Button>
-            ) : (
-              <p>Daily rhythm</p>
-            )}
-            <h2>Habits</h2>
+            ) : null}
           </div>
-          <Button
-            className={styles.closeButton}
-            aria-label="Close habit manager"
-            onPress={onClose}
-          >
-            ×
-          </Button>
-        </div>
+          {activeHabits.length === 0 && !showArchived ? (
+            <p className={styles.emptyManager}>
+              A small habit can be enough to begin.
+            </p>
+          ) : (
+            <ul className={styles.manageHabitList}>
+              {activeHabits.map((habit, index) => {
+                const isOpen = reorderingId === habit.id;
 
-        {isEditing ? (
-          <HabitForm
-            habit={selectedHabit}
-            onSaved={(habitId) => {
-              setSelectedId(habitId);
-              setIsEditing(false);
-            }}
-            onCancel={() => setIsEditing(false)}
-          />
-        ) : selectedHabit ? (
-          <HabitDetails
-            habit={selectedHabit}
-            logs={logs}
-            today={today}
-            onEdit={() => setIsEditing(true)}
-            onClose={() => setSelectedId(null)}
-          />
-        ) : (
-          <div className={styles.managerList}>
-            <div className={styles.managerActions}>
-              <Button className={styles.primaryButton} onPress={startNewHabit}>
-                Add a habit
-              </Button>
-              {habits.some(({ payload }) => payload.archivedAt) ? (
-                <Button
-                  className={styles.textButton}
-                  onPress={() => setShowArchived((visible) => !visible)}
-                >
-                  {showArchived ? 'Hide archived' : 'Show archived'}
-                </Button>
-              ) : null}
-            </div>
-            {activeHabits.length === 0 && !showArchived ? (
-              <p className={styles.emptyManager}>
-                A small habit can be enough to begin.
-              </p>
-            ) : (
-              <ul className={styles.manageHabitList}>
-                {activeHabits.map((habit, index) => {
-                  const isOpen = reorderingId === habit.id;
-
-                  return (
-                    <li
-                      key={habit.id}
-                      className={styles.manageHabitItem}
-                      data-dragging={draggedId === habit.id || undefined}
-                      onDragOver={(event) => {
-                        if (draggedId) event.preventDefault();
-                      }}
-                      onDrop={(event) => {
-                        event.preventDefault();
-                        void dropHabitOn(habit.id);
-                      }}
-                    >
-                      <div className={styles.manageHabitRow}>
-                        <button
-                          type="button"
-                          className={styles.dragHandle}
-                          aria-label={`Drag to reorder ${habit.payload.name}`}
-                          draggable
-                          onDragStart={(event) =>
-                            beginDragging(event, habit.id)
-                          }
-                          onDragEnd={() => setDraggedId(null)}
-                        >
-                          <span aria-hidden="true">≡</span>
-                        </button>
+                return (
+                  <li
+                    key={habit.id}
+                    className={styles.manageHabitItem}
+                    data-dragging={draggedId === habit.id || undefined}
+                    onDragOver={(event) => {
+                      if (draggedId) event.preventDefault();
+                    }}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      void dropHabitOn(habit.id);
+                    }}
+                  >
+                    <div className={styles.manageHabitRow}>
+                      <button
+                        type="button"
+                        className={styles.dragHandle}
+                        aria-label={`Drag to reorder ${habit.payload.name}`}
+                        draggable
+                        onDragStart={(event) => beginDragging(event, habit.id)}
+                        onDragEnd={() => setDraggedId(null)}
+                      >
+                        <span aria-hidden="true">≡</span>
+                      </button>
+                      <Button
+                        className={styles.manageHabitButton}
+                        onPress={() => setSelectedId(habit.id)}
+                      >
+                        {habit.payload.name}
+                      </Button>
+                      <Button
+                        className={styles.reorderMenuButton}
+                        aria-label={`Reorder ${habit.payload.name}`}
+                        aria-expanded={isOpen}
+                        aria-controls={`reorder-${habit.id}`}
+                        onPress={() =>
+                          setReorderingId(isOpen ? null : habit.id)
+                        }
+                      >
+                        <span aria-hidden="true">•••</span>
+                      </Button>
+                    </div>
+                    {isOpen ? (
+                      <fieldset
+                        id={`reorder-${habit.id}`}
+                        className={styles.reorderActions}
+                      >
+                        <legend className="visually-hidden">
+                          Reorder {habit.payload.name}
+                        </legend>
                         <Button
-                          className={styles.manageHabitButton}
-                          onPress={() => setSelectedId(habit.id)}
+                          className={styles.reorderButton}
+                          isDisabled={index === 0 || isReordering}
+                          onPress={() => void moveHabitBy(habit, -1)}
                         >
-                          {habit.payload.name}
+                          Move up
                         </Button>
                         <Button
-                          className={styles.reorderMenuButton}
-                          aria-label={`Reorder ${habit.payload.name}`}
-                          aria-expanded={isOpen}
-                          aria-controls={`reorder-${habit.id}`}
-                          onPress={() =>
-                            setReorderingId(isOpen ? null : habit.id)
+                          className={styles.reorderButton}
+                          isDisabled={
+                            index === activeHabits.length - 1 || isReordering
                           }
+                          onPress={() => void moveHabitBy(habit, 1)}
                         >
-                          <span aria-hidden="true">•••</span>
+                          Move down
                         </Button>
-                      </div>
-                      {isOpen ? (
-                        <fieldset
-                          id={`reorder-${habit.id}`}
-                          className={styles.reorderActions}
+                        <Button
+                          className={styles.reorderDoneButton}
+                          onPress={() => setReorderingId(null)}
                         >
-                          <legend className="visually-hidden">
-                            Reorder {habit.payload.name}
-                          </legend>
-                          <Button
-                            className={styles.reorderButton}
-                            isDisabled={index === 0 || isReordering}
-                            onPress={() => void moveHabitBy(habit, -1)}
-                          >
-                            Move up
-                          </Button>
-                          <Button
-                            className={styles.reorderButton}
-                            isDisabled={
-                              index === activeHabits.length - 1 || isReordering
-                            }
-                            onPress={() => void moveHabitBy(habit, 1)}
-                          >
-                            Move down
-                          </Button>
-                          <Button
-                            className={styles.reorderDoneButton}
-                            onPress={() => setReorderingId(null)}
-                          >
-                            Done
-                          </Button>
-                        </fieldset>
-                      ) : null}
+                          Done
+                        </Button>
+                      </fieldset>
+                    ) : null}
+                  </li>
+                );
+              })}
+              {showArchived
+                ? archivedHabits.map((habit) => (
+                    <li key={habit.id} className={styles.archivedHabit}>
+                      <span>{habit.payload.name}</span>
+                      <Button
+                        className={styles.noteButton}
+                        onPress={() => restore(habit.id)}
+                      >
+                        Restore
+                      </Button>
                     </li>
-                  );
-                })}
-                {showArchived
-                  ? archivedHabits.map((habit) => (
-                      <li key={habit.id} className={styles.archivedHabit}>
-                        <span>{habit.payload.name}</span>
-                        <Button
-                          className={styles.noteButton}
-                          onPress={() => restore(habit.id)}
-                        >
-                          Restore
-                        </Button>
-                      </li>
-                    ))
-                  : null}
-              </ul>
-            )}
-            <span className="visually-hidden" aria-live="polite">
-              {reorderStatus}
-            </span>
-          </div>
-        )}
-      </section>
-    </div>
+                  ))
+                : null}
+            </ul>
+          )}
+          <span className="visually-hidden" aria-live="polite">
+            {reorderStatus}
+          </span>
+        </div>
+      )}
+    </section>
   );
 }
 
 export function HabitList() {
-  const [isManaging, setIsManaging] = useState(false);
-  const data = useLiveQuery(habitDocuments, []) ?? { habits: [], logs: [] };
+  const data = useLiveQuery(loadHabitDocuments, []) ?? { habits: [], logs: [] };
   const today = localDateFor(new Date());
   const activeHabits = data.habits.filter(({ payload }) => !payload.archivedAt);
   const todaysHabits = activeHabits.filter(({ payload }) =>
@@ -598,63 +571,48 @@ export function HabitList() {
   );
 
   return (
-    <>
-      <section className={styles.section} aria-labelledby="today-habits">
-        <div className={styles.sectionHeading}>
-          <div>
-            <p className={styles.eyebrow}>A gentle rhythm</p>
-            <h2 id="today-habits">Today’s habits</h2>
-          </div>
-          <Button
-            className={styles.manageButton}
-            onPress={() => setIsManaging(true)}
-          >
-            Manage
-          </Button>
+    <section className={styles.section} aria-labelledby="today-habits">
+      <div className={styles.sectionHeading}>
+        <div>
+          <p className={styles.eyebrow}>A gentle rhythm</p>
+          <h2 id="today-habits">Today’s habits</h2>
         </div>
-        {todaysHabits.length === 0 ? (
-          <p className={styles.emptyToday}>
-            {activeHabits.length === 0
-              ? 'No habits yet. Begin with something kind and small.'
-              : 'Nothing is scheduled for today.'}
-          </p>
-        ) : (
-          <div className={styles.todayList}>
-            {todaysHabits.map((habit) => {
-              const isCompleted = completedHabitIds.has(habit.id);
+        <Link className={styles.manageButton} to="/habits">
+          Manage
+        </Link>
+      </div>
+      {todaysHabits.length === 0 ? (
+        <p className={styles.emptyToday}>
+          {activeHabits.length === 0
+            ? 'No habits yet. Begin with something kind and small.'
+            : 'Nothing is scheduled for today.'}
+        </p>
+      ) : (
+        <div className={styles.todayList}>
+          {todaysHabits.map((habit) => {
+            const isCompleted = completedHabitIds.has(habit.id);
 
-              return (
-                <Button
-                  key={habit.id}
-                  className={styles.todayHabit}
-                  aria-pressed={isCompleted}
-                  onPress={() =>
-                    setHabitCompleted(habit.id, today, !isCompleted)
-                  }
-                >
-                  <span className={styles.completionMark} aria-hidden="true">
-                    {isCompleted ? '✓' : ''}
+            return (
+              <Button
+                key={habit.id}
+                className={styles.todayHabit}
+                aria-pressed={isCompleted}
+                onPress={() => setHabitCompleted(habit.id, today, !isCompleted)}
+              >
+                <span className={styles.completionMark} aria-hidden="true">
+                  {isCompleted ? '✓' : ''}
+                </span>
+                <span className={styles.habitName}>{habit.payload.name}</span>
+                {habit.payload.reminderTime ? (
+                  <span className={styles.reminderTime}>
+                    {formatReminder(habit.payload.reminderTime)}
                   </span>
-                  <span className={styles.habitName}>{habit.payload.name}</span>
-                  {habit.payload.reminderTime ? (
-                    <span className={styles.reminderTime}>
-                      {formatReminder(habit.payload.reminderTime)}
-                    </span>
-                  ) : null}
-                </Button>
-              );
-            })}
-          </div>
-        )}
-      </section>
-      {isManaging ? (
-        <HabitManager
-          habits={data.habits}
-          logs={data.logs}
-          today={today}
-          onClose={() => setIsManaging(false)}
-        />
-      ) : null}
-    </>
+                ) : null}
+              </Button>
+            );
+          })}
+        </div>
+      )}
+    </section>
   );
 }

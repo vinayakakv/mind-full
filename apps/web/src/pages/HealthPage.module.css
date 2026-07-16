@@ -52,8 +52,7 @@
   flex: none;
 }
 
-.primaryButton,
-.smallButton {
+.primaryButton {
   background: var(--accent-strong);
   border: 1px solid var(--accent-strong);
   border-radius: 2rem;
@@ -63,21 +62,13 @@
   padding: 0.7rem 1rem;
 }
 
-.smallButton {
-  font-size: 0.76rem;
-  padding: 0.5rem 0.8rem;
-}
-
-.primaryButton[data-disabled],
-.smallButton[data-disabled] {
+.primaryButton[data-disabled] {
   cursor: default;
   opacity: 0.55;
 }
 
 .textButton,
-.archiveButton,
-.deleteButton,
-.showArchivedButton {
+.deleteButton {
   background: transparent;
   border: 0;
   color: var(--text-muted);
@@ -85,14 +76,13 @@
   font: inherit;
   font-size: 0.78rem;
   padding: 0.55rem 0.25rem;
+  text-decoration: none;
 }
 
-.textButton[data-hovered],
-.showArchivedButton[data-hovered] {
+.textButton[data-hovered] {
   color: var(--text-primary);
 }
 
-.archiveButton,
 .deleteButton {
   color: var(--text-danger);
 }
@@ -205,16 +195,13 @@
   margin: 2rem 0;
 }
 
-.history ol,
-.metricList {
+.history ol {
   list-style: none;
   margin: 1.25rem 0 0;
   padding: 0;
 }
 
-.history li,
-.metricRow,
-.archivedMetric {
+.history li {
   align-items: center;
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
@@ -224,21 +211,17 @@
   padding: 0.65rem 0;
 }
 
-.measurementSummary,
-.metricSummary {
+.measurementSummary {
   display: grid;
   gap: 0.2rem;
 }
 
-.measurementSummary span,
-.metricSummary span,
-.archivedMetric {
+.measurementSummary span {
   color: var(--text-muted);
   font-size: 0.72rem;
 }
 
-.history li strong,
-.metricRow strong {
+.history li strong {
   font-family: var(--font-reflection);
   font-size: 1rem;
   font-weight: 500;
@@ -259,10 +242,6 @@
   max-height: calc(100dvh - 2rem);
   max-width: 32rem;
   width: 100%;
-}
-
-.managerModal {
-  max-width: 40rem;
 }
 
 .dialog {
@@ -301,17 +280,13 @@
   width: 2.25rem;
 }
 
-.measurementForm,
-.newMetricForm,
-.metricEditForm {
+.measurementForm {
   display: grid;
   gap: 1.2rem;
   margin-top: 2rem;
 }
 
 .measurementForm label,
-.newMetricForm label,
-.metricEditForm label,
 .nativeField > span {
   color: var(--text-muted);
   display: block;
@@ -320,8 +295,6 @@
 }
 
 .measurementForm input,
-.newMetricForm input,
-.metricEditForm input,
 .nativeField select {
   background: var(--surface-soft);
   border: 1px solid var(--border-control);
@@ -355,33 +328,6 @@
   color: var(--text-danger);
   font-size: 0.75rem;
   margin: -0.5rem 0 0;
-}
-
-.metricEditForm {
-  margin: 0;
-  padding: 0.65rem 0;
-  width: 100%;
-}
-
-.archivedMetric {
-  color: var(--text-faint);
-}
-
-.showArchivedButton {
-  margin-top: 1rem;
-}
-
-.newMetricForm {
-  border-top: 1px solid var(--border-subtle);
-  margin-top: 2rem;
-  padding-top: 2rem;
-}
-
-.newMetricForm h3 {
-  font-family: var(--font-reflection);
-  font-size: 1.25rem;
-  font-weight: 500;
-  margin: 0;
 }
 
 @keyframes arrive {
@@ -423,8 +369,7 @@
     padding: 0;
   }
 
-  .modal,
-  .managerModal {
+  .modal {
     max-height: 92dvh;
     max-width: none;
   }

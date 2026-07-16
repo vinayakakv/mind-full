@@ -189,11 +189,12 @@ test('keeps completed morning and evening check-ins as read-only summaries', asy
 });
 
 const addHabit = async (page: Page, name: string): Promise<void> => {
-  await page.getByRole('button', { name: 'Manage' }).click();
+  await page.getByRole('link', { name: 'Manage' }).click();
+  await expect(page).toHaveURL(/\/habits$/);
   await page.getByRole('button', { name: 'Add a habit' }).click();
   await page.getByRole('textbox', { name: 'Habit' }).fill(name);
   await page.getByRole('button', { name: 'Add habit' }).click();
-  await page.getByRole('button', { name: 'Close habit manager' }).click();
+  await page.getByRole('link', { name: 'Back to today' }).click();
 };
 
 test('creates and completes a habit through an offline reload', async ({
@@ -393,15 +394,13 @@ test('records and reviews a body measurement offline', async ({
 
   await expect(page.getByRole('heading', { name: 'Health' })).toBeVisible();
   await expect(page.getByRole('button', { name: /Weight/ })).toBeVisible();
-  await page.getByRole('button', { name: 'Manage metrics' }).click();
+  await page.getByRole('link', { name: 'Manage metrics' }).click();
+  await expect(page).toHaveURL(/\/health\/metrics$/);
   await page.getByLabel('Name').fill('Neck');
   await page.getByRole('button', { name: 'Add metric' }).click();
-  await expect(
-    page
-      .getByRole('dialog', { name: 'Body metrics' })
-      .getByText('Neck', { exact: true }),
-  ).toBeVisible();
-  await page.getByRole('button', { name: 'Close metric manager' }).click();
+  await expect(page.getByText('Neck', { exact: true })).toBeVisible();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page.getByRole('link', { name: 'Back to health' }).click();
   await expect(page.getByRole('button', { name: /Neck/ })).toBeVisible();
   await page.getByRole('button', { name: 'Add measurement' }).click();
   await page.getByLabel('Value').fill('72.4');

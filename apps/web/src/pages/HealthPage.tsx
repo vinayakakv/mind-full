@@ -1,7 +1,6 @@
 import {
   type BodyMeasurementDocument,
   type BodyMetricDocument,
-  type BodyMetricKind,
   type BodyUnit,
   changeFromPreviousMeasurement,
   displayedBodyValue,
@@ -9,7 +8,6 @@ import {
   type HealthRange,
   latestBodyMeasurements,
   measurementsInHealthRange,
-  unitsForBodyMetric,
 } from '@mindfull/domain';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useState } from 'react';
@@ -24,6 +22,7 @@ import {
   ModalOverlay,
   TextField,
 } from 'react-aria-components';
+import { Link } from 'react-router';
 import {
   CartesianGrid,
   Line,
@@ -36,13 +35,10 @@ import {
 
 import {
   addBodyMeasurement,
-  createBodyMetric,
   deleteBodyMeasurement,
   documentTable,
   ensureDefaultBodyMetrics,
-  setBodyMetricArchived,
   updateBodyMeasurement,
-  updateBodyMetric,
 } from '../data/documents';
 import styles from './HealthPage.module.css';
 
@@ -270,188 +266,6 @@ function MeasurementDialog({
   );
 }
 
-function MetricRow({ metric }: { metric: BodyMetricDocument }) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [name, setName] = useState(metric.payload.name);
-  const [unit, setUnit] = useState<BodyUnit>(metric.payload.preferredUnit);
-
-  const save = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!name.trim()) return;
-    await updateBodyMetric(metric.id, {
-      name: name.trim(),
-      preferredUnit: unit,
-    });
-    setIsEditing(false);
-  };
-
-  if (metric.payload.archivedAt) {
-    return (
-      <li className={styles.archivedMetric}>
-        <span>{metric.payload.name}</span>
-        <Button
-          className={styles.textButton}
-          onPress={() => setBodyMetricArchived(metric.id, false)}
-        >
-          Restore
-        </Button>
-      </li>
-    );
-  }
-
-  return (
-    <li className={styles.metricRow}>
-      {isEditing ? (
-        <Form className={styles.metricEditForm} onSubmit={save}>
-          <TextField value={name} onChange={setName} isRequired>
-            <Label>Name</Label>
-            <Input maxLength={100} />
-          </TextField>
-          <label className={styles.nativeField}>
-            <span>Preferred unit</span>
-            <select
-              aria-label={`Preferred unit for ${metric.payload.name}`}
-              value={unit}
-              onChange={(event) =>
-                setUnit(event.currentTarget.value as BodyUnit)
-              }
-            >
-              {unitsForBodyMetric(metric.payload.kind).map((candidate) => (
-                <option key={candidate} value={candidate}>
-                  {candidate}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className={styles.formActions}>
-            <Button className={styles.smallButton} type="submit">
-              Save
-            </Button>
-            <Button
-              className={styles.textButton}
-              onPress={() => setIsEditing(false)}
-            >
-              Cancel
-            </Button>
-          </div>
-        </Form>
-      ) : (
-        <>
-          <div className={styles.metricSummary}>
-            <strong>{metric.payload.name}</strong>
-            <span>{metric.payload.preferredUnit}</span>
-          </div>
-          <div className={styles.rowActions}>
-            <Button
-              className={styles.textButton}
-              onPress={() => setIsEditing(true)}
-            >
-              Edit
-            </Button>
-            <Button
-              className={styles.archiveButton}
-              onPress={() => setBodyMetricArchived(metric.id, true)}
-            >
-              Archive
-            </Button>
-          </div>
-        </>
-      )}
-    </li>
-  );
-}
-
-function MetricManager({
-  metrics,
-  onClose,
-}: {
-  metrics: BodyMetricDocument[];
-  onClose: () => void;
-}) {
-  const [name, setName] = useState('');
-  const [kind, setKind] = useState<BodyMetricKind>('circumference');
-  const [showArchived, setShowArchived] = useState(false);
-  const preferredUnit = kind === 'mass' ? 'kg' : 'cm';
-  const visibleMetrics = metrics.filter(
-    ({ payload }) => showArchived || !payload.archivedAt,
-  );
-
-  const addMetric = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!name.trim()) return;
-    await createBodyMetric(name.trim(), kind, preferredUnit);
-    setName('');
-  };
-
-  return (
-    <ModalOverlay
-      className={styles.modalOverlay}
-      isOpen
-      isDismissable
-      onOpenChange={(isOpen) => {
-        if (!isOpen) onClose();
-      }}
-    >
-      <Modal className={`${styles.modal} ${styles.managerModal}`}>
-        <Dialog className={styles.dialog}>
-          <div className={styles.dialogHeading}>
-            <div>
-              <p>Your measures</p>
-              <Heading slot="title">Body metrics</Heading>
-            </div>
-            <Button
-              className={styles.closeButton}
-              aria-label="Close metric manager"
-              onPress={onClose}
-            >
-              ×
-            </Button>
-          </div>
-          <ul className={styles.metricList}>
-            {visibleMetrics.map((metric) => (
-              <MetricRow key={metric.id} metric={metric} />
-            ))}
-          </ul>
-          <Button
-            className={styles.showArchivedButton}
-            aria-pressed={showArchived}
-            onPress={() => setShowArchived((shown) => !shown)}
-          >
-            {showArchived ? 'Hide archived' : 'Show archived'}
-          </Button>
-          <Form className={styles.newMetricForm} onSubmit={addMetric}>
-            <h3>Add a custom metric</h3>
-            <TextField value={name} onChange={setName} isRequired>
-              <Label>Name</Label>
-              <Input placeholder="Neck" maxLength={100} />
-            </TextField>
-            <label className={styles.nativeField}>
-              <span>Kind</span>
-              <select
-                aria-label="Metric kind"
-                value={kind}
-                onChange={(event) =>
-                  setKind(event.currentTarget.value as BodyMetricKind)
-                }
-              >
-                <option value="circumference">Circumference · cm</option>
-                <option value="mass">Mass · kg</option>
-              </select>
-            </label>
-            <Button
-              className={styles.smallButton}
-              type="submit"
-              isDisabled={!name.trim()}
-            >
-              Add metric
-            </Button>
-          </Form>
-        </Dialog>
-      </Modal>
-    </ModalOverlay>
-  );
-}
-
 function HealthChart({
   metric,
   measurements,
@@ -628,7 +442,6 @@ export function HealthPage() {
   const [selectedId, setSelectedId] = useState('body-metric:weight');
   const [range, setRange] = useState<HealthRange>('3m');
   const [isAdding, setIsAdding] = useState(false);
-  const [isManaging, setIsManaging] = useState(false);
 
   useEffect(() => {
     void ensureDefaultBodyMetrics();
@@ -659,12 +472,9 @@ export function HealthPage() {
           >
             Add measurement
           </Button>
-          <Button
-            className={styles.textButton}
-            onPress={() => setIsManaging(true)}
-          >
+          <Link className={styles.textButton} to="/health/metrics">
             Manage metrics
-          </Button>
+          </Link>
         </div>
       </header>
 
@@ -718,12 +528,6 @@ export function HealthPage() {
           measurements={health?.measurements ?? []}
           initialMetricId={selectedMetric.id}
           onClose={() => setIsAdding(false)}
-        />
-      ) : null}
-      {isManaging && health ? (
-        <MetricManager
-          metrics={health.metrics}
-          onClose={() => setIsManaging(false)}
         />
       ) : null}
     </section>

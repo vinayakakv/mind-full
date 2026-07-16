@@ -36,6 +36,23 @@ The initial app-owned component set should be small:
 
 More components are added only when repeated use establishes a real pattern.
 
+## Modal boundary
+
+Modals are reserved for short, bounded actions that make sense in the context
+of the page beneath them. The whole action should be understandable at a glance
+and normally end when it is saved or cancelled. Add measurement is one such
+action. The active check-in is a deliberate focused-flow exception.
+
+Use a routed page when an experience contains a collection to manage, long
+reading, reordering, nested add/edit/detail states, or enough work that a stable
+URL and normal document scrolling are useful. Habit management lives at
+`/habits`; body-metric management lives at `/health/metrics`. Completed
+check-ins and other summaries remain reading pages.
+
+Every true modal uses React Aria behavior for focus containment, Escape,
+restoration, and background inertness. A large panel is not made a modal merely
+to avoid adding a route.
+
 ## Typography
 
 - A soft serif is used for reflection prompts, journal reading, review content,
