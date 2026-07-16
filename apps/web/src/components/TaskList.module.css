@@ -72,14 +72,21 @@
   text-transform: uppercase;
 }
 
-.taskForm input {
+.taskForm input,
+.taskForm textarea {
   background: var(--surface-soft);
   border: 1px solid var(--border-control);
   border-radius: 0.65rem;
   color: var(--text-primary);
   font: inherit;
+  line-height: 1.45;
   padding: 0.7rem 0.8rem;
   width: 100%;
+}
+
+.taskForm textarea {
+  min-height: 4.75rem;
+  resize: vertical;
 }
 
 .primaryButton {
@@ -142,29 +149,36 @@
 }
 
 .task {
-  align-items: center;
+  align-items: flex-start;
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
   gap: 0.75rem;
   justify-content: space-between;
   min-height: 3.4rem;
+  padding-block: 0.8rem;
 }
 
 .taskLabel {
-  align-items: center;
+  align-items: flex-start;
   cursor: pointer;
   display: flex;
   flex: 1;
   gap: 0.85rem;
+  min-width: 0;
 }
 
 .taskText {
   display: block;
+  line-height: 1.45;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .taskLabel input {
   accent-color: var(--accent-strong);
+  flex: none;
   height: 1rem;
+  margin-top: 0.2rem;
   width: 1rem;
 }
 
@@ -208,6 +222,10 @@
 }
 
 @media (max-width: 36rem) {
+  .section {
+    padding-bottom: 4.5rem;
+  }
+
   .deleteButton {
     opacity: 0.5;
   }

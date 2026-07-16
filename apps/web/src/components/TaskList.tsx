@@ -1,7 +1,14 @@
 import type { TaskDocument } from '@mindfull/domain';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
-import { Button, Form, Input, Label, TextField } from 'react-aria-components';
+import {
+  Button,
+  Form,
+  Input,
+  Label,
+  TextArea,
+  TextField,
+} from 'react-aria-components';
 
 import {
   addTask,
@@ -53,16 +60,16 @@ export function TaskList() {
 
   const submitTask = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const trimmedText = taskText.trim();
+    const normalizedText = taskText.trim().replace(/\s+/g, ' ');
 
-    if (!trimmedText || saveState === 'saving') {
+    if (!normalizedText || saveState === 'saving') {
       return;
     }
 
     setSaveState('saving');
     try {
       await addTask(
-        trimmedText,
+        normalizedText,
         reminderLocal ? new Date(reminderLocal).toISOString() : null,
       );
       closeTaskDialog();
@@ -147,10 +154,14 @@ export function TaskList() {
               }}
               isRequired
               isDisabled={saveState === 'saving'}
-              autoFocus
             >
               <Label>Task</Label>
-              <Input placeholder="A small thing to remember…" />
+              <TextArea
+                rows={2}
+                maxLength={500}
+                placeholder="A small thing to remember…"
+                autoFocus
+              />
             </TextField>
             <TextField
               value={reminderLocal}
