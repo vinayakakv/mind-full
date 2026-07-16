@@ -86,17 +86,17 @@ placement are intentionally avoided.
 
 ## Implementation sequence
 
-1. Extract the document store and typed feature data modules while preserving
-   public behavior.
-2. Extract the shared short-action dialog and adopt it for task and
-   measurement entry.
-3. Add a small boundary-aware current-time hook and use it where date or period
-   changes affect the UI.
-4. Replace whole-database observers with typed queries and make History truly
-   incremental.
-5. Split oversized feature components along their existing product seams.
-6. Tighten saving, loading, and missing states; lazy-load remaining secondary
-   routes.
+- [x] Extract the document store and typed feature data modules while
+  preserving public behavior.
+- [x] Extract the shared short-action dialog and adopt it for task and
+  measurement entry.
+- [x] Add a small boundary-aware current-time hook and use it where date or
+  period changes affect the UI.
+- [x] Replace whole-database observers with typed queries and make History
+  truly incremental.
+- [x] Split oversized feature components along their existing product seams.
+- [x] Tighten saving, loading, and missing states; lazy-load remaining
+  secondary routes.
 
 Each step is verified with Biome, TypeScript, the focused tests that cover the
 changed boundary, a production build, and mobile and desktop inspection for

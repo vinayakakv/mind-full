@@ -72,8 +72,7 @@ does not carry the visualization dependency.
 
 ## Recording flow
 
-Add measurement opens a small modal on wider screens and a compact drawer on
-mobile. It contains:
+Add measurement opens a compact centered dialog on every viewport. It contains:
 
 1. A metric selector
 2. One numeric value field, prefilled with that metric's latest recorded value
