@@ -32,6 +32,8 @@ defaults.
   Docker Compose, scheduling, notifications, pairing, and backups.
 - [Implementation plan](./implementation-plan.md) — vertical milestones, exit
   criteria, and commit strategy.
+- [Frontend maintainability plan](./frontend-maintainability.md) — data and UI
+  boundaries, time correctness, query scope, and incremental refactor order.
 - [Decision register](./decision-register.md) — concise list of settled
   decisions and deferred ideas.
 

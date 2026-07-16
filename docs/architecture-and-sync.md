@@ -55,6 +55,11 @@ The full database is not copied into atoms. Components observe persisted
 documents through Dexie live queries. Workflow write atoms call domain
 repositories that persist changes locally.
 
+The low-level document store owns validation, local transactions, dirty-state
+tracking, and remote application. Typed feature data modules own queries and
+commands for settings, habits, tasks, journals, health, check-ins, and
+reminders. Components do not receive the raw Dexie document table.
+
 ## Backend
 
 - Node.js 24.15 or newer, using the built-in SQLite driver
