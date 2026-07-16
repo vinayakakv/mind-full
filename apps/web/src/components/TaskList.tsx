@@ -1,7 +1,17 @@
 import type { TaskDocument } from '@mindfull/domain';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
-import { Button, Form, Input, Label, TextField } from 'react-aria-components';
+import {
+  Button,
+  Dialog,
+  Form,
+  Heading,
+  Input,
+  Label,
+  Modal,
+  ModalOverlay,
+  TextField,
+} from 'react-aria-components';
 
 import {
   addTask,
@@ -40,8 +50,15 @@ const loadTasks = async (): Promise<TaskDocument[]> => {
 
 export function TaskList() {
   const tasks = useLiveQuery(async () => visibleTasks(await loadTasks()), []);
+  const [isCreating, setIsCreating] = useState(false);
   const [taskText, setTaskText] = useState('');
   const [reminderLocal, setReminderLocal] = useState('');
+
+  const closeTaskDialog = () => {
+    setIsCreating(false);
+    setTaskText('');
+    setReminderLocal('');
+  };
 
   const submitTask = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -55,8 +72,7 @@ export function TaskList() {
       trimmedText,
       reminderLocal ? new Date(reminderLocal).toISOString() : null,
     );
-    setTaskText('');
-    setReminderLocal('');
+    closeTaskDialog();
   };
 
   const incompleteTasks =
@@ -107,32 +123,79 @@ export function TaskList() {
           <p className={styles.eyebrow}>Keep in view</p>
           <h2 id="tasks-heading">Tasks</h2>
         </div>
-        {tasks ? (
-          <span className={styles.count}>{incompleteTasks.length}</span>
-        ) : null}
+        <div className={styles.headingActions}>
+          {tasks ? (
+            <span className={styles.count}>{incompleteTasks.length}</span>
+          ) : null}
+          <Button
+            className={styles.newTaskButton}
+            onPress={() => setIsCreating(true)}
+          >
+            Add task
+          </Button>
+        </div>
       </div>
 
-      <Form className={styles.form} onSubmit={submitTask}>
-        <TextField
-          aria-label="New task"
-          value={taskText}
-          onChange={setTaskText}
-          className={styles.textField}
+      {isCreating ? (
+        <ModalOverlay
+          className={styles.modalOverlay}
+          isOpen
+          isDismissable
+          onOpenChange={(isOpen) => {
+            if (!isOpen) closeTaskDialog();
+          }}
         >
-          <Label className="visually-hidden">New task</Label>
-          <Input placeholder="A small thing to remember…" />
-        </TextField>
-        <Button type="submit" className={styles.addButton}>
-          Add
-        </Button>
-        <details className={styles.reminderField}>
-          <summary>Add a reminder</summary>
-          <TextField value={reminderLocal} onChange={setReminderLocal}>
-            <Label>Reminder time</Label>
-            <Input type="datetime-local" />
-          </TextField>
-        </details>
-      </Form>
+          <Modal className={styles.modal}>
+            <Dialog className={styles.dialog}>
+              <div className={styles.dialogHeading}>
+                <div>
+                  <p>Keep in view</p>
+                  <Heading slot="title">Add a task</Heading>
+                </div>
+                <Button
+                  className={styles.closeButton}
+                  aria-label="Close"
+                  onPress={closeTaskDialog}
+                >
+                  ×
+                </Button>
+              </div>
+              <Form className={styles.taskForm} onSubmit={submitTask}>
+                <TextField
+                  value={taskText}
+                  onChange={setTaskText}
+                  isRequired
+                  autoFocus
+                >
+                  <Label>Task</Label>
+                  <Input placeholder="A small thing to remember…" />
+                </TextField>
+                <TextField value={reminderLocal} onChange={setReminderLocal}>
+                  <Label>
+                    Reminder <span>Optional</span>
+                  </Label>
+                  <Input type="datetime-local" />
+                </TextField>
+                <div className={styles.formActions}>
+                  <Button
+                    type="submit"
+                    className={styles.primaryButton}
+                    isDisabled={!taskText.trim()}
+                  >
+                    Add task
+                  </Button>
+                  <Button
+                    className={styles.textButton}
+                    onPress={closeTaskDialog}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </Form>
+            </Dialog>
+          </Modal>
+        </ModalOverlay>
+      ) : null}
 
       {tasks?.length === 0 ? (
         <p className={styles.empty}>Nothing is asking for your attention.</p>

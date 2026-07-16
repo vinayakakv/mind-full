@@ -29,65 +29,140 @@
   font-variant-numeric: tabular-nums;
 }
 
-.form {
+.headingActions,
+.formActions {
   align-items: center;
-  border-bottom: 1px solid var(--border-control);
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  padding-bottom: 0.55rem;
+  gap: 0.65rem;
 }
 
-.reminderField {
-  color: var(--text-muted);
-  font-size: 0.75rem;
-  flex-basis: 100%;
-}
-
-.reminderField summary {
+.newTaskButton {
+  background: var(--accent-soft);
+  border: 1px solid var(--border-control);
+  border-radius: 2rem;
+  color: var(--text-primary);
   cursor: pointer;
-  width: fit-content;
+  font: inherit;
+  font-size: 0.78rem;
+  padding: 0.55rem 0.8rem;
 }
 
-.reminderField label {
-  display: block;
-  margin: 0.65rem 0 0.3rem;
+.newTaskButton[data-hovered] {
+  border-color: var(--accent-strong);
 }
 
-.reminderField input {
+.modalOverlay {
+  align-items: center;
+  background: color-mix(in srgb, var(--surface-canvas) 80%, transparent);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 1rem;
+  position: fixed;
+  z-index: 30;
+}
+
+.modal {
+  max-height: calc(100dvh - 2rem);
+  max-width: 32rem;
+  width: 100%;
+}
+
+.dialog {
+  background: var(--surface-canvas);
+  border: 1px solid var(--border-control);
+  border-radius: 1.2rem;
+  box-shadow: 0 2rem 5rem var(--shadow-soft);
+  max-height: calc(100dvh - 2rem);
+  overflow: auto;
+  padding: clamp(1.25rem, 5vw, 2.25rem);
+}
+
+.dialog:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.dialogHeading {
+  align-items: start;
+  display: flex;
+  justify-content: space-between;
+}
+
+.dialogHeading p {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.11em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.dialogHeading h2 {
+  font-family: var(--font-reflection);
+  font-size: 2.25rem;
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  margin: 0.35rem 0 0;
+}
+
+.closeButton {
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1.3rem;
+  height: 2.25rem;
+  width: 2.25rem;
+}
+
+.taskForm {
+  display: grid;
+  gap: 1.2rem;
+  margin-top: 2rem;
+}
+
+.taskForm label {
+  color: var(--text-muted);
+  display: flex;
+  font-size: 0.75rem;
+  justify-content: space-between;
+  margin-bottom: 0.4rem;
+}
+
+.taskForm label span {
+  color: var(--text-faint);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.taskForm input {
   background: var(--surface-soft);
   border: 1px solid var(--border-control);
   border-radius: 0.65rem;
   color: var(--text-primary);
-  padding: 0.6rem 0.7rem;
-}
-
-.reminderTime {
-  color: var(--text-muted);
-  display: block;
-  font-size: 0.7rem;
-  margin-top: 0.2rem;
-}
-
-.textField {
-  flex: 1;
-}
-
-.textField input {
-  background: transparent;
-  border: 0;
-  color: var(--text-primary);
   font: inherit;
-  outline: 0;
-  padding: 0.55rem 0;
+  padding: 0.7rem 0.8rem;
   width: 100%;
 }
 
-.textField input::placeholder {
-  color: var(--text-faint);
+.primaryButton {
+  background: var(--accent-strong);
+  border: 1px solid var(--accent-strong);
+  border-radius: 2rem;
+  color: var(--on-accent);
+  cursor: pointer;
+  font: inherit;
+  padding: 0.7rem 1rem;
 }
 
-.addButton,
+.primaryButton[data-disabled] {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.textButton,
 .deleteButton {
   background: transparent;
   border: 0;
@@ -96,14 +171,20 @@
   font: inherit;
 }
 
-.addButton {
-  border-radius: 2rem;
-  color: var(--accent-strong);
-  padding: 0.5rem 0.75rem;
+.textButton {
+  font-size: 0.78rem;
+  padding: 0.55rem 0.25rem;
 }
 
-.addButton[data-hovered] {
-  background: var(--accent-soft);
+.textButton[data-hovered] {
+  color: var(--text-primary);
+}
+
+.reminderTime {
+  color: var(--text-muted);
+  display: block;
+  font-size: 0.7rem;
+  margin-top: 0.2rem;
 }
 
 .empty {
@@ -186,6 +267,24 @@
 }
 
 @media (max-width: 36rem) {
+  .modalOverlay {
+    align-items: end;
+    padding: 0;
+  }
+
+  .modal {
+    max-height: 92dvh;
+    max-width: none;
+  }
+
+  .dialog {
+    border-bottom: 0;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    max-height: 92dvh;
+    padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+  }
+
   .deleteButton {
     opacity: 0.5;
   }

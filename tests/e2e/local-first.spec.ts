@@ -73,8 +73,10 @@ test('keeps tasks and a check-in draft through an offline reload', async ({
   await prepareServiceWorker(page);
   await context.setOffline(true);
 
-  await page.getByLabel('New task').fill('Drink tea slowly');
-  await page.getByRole('button', { name: 'Add', exact: true }).click();
+  await page.getByRole('button', { name: 'Add task' }).click();
+  const taskDialog = page.getByRole('dialog', { name: 'Add a task' });
+  await taskDialog.getByLabel('Task').fill('Drink tea slowly');
+  await taskDialog.getByRole('button', { name: 'Add task' }).click();
   await page.getByRole('button', { name: 'Begin morning check-in' }).click();
   await page.getByRole('button', { name: "I'm here" }).click();
   await page.getByRole('button', { name: 'Steady' }).click();
@@ -371,8 +373,10 @@ test('synchronizes a task between two paired browsers', async ({ browser }) => {
     await pairBrowser(secondPage);
 
     await firstPage.goto('/');
-    await firstPage.getByLabel('New task').fill(taskText);
-    await firstPage.getByRole('button', { name: 'Add', exact: true }).click();
+    await firstPage.getByRole('button', { name: 'Add task' }).click();
+    const taskDialog = firstPage.getByRole('dialog', { name: 'Add a task' });
+    await taskDialog.getByLabel('Task').fill(taskText);
+    await taskDialog.getByRole('button', { name: 'Add task' }).click();
     await expect(firstPage.getByText('Synced')).toBeVisible();
 
     await secondPage.goto('/settings');

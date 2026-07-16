@@ -148,6 +148,9 @@ Tasks do not have due dates, priorities, overdue states, or urgency colors.
 Incomplete tasks retain their creation order. Completed tasks move into a
 visually subdued group below incomplete tasks. There is no manual reordering
 interface.
+Creating a task opens a short contextual dialog with the task text and an
+optional exact reminder time. Saving or cancelling returns directly to the
+unchanged task list.
 Incomplete tasks remain until completed or manually deleted. Completed tasks
 remain visible for seven days and are then automatically deleted from the
 visible domain through a deletion tombstone.
