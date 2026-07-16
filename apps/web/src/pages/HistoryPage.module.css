@@ -84,7 +84,6 @@
 }
 
 .entryLink,
-.entryButton,
 .habitEntry {
   background: transparent;
   border: 0;
@@ -98,20 +97,16 @@
   width: 100%;
 }
 
-.entryLink,
-.entryButton {
+.entryLink {
   cursor: pointer;
 }
 
 .entryLink:hover,
-.entryLink:focus-visible,
-.entryButton[data-hovered],
-.entryButton[data-focus-visible] {
+.entryLink:focus-visible {
   color: var(--accent-strong);
 }
 
 .entryLink strong,
-.entryButton strong,
 .habitEntry strong {
   font-family: var(--font-reflection);
   font-size: 1.2rem;

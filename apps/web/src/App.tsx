@@ -26,6 +26,13 @@ const router = createBrowserRouter([
         },
       },
       {
+        path: 'check-ins/:checkInId',
+        lazy: async () => {
+          const { CheckInPage } = await import('./pages/CheckInPage');
+          return { Component: CheckInPage };
+        },
+      },
+      {
         path: 'health',
         lazy: async () => {
           const { HealthPage } = await import('./pages/HealthPage');

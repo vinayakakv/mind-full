@@ -52,6 +52,8 @@ topic documents contain the detailed rationale and behavior.
   journals and check-ins are immutable logs that may still be deleted.
 - Summary screens are read-only editorial surfaces. Further reflection creates
   a new journal rather than editing the source or summary.
+- Active check-ins use a focused modal; completed check-ins use a dedicated
+  reading page with normal document scrolling.
 - Titles are optional; there are no tags initially.
 - Analysis status may be shown subtly.
 - Weekly reviews are read-only generated snapshots.

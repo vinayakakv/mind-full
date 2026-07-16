@@ -1,11 +1,9 @@
 import { journalBody, journalHeading } from '@mindfull/domain';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useSetAtom } from 'jotai';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from 'react-aria-components';
 import { Link } from 'react-router';
 
-import { CheckInFlow } from '../components/CheckInFlow';
 import { TaskSuggestions } from '../components/TaskSuggestions';
 import { documentTable } from '../data/documents';
 import {
@@ -14,7 +12,6 @@ import {
   type HistoryFilter,
   historyEntriesFrom,
 } from '../data/history';
-import { activeCheckInIdAtom } from '../state/check-in';
 import styles from './HistoryPage.module.css';
 
 const pageSize = 18;
@@ -69,10 +66,8 @@ function JournalHistoryEntry({
 
 function CheckInHistoryEntry({
   entry,
-  onOpen,
 }: {
   entry: Extract<HistoryEntry, { kind: 'check-in' }>;
-  onOpen: () => void;
 }) {
   const details = [
     entry.checkIn.payload.mood,
@@ -81,13 +76,17 @@ function CheckInHistoryEntry({
   const kind = entry.checkIn.payload.kind === 'morning' ? 'Morning' : 'Evening';
 
   return (
-    <Button className={styles.entryButton} onPress={onOpen}>
+    <Link
+      className={styles.entryLink}
+      to={`/check-ins/${encodeURIComponent(entry.checkIn.id)}`}
+      state={{ returnTo: 'history' }}
+    >
       <span className={styles.entryKind}>Check-in</span>
       <strong>{kind} check-in</strong>
       {details.length ? (
         <span className={styles.excerpt}>{details.join(' · ')}</span>
       ) : null}
-    </Button>
+    </Link>
   );
 }
 
@@ -120,7 +119,6 @@ export function HistoryPage() {
   const [filter, setFilter] = useState<HistoryFilter>('all');
   const [visibleCount, setVisibleCount] = useState(pageSize);
   const continuation = useRef<HTMLDivElement>(null);
-  const setActiveCheckInId = useSetAtom(activeCheckInIdAtom);
   const filteredEntries = filterHistoryEntries(entries ?? [], filter);
   const visibleEntries = filteredEntries.slice(0, visibleCount);
   const hasMore = visibleEntries.length < filteredEntries.length;
@@ -189,10 +187,7 @@ export function HistoryPage() {
                 <JournalHistoryEntry entry={entry} />
               ) : null}
               {entry.kind === 'check-in' ? (
-                <CheckInHistoryEntry
-                  entry={entry}
-                  onOpen={() => setActiveCheckInId(entry.checkIn.id)}
-                />
+                <CheckInHistoryEntry entry={entry} />
               ) : null}
               {entry.kind === 'habit' ? (
                 <HabitHistoryEntry entry={entry} />
@@ -212,7 +207,6 @@ export function HistoryPage() {
           </Button>
         </div>
       ) : null}
-      <CheckInFlow />
     </section>
   );
 }

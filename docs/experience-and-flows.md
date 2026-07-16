@@ -50,7 +50,9 @@ section lets the user review them early.
 - The initial filters are All, Journals, Check-ins, and Habits.
 - Completed journal entries open a typographic reading surface without edit
   controls.
-- Check-ins open a read-only summary of what was recorded.
+- Completed check-ins open a dedicated read-only summary page. The focused
+  modal is reserved for the active step-by-step flow and its short completion
+  moment.
 - Habit history includes recorded completions and explicitly recorded misses;
   a calculated absence is not presented as a logged event.
 - Results are revealed in small pages with automatic continuation near the end

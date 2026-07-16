@@ -93,6 +93,7 @@ function JournalComposeAction() {
 }
 
 export function TodayPage() {
+  const navigate = useNavigate();
   const now = new Date();
   const today = localDateFor(now);
   const settings = useLiveQuery(() => ensureSettings());
@@ -110,6 +111,19 @@ export function TodayPage() {
     settings?.payload.eveningStartsAt ?? '18:00',
   );
   const otherKind = relevantKind === 'morning' ? 'evening' : 'morning';
+  const openSelectedCheckIn = (
+    kind: CheckInKind,
+    checkIn: CheckInDocument | undefined,
+  ) => {
+    if (checkIn?.payload.status === 'completed') {
+      navigate(`/check-ins/${encodeURIComponent(checkIn.id)}`, {
+        state: { returnTo: 'today' },
+      });
+      return;
+    }
+
+    void openCheckIn(kind, setActiveCheckInId);
+  };
 
   return (
     <>
@@ -130,13 +144,15 @@ export function TodayPage() {
             kind={relevantKind}
             checkIn={checkIns?.[relevantKind]}
             isRelevant
-            onOpen={() => openCheckIn(relevantKind, setActiveCheckInId)}
+            onOpen={() =>
+              openSelectedCheckIn(relevantKind, checkIns?.[relevantKind])
+            }
           />
           <CheckInInvitation
             kind={otherKind}
             checkIn={checkIns?.[otherKind]}
             isRelevant={false}
-            onOpen={() => openCheckIn(otherKind, setActiveCheckInId)}
+            onOpen={() => openSelectedCheckIn(otherKind, checkIns?.[otherKind])}
           />
         </div>
       </section>

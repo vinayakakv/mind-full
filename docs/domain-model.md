@@ -152,8 +152,9 @@ Prompt text is snapshotted into the response so later prompt-library changes do
 not alter history.
 
 Completed check-ins are immutable. Their completion view is a read-only
-summary of the recorded answers rather than a route back into the question
-flow. They may still be permanently deleted through a synchronized tombstone.
+summary page of the recorded answers rather than a route back into the modal
+question flow. They may still be permanently deleted through a synchronized
+tombstone.
 
 ### Prompt candidate
 
