@@ -1,4 +1,4 @@
-import type { CheckInDocument } from '@mindfull/domain';
+import type { CheckInDocument, CheckInKind } from '@mindfull/domain';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
 import { Button } from 'react-aria-components';
@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import { Link, useLocation, useNavigate, useParams } from 'react-router';
 
 import { deleteCheckIn, documentTable } from '../data/documents';
+import { localDateFor } from '../data/time';
 import styles from './CheckInPage.module.css';
 
 const formatLocalDate = (localDate: string): string =>
@@ -38,6 +39,16 @@ const observationsFrom = (
       observation.value !== null,
   );
 
+export const checkInPageHeading = (
+  kind: CheckInKind,
+  localDate: string,
+  today: string,
+): string => {
+  const period = kind === 'morning' ? 'morning' : 'evening';
+  if (localDate === today) return `This ${period}`;
+  return kind === 'morning' ? 'Morning check-in' : 'Evening check-in';
+};
+
 export function CheckInPage() {
   const { checkInId } = useParams();
   const location = useLocation();
@@ -68,6 +79,11 @@ export function CheckInPage() {
   }
 
   const isMorning = checkIn.payload.kind === 'morning';
+  const heading = checkInPageHeading(
+    checkIn.payload.kind,
+    checkIn.payload.localDate,
+    localDateFor(new Date()),
+  );
   const observations = observationsFrom(checkIn);
   const answers = checkIn.payload.responses.filter(
     (response) => !response.skipped && response.answer,
@@ -90,7 +106,7 @@ export function CheckInPage() {
           <Link to={returnPath}>{returnLabel}</Link>
         </div>
         <p className={styles.eyebrow}>What you noticed</p>
-        <h1>{isMorning ? 'This morning' : 'This evening'}</h1>
+        <h1>{heading}</h1>
         <p className={styles.introduction}>
           {isMorning
             ? 'A small record of how the day began.'

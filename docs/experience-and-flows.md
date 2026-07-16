@@ -53,6 +53,8 @@ section lets the user review them early.
 - Completed check-ins open a dedicated read-only summary page. The focused
   modal is reserved for the active step-by-step flow and its short completion
   moment.
+- Today's summary titles read This morning or This evening. Past entries use
+  Morning check-in or Evening check-in beside their recorded date.
 - Habit history includes recorded completions and explicitly recorded misses;
   a calculated absence is not presented as a logged event.
 - Results are revealed in small pages with automatic continuation near the end
