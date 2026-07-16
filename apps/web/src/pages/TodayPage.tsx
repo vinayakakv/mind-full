@@ -19,6 +19,7 @@ import { findCheckIn } from '../data/check-ins';
 import { createJournal } from '../data/journals';
 import { ensureSettings } from '../data/settings';
 import { greetingFor, localDateFor, localTimeFor } from '../data/time';
+import { useCurrentTime } from '../hooks/use-current-time';
 import { activeCheckInIdAtom } from '../state/check-in';
 import styles from './TodayPage.module.css';
 
@@ -96,7 +97,7 @@ function JournalComposeAction() {
 
 export function TodayPage() {
   const navigate = useNavigate();
-  const now = new Date();
+  const now = useCurrentTime('minute');
   const today = localDateFor(now);
   const settings = useLiveQuery(() => ensureSettings());
   const checkIns = useLiveQuery(
@@ -135,9 +136,9 @@ export function TodayPage() {
             weekday: 'long',
             month: 'long',
             day: 'numeric',
-          }).format(new Date())}
+          }).format(now)}
         </p>
-        <h1>{greetingFor(new Date())}.</h1>
+        <h1>{greetingFor(now)}.</h1>
         <p className={styles.lede}>
           Begin with where you are, then choose what deserves your attention.
         </p>

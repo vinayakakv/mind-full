@@ -4,6 +4,7 @@ import { NavLink, Outlet } from 'react-router';
 
 import { loadSettings } from '../data/settings';
 import { localTimeFor } from '../data/time';
+import { useCurrentTime } from '../hooks/use-current-time';
 import { useHousekeeping } from '../hooks/use-housekeeping';
 import { useResolvedTheme } from '../hooks/use-resolved-theme';
 import { useSync } from '../hooks/use-sync';
@@ -39,11 +40,12 @@ function PrimaryNavigation({ className }: { className: string }) {
 export function AppShell() {
   useSync();
   useHousekeeping();
+  const now = useCurrentTime('minute');
   const settings = useLiveQuery(loadSettings);
 
   useResolvedTheme(settings?.payload.theme ?? 'system');
   const period = relevantCheckInKind(
-    localTimeFor(new Date()),
+    localTimeFor(now),
     settings?.payload.morningStartsAt ?? '05:00',
     settings?.payload.eveningStartsAt ?? '18:00',
   );

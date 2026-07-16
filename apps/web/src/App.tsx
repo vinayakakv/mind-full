@@ -2,7 +2,6 @@ import { createBrowserRouter, RouterProvider } from 'react-router';
 
 import { AppShell } from './components/AppShell';
 import { PlaceholderPage } from './pages/PlaceholderPage';
-import { SettingsPage } from './pages/SettingsPage';
 import { TodayPage } from './pages/TodayPage';
 
 const router = createBrowserRouter([
@@ -64,7 +63,13 @@ const router = createBrowserRouter([
           </PlaceholderPage>
         ),
       },
-      { path: 'settings', Component: SettingsPage },
+      {
+        path: 'settings',
+        lazy: async () => {
+          const { SettingsPage } = await import('./pages/SettingsPage');
+          return { Component: SettingsPage };
+        },
+      },
     ],
   },
 ]);

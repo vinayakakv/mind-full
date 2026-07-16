@@ -11,17 +11,7 @@ import {
 } from '@mindfull/domain';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useState } from 'react';
-import {
-  Button,
-  Dialog,
-  Form,
-  Heading,
-  Input,
-  Label,
-  Modal,
-  ModalOverlay,
-  TextField,
-} from 'react-aria-components';
+import { Button, Form, Input, Label, TextField } from 'react-aria-components';
 import { Link } from 'react-router';
 import {
   CartesianGrid,
@@ -32,7 +22,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-
+import { ActionDialog } from '../components/ui/ActionDialog';
 import {
   addBodyMeasurement,
   deleteBodyMeasurement,
@@ -160,84 +150,57 @@ function MeasurementDialog({
   };
 
   return (
-    <ModalOverlay
-      className={styles.modalOverlay}
-      isOpen
-      isDismissable
-      onOpenChange={(isOpen) => {
-        if (!isOpen) onClose();
-      }}
+    <ActionDialog
+      eyebrow="Body measurement"
+      title={measurement ? 'Edit entry' : 'Add measurement'}
+      onClose={onClose}
     >
-      <Modal className={styles.modal}>
-        <Dialog className={styles.dialog}>
-          <div className={styles.dialogHeading}>
-            <div>
-              <p>Body measurement</p>
-              <Heading slot="title">
-                {measurement ? 'Edit entry' : 'Add measurement'}
-              </Heading>
-            </div>
-            <Button
-              className={styles.closeButton}
-              aria-label="Close"
-              onPress={onClose}
-            >
-              ×
-            </Button>
+      <Form className={styles.measurementForm} onSubmit={save}>
+        <label className={styles.nativeField}>
+          <span>Metric</span>
+          <select
+            aria-label="Metric"
+            value={metric?.id ?? ''}
+            disabled={Boolean(measurement)}
+            onChange={(event) => {
+              const nextMetricId = event.currentTarget.value;
+              setMetricId(nextMetricId);
+              setValue(valueForMetric(nextMetricId));
+            }}
+          >
+            {metrics.map((candidate) => (
+              <option key={candidate.id} value={candidate.id}>
+                {candidate.payload.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <TextField value={value} onChange={setValue} isRequired autoFocus>
+          <Label>Value</Label>
+          <div className={styles.valueField}>
+            <Input type="number" min="0.01" step="0.01" inputMode="decimal" />
+            <span>{metric?.payload.preferredUnit}</span>
           </div>
-          <Form className={styles.measurementForm} onSubmit={save}>
-            <label className={styles.nativeField}>
-              <span>Metric</span>
-              <select
-                aria-label="Metric"
-                value={metric?.id ?? ''}
-                disabled={Boolean(measurement)}
-                onChange={(event) => {
-                  const nextMetricId = event.currentTarget.value;
-                  setMetricId(nextMetricId);
-                  setValue(valueForMetric(nextMetricId));
-                }}
-              >
-                {metrics.map((candidate) => (
-                  <option key={candidate.id} value={candidate.id}>
-                    {candidate.payload.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <TextField value={value} onChange={setValue} isRequired autoFocus>
-              <Label>Value</Label>
-              <div className={styles.valueField}>
-                <Input
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  inputMode="decimal"
-                />
-                <span>{metric?.payload.preferredUnit}</span>
-              </div>
-            </TextField>
-            {value && !canSave ? (
-              <p className={styles.error}>
-                Enter a positive value with up to two decimals.
-              </p>
-            ) : null}
-            <div className={styles.formActions}>
-              <Button
-                className={styles.primaryButton}
-                type="submit"
-                isDisabled={!canSave}
-              >
-                {measurement ? 'Save changes' : 'Save measurement'}
-              </Button>
-              <Button className={styles.textButton} onPress={onClose}>
-                Cancel
-              </Button>
-            </div>
-          </Form>
-        </Dialog>
-      </Modal>
-    </ModalOverlay>
+        </TextField>
+        {value && !canSave ? (
+          <p className={styles.error}>
+            Enter a positive value with up to two decimals.
+          </p>
+        ) : null}
+        <div className={styles.formActions}>
+          <Button
+            className={styles.primaryButton}
+            type="submit"
+            isDisabled={!canSave}
+          >
+            {measurement ? 'Save changes' : 'Save measurement'}
+          </Button>
+          <Button className={styles.textButton} onPress={onClose}>
+            Cancel
+          </Button>
+        </div>
+      </Form>
+    </ActionDialog>
   );
 }
 

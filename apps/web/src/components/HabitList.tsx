@@ -27,6 +27,7 @@ import {
   updateHabit,
 } from '../data/habits';
 import { localDateFor } from '../data/time';
+import { useCurrentTime } from '../hooks/use-current-time';
 import styles from './HabitList.module.css';
 
 const weekdays = [
@@ -526,7 +527,7 @@ export function HabitManagement({
 
 export function HabitList() {
   const data = useLiveQuery(loadHabitDocuments, []) ?? { habits: [], logs: [] };
-  const today = localDateFor(new Date());
+  const today = localDateFor(useCurrentTime('day'));
   const activeHabits = data.habits.filter(({ payload }) => !payload.archivedAt);
   const todaysHabits = activeHabits.filter(({ payload }) =>
     scheduledOn(payload.weekdays, today),

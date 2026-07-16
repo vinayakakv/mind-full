@@ -224,8 +224,8 @@ export function JournalPage() {
   const navigate = useNavigate();
   const selectedId = searchParams.get('entry');
   const selectedJournal = useLiveQuery(async () => {
-    if (!selectedId) return undefined;
-    return loadJournal(selectedId);
+    if (!selectedId) return null;
+    return (await loadJournal(selectedId)) ?? null;
   }, [selectedId]);
   const isDraft = selectedJournal?.payload.status === 'draft';
 
@@ -264,6 +264,15 @@ export function JournalPage() {
 
       {selectedJournal && !isDraft ? (
         <JournalReading journal={selectedJournal} onDelete={deleteSelected} />
+      ) : null}
+
+      {selectedId && selectedJournal === null ? (
+        <div className={styles.invitation}>
+          <p>This journal entry is no longer available.</p>
+          <Link className={styles.historyLink} to="/history">
+            Back to history
+          </Link>
+        </div>
       ) : null}
 
       {!selectedId ? (

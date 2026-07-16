@@ -1,6 +1,7 @@
 import type {
   CheckInDocument,
   DomainDocument,
+  HabitDocument,
   HabitLogDocument,
   JournalDocument,
 } from '@mindfull/domain';
@@ -108,18 +109,48 @@ export const filterHistoryEntries = (
 ): HistoryEntry[] =>
   filter === 'all' ? entries : entries.filter((entry) => entry.kind === filter);
 
-export const loadHistoryEntries = async (): Promise<HistoryEntry[]> => {
-  const [journals, checkIns, habits, habitLogs] = await Promise.all([
-    documentTable().where('type').equals('journal').toArray(),
-    documentTable().where('type').equals('check-in').toArray(),
-    documentTable().where('type').equals('habit').toArray(),
-    documentTable().where('type').equals('habit-log').toArray(),
-  ]);
+const belongsInHistory = (
+  document: DomainDocument,
+  filter: HistoryFilter,
+): boolean => {
+  if (document.deletedAt) return false;
+  if (document.type === 'journal') {
+    return (
+      (filter === 'all' || filter === 'journal') && isWrittenJournal(document)
+    );
+  }
+  if (document.type === 'check-in') {
+    return (
+      (filter === 'all' || filter === 'check-in') &&
+      document.payload.status === 'completed' &&
+      Boolean(document.payload.completedAt)
+    );
+  }
+  return (
+    document.type === 'habit-log' && (filter === 'all' || filter === 'habit')
+  );
+};
 
-  return historyEntriesFrom([
-    ...journals,
-    ...checkIns,
-    ...habits,
-    ...habitLogs,
-  ]);
+export const loadHistoryPage = async (
+  filter: HistoryFilter,
+  limit: number,
+): Promise<{ entries: HistoryEntry[]; hasMore: boolean }> => {
+  const activity = await documentTable()
+    .orderBy('occurredAt')
+    .reverse()
+    .filter((document) => belongsInHistory(document, filter))
+    .limit(limit + 1)
+    .toArray();
+  const visibleActivity = activity.slice(0, limit);
+  const habitIds = visibleActivity.flatMap((document) =>
+    document.type === 'habit-log' ? [document.payload.habitId] : [],
+  );
+  const habits = (await documentTable().bulkGet(habitIds)).filter(
+    (document): document is HabitDocument => document?.type === 'habit',
+  );
+
+  return {
+    entries: historyEntriesFrom([...habits, ...visibleActivity]),
+    hasMore: activity.length > limit,
+  };
 };

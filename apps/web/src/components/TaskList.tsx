@@ -1,17 +1,7 @@
 import type { TaskDocument } from '@mindfull/domain';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
-import {
-  Button,
-  Dialog,
-  Form,
-  Heading,
-  Input,
-  Label,
-  Modal,
-  ModalOverlay,
-  TextField,
-} from 'react-aria-components';
+import { Button, Form, Input, Label, TextField } from 'react-aria-components';
 
 import {
   addTask,
@@ -19,11 +9,14 @@ import {
   loadTasks,
   setTaskCompleted,
 } from '../data/tasks';
+import { useCurrentTime } from '../hooks/use-current-time';
 import styles from './TaskList.module.css';
+import { ActionDialog } from './ui/ActionDialog';
 
-const visibleTasks = (documents: Awaited<ReturnType<typeof loadTasks>>) => {
-  const now = new Date().toISOString();
-
+const visibleTasks = (
+  documents: Awaited<ReturnType<typeof loadTasks>>,
+  now: string,
+) => {
   return documents
     .filter(
       (task) =>
@@ -39,30 +32,43 @@ const visibleTasks = (documents: Awaited<ReturnType<typeof loadTasks>>) => {
 };
 
 export function TaskList() {
-  const tasks = useLiveQuery(async () => visibleTasks(await loadTasks()), []);
+  const now = useCurrentTime('minute').toISOString();
+  const tasks = useLiveQuery(
+    async () => visibleTasks(await loadTasks(), now),
+    [now],
+  );
   const [isCreating, setIsCreating] = useState(false);
   const [taskText, setTaskText] = useState('');
   const [reminderLocal, setReminderLocal] = useState('');
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'error'>(
+    'idle',
+  );
 
   const closeTaskDialog = () => {
     setIsCreating(false);
     setTaskText('');
     setReminderLocal('');
+    setSaveState('idle');
   };
 
   const submitTask = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const trimmedText = taskText.trim();
 
-    if (!trimmedText) {
+    if (!trimmedText || saveState === 'saving') {
       return;
     }
 
-    await addTask(
-      trimmedText,
-      reminderLocal ? new Date(reminderLocal).toISOString() : null,
-    );
-    closeTaskDialog();
+    setSaveState('saving');
+    try {
+      await addTask(
+        trimmedText,
+        reminderLocal ? new Date(reminderLocal).toISOString() : null,
+      );
+      closeTaskDialog();
+    } catch {
+      setSaveState('error');
+    }
   };
 
   const incompleteTasks =
@@ -127,64 +133,54 @@ export function TaskList() {
       </div>
 
       {isCreating ? (
-        <ModalOverlay
-          className={styles.modalOverlay}
-          isOpen
-          isDismissable
-          onOpenChange={(isOpen) => {
-            if (!isOpen) closeTaskDialog();
-          }}
+        <ActionDialog
+          eyebrow="Keep in view"
+          title="Add a task"
+          onClose={closeTaskDialog}
         >
-          <Modal className={styles.modal}>
-            <Dialog className={styles.dialog}>
-              <div className={styles.dialogHeading}>
-                <div>
-                  <p>Keep in view</p>
-                  <Heading slot="title">Add a task</Heading>
-                </div>
-                <Button
-                  className={styles.closeButton}
-                  aria-label="Close"
-                  onPress={closeTaskDialog}
-                >
-                  ×
-                </Button>
-              </div>
-              <Form className={styles.taskForm} onSubmit={submitTask}>
-                <TextField
-                  value={taskText}
-                  onChange={setTaskText}
-                  isRequired
-                  autoFocus
-                >
-                  <Label>Task</Label>
-                  <Input placeholder="A small thing to remember…" />
-                </TextField>
-                <TextField value={reminderLocal} onChange={setReminderLocal}>
-                  <Label>
-                    Reminder <span>Optional</span>
-                  </Label>
-                  <Input type="datetime-local" />
-                </TextField>
-                <div className={styles.formActions}>
-                  <Button
-                    type="submit"
-                    className={styles.primaryButton}
-                    isDisabled={!taskText.trim()}
-                  >
-                    Add task
-                  </Button>
-                  <Button
-                    className={styles.textButton}
-                    onPress={closeTaskDialog}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </Form>
-            </Dialog>
-          </Modal>
-        </ModalOverlay>
+          <Form className={styles.taskForm} onSubmit={submitTask}>
+            <TextField
+              value={taskText}
+              onChange={(value) => {
+                setTaskText(value);
+                setSaveState('idle');
+              }}
+              isRequired
+              isDisabled={saveState === 'saving'}
+              autoFocus
+            >
+              <Label>Task</Label>
+              <Input placeholder="A small thing to remember…" />
+            </TextField>
+            <TextField
+              value={reminderLocal}
+              onChange={setReminderLocal}
+              isDisabled={saveState === 'saving'}
+            >
+              <Label>
+                Reminder <span>Optional</span>
+              </Label>
+              <Input type="datetime-local" />
+            </TextField>
+            {saveState === 'error' ? (
+              <p className={styles.error} role="alert">
+                The task could not be saved. Please try again.
+              </p>
+            ) : null}
+            <div className={styles.formActions}>
+              <Button
+                type="submit"
+                className={styles.primaryButton}
+                isDisabled={!taskText.trim() || saveState === 'saving'}
+              >
+                {saveState === 'saving' ? 'Adding…' : 'Add task'}
+              </Button>
+              <Button className={styles.textButton} onPress={closeTaskDialog}>
+                Cancel
+              </Button>
+            </div>
+          </Form>
+        </ActionDialog>
       ) : null}
 
       {tasks?.length === 0 ? (

@@ -9,7 +9,7 @@ import {
   filterHistoryEntries,
   type HistoryEntry,
   type HistoryFilter,
-  loadHistoryEntries,
+  loadHistoryPage,
 } from '../data/history';
 import styles from './HistoryPage.module.css';
 
@@ -111,13 +111,15 @@ function HabitHistoryEntry({
 }
 
 export function HistoryPage() {
-  const entries = useLiveQuery(loadHistoryEntries, []);
   const [filter, setFilter] = useState<HistoryFilter>('all');
   const [visibleCount, setVisibleCount] = useState(pageSize);
   const continuation = useRef<HTMLDivElement>(null);
-  const filteredEntries = filterHistoryEntries(entries ?? [], filter);
-  const visibleEntries = filteredEntries.slice(0, visibleCount);
-  const hasMore = visibleEntries.length < filteredEntries.length;
+  const page = useLiveQuery(
+    () => loadHistoryPage(filter, visibleCount),
+    [filter, visibleCount],
+  );
+  const visibleEntries = filterHistoryEntries(page?.entries ?? [], filter);
+  const hasMore = page?.hasMore ?? false;
 
   useEffect(() => {
     const target = continuation.current;
@@ -161,7 +163,7 @@ export function HistoryPage() {
 
       <TaskSuggestions />
 
-      {entries && visibleEntries.length === 0 ? (
+      {page && visibleEntries.length === 0 ? (
         <p className={styles.empty}>
           {filter === 'all'
             ? 'Your reflections and rhythms will gather here.'

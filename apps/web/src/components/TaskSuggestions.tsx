@@ -5,7 +5,7 @@ import type {
   TaskSuggestionDocument,
 } from '@mindfull/domain';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button } from 'react-aria-components';
 import { Link } from 'react-router';
 
@@ -14,6 +14,7 @@ import {
   loadTaskSuggestionContext,
   rejectTaskSuggestion,
 } from '../data/tasks';
+import { useCurrentTime } from '../hooks/use-current-time';
 import styles from './TaskSuggestions.module.css';
 
 type SuggestionSource = JournalDocument | CheckInDocument;
@@ -78,19 +79,11 @@ function Source({ source }: { source: SuggestionSource | undefined }) {
 
 export function TaskSuggestions() {
   const documents = useLiveQuery(loadTaskSuggestionContext, []);
-  const [now, setNow] = useState(() => new Date().toISOString());
+  const now = useCurrentTime('minute').toISOString();
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const suggestions = documents
     ? availableSuggestions(documents, now)
     : undefined;
-
-  useEffect(() => {
-    const refresh = window.setInterval(
-      () => setNow(new Date().toISOString()),
-      60_000,
-    );
-    return () => window.clearInterval(refresh);
-  }, []);
 
   if (!suggestions?.length) return null;
 

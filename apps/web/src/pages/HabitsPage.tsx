@@ -4,9 +4,11 @@ import { Link } from 'react-router';
 import { HabitManagement } from '../components/HabitList';
 import { loadHabitDocuments } from '../data/habits';
 import { localDateFor } from '../data/time';
+import { useCurrentTime } from '../hooks/use-current-time';
 import styles from './HabitsPage.module.css';
 
 export function HabitsPage() {
+  const today = localDateFor(useCurrentTime('day'));
   const data = useLiveQuery(loadHabitDocuments, []) ?? {
     habits: [],
     logs: [],
@@ -21,11 +23,7 @@ export function HabitsPage() {
         </div>
         <Link to="/">Back to today</Link>
       </header>
-      <HabitManagement
-        habits={data.habits}
-        logs={data.logs}
-        today={localDateFor(new Date())}
-      />
+      <HabitManagement habits={data.habits} logs={data.logs} today={today} />
     </section>
   );
 }
