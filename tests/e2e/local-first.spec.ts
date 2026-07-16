@@ -91,6 +91,44 @@ test('keeps tasks and a check-in draft through an offline reload', async ({
   await expect(page.getByText('Appreciate', { exact: true })).toBeVisible();
 });
 
+test('keeps focus in the check-in as questions change', async ({ page }) => {
+  await page.setViewportSize({ width: 412, height: 839 });
+  await page.goto('/');
+
+  const invitation = page
+    .getByRole('button', { name: /morning check-in/ })
+    .first();
+  await expect(invitation).toHaveAccessibleName(/Begin morning check-in/);
+  await invitation.focus();
+  await invitation.click();
+
+  const dialog = page.getByRole('dialog', { name: 'Morning check-in' });
+  const arrivalHeading = dialog.getByRole('heading', {
+    name: 'Take one unhurried breath.',
+  });
+  await expect(arrivalHeading).toBeFocused();
+
+  await dialog.getByRole('button', { name: "I'm here" }).click();
+  await expect(
+    dialog.getByRole('heading', { name: 'How are you arriving?' }),
+  ).toBeFocused();
+
+  await dialog.getByRole('button', { name: 'Skip' }).click();
+  await expect(
+    dialog.getByRole('heading', { name: 'What is here with you?' }),
+  ).toBeFocused();
+
+  await page.keyboard.press('Shift+Tab');
+  await expect(
+    dialog.getByRole('button', { name: 'Close check-in' }),
+  ).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await expect(dialog.getByRole('button', { name: 'Back' })).toBeFocused();
+
+  await dialog.getByRole('button', { name: 'Close check-in' }).click();
+  await expect(invitation).toBeFocused();
+});
+
 const completeCheckInBySkipping = async (
   page: Page,
   kind: 'morning' | 'evening',

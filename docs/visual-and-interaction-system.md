@@ -103,6 +103,8 @@ reduced-motion always receives the still treatment.
 - The Today view can group content through whitespace and headings rather than
   putting every section in a card.
 - Check-ins temporarily become the entire focus of the page.
+- Check-in dialogs contain keyboard focus. Each new step receives focus on its
+  heading, and closing the flow restores focus to the invitation that opened it.
 - Settings may be denser than reflection surfaces, but should use the same
   typography and rhythm.
 - Primary navigation contains Today, History, and Reflect. Settings uses a

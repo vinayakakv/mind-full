@@ -22,6 +22,10 @@
   width: 100%;
 }
 
+.dialogContent {
+  outline: none;
+}
+
 .dialogHeader {
   align-items: center;
   color: var(--text-muted);
@@ -91,6 +95,10 @@
   line-height: 1.08;
   margin: 0;
   max-width: 16ch;
+}
+
+.step h2:focus-visible {
+  outline: none;
 }
 
 .supporting,

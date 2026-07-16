@@ -5,8 +5,14 @@ import type {
 } from '@mindfull/domain';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAtom } from 'jotai';
-import { useState } from 'react';
-import { Button, TextArea } from 'react-aria-components';
+import { useEffect, useRef, useState } from 'react';
+import {
+  Button,
+  Dialog,
+  Modal,
+  ModalOverlay,
+  TextArea,
+} from 'react-aria-components';
 
 import {
   documentTable,
@@ -91,7 +97,7 @@ function ArrivalStep({ checkIn }: { checkIn: CheckInDocument }) {
   return (
     <div className={styles.step}>
       <p className={styles.kicker}>{isMorning ? 'Arrive' : 'Settle'}</p>
-      <h2>
+      <h2 tabIndex={-1}>
         {isMorning
           ? 'Take one unhurried breath.'
           : 'Let the day soften around you.'}
@@ -172,7 +178,9 @@ function FeelingStep({ checkIn }: { checkIn: CheckInDocument }) {
   return (
     <div className={styles.step}>
       <p className={styles.kicker}>Notice</p>
-      <h2>{isMorning ? 'How are you arriving?' : 'How does the day feel?'}</h2>
+      <h2 tabIndex={-1}>
+        {isMorning ? 'How are you arriving?' : 'How does the day feel?'}
+      </h2>
       {isMorning ? (
         <ChoiceRow
           label="Energy"
@@ -226,7 +234,7 @@ function EmotionsStep({ checkIn }: { checkIn: CheckInDocument }) {
   return (
     <div className={styles.step}>
       <p className={styles.kicker}>Name</p>
-      <h2>What is here with you?</h2>
+      <h2 tabIndex={-1}>What is here with you?</h2>
       <p className={styles.supporting}>Choose as many words as feel true.</p>
       <fieldset className={styles.emotions}>
         <legend className={styles.visuallyHidden}>Emotion words</legend>
@@ -297,7 +305,7 @@ function PromptStep({
   return (
     <div className={styles.step}>
       <p className={styles.kicker}>{promptKicker(response.promptId)}</p>
-      <h2>{response.promptText}</h2>
+      <h2 tabIndex={-1}>{response.promptText}</h2>
       {response.source === 'ai' ? (
         <p className={styles.aiLabel}>A question prepared by Mindfull</p>
       ) : null}
@@ -338,7 +346,7 @@ function ReflectionStep({ checkIn }: { checkIn: CheckInDocument }) {
   return (
     <div className={styles.step}>
       <p className={styles.kicker}>Anything else</p>
-      <h2>Is there anything you would like to leave here?</h2>
+      <h2 tabIndex={-1}>Is there anything you would like to leave here?</h2>
       <p className={styles.supporting}>Optional, and just for you.</p>
       <TextArea
         className={styles.reflection}
@@ -377,7 +385,7 @@ function CompletionStep({
   return (
     <div className={styles.step}>
       <p className={styles.kicker}>{isMorning ? 'For today' : 'For tonight'}</p>
-      <h2>
+      <h2 tabIndex={-1}>
         {isMorning ? 'You have made a little room.' : 'The day can rest here.'}
       </h2>
       <p className={styles.supporting}>
@@ -429,12 +437,24 @@ function ActiveStep({
 
 export function CheckInFlow() {
   const [activeCheckInId, setActiveCheckInId] = useAtom(activeCheckInIdAtom);
+  const stepFrameRef = useRef<HTMLDivElement>(null);
   const activeDocument = useLiveQuery(
     async () => (activeCheckInId ? documentTable().get(activeCheckInId) : null),
     [activeCheckInId],
   );
   const checkIn =
     activeDocument?.type === 'check-in' ? activeDocument : undefined;
+  const currentStep = checkIn?.payload.currentStep;
+
+  useEffect(() => {
+    if (currentStep === undefined) return;
+
+    const frame = requestAnimationFrame(() => {
+      stepFrameRef.current?.querySelector<HTMLElement>('h2')?.focus();
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [currentStep]);
 
   if (!activeCheckInId) return null;
 
@@ -444,42 +464,46 @@ export function CheckInFlow() {
     : 'Check-in';
 
   return (
-    <div className={styles.backdrop} role="presentation">
-      <section
-        className={styles.dialog}
-        role="dialog"
-        aria-modal="true"
-        aria-label={label}
-      >
-        <div className={styles.dialogHeader}>
-          <span>{label}</span>
-          <Button
-            className={styles.closeButton}
-            aria-label="Close check-in"
-            onPress={close}
-          >
-            ×
-          </Button>
-        </div>
-        <div className={styles.progress} aria-hidden="true">
-          <span
-            style={{
-              width: `${((checkIn?.payload.currentStep ?? 0) / (checkIn ? completionStepFor(checkIn) : 1)) * 100}%`,
-            }}
-          />
-        </div>
-        {checkIn ? (
-          <div
-            key={`${checkIn.id}:${checkIn.payload.currentStep}`}
-            className={styles.stepFrame}
-          >
-            <ActiveStep checkIn={checkIn} onClose={close} />
+    <ModalOverlay
+      className={styles.backdrop}
+      isOpen
+      onOpenChange={(isOpen) => {
+        if (!isOpen) close();
+      }}
+    >
+      <Modal className={styles.dialog}>
+        <Dialog className={styles.dialogContent} aria-label={label}>
+          <div className={styles.dialogHeader}>
+            <span>{label}</span>
+            <Button
+              className={styles.closeButton}
+              aria-label="Close check-in"
+              onPress={close}
+            >
+              ×
+            </Button>
           </div>
-        ) : (
-          <p className={styles.loading}>Opening a quiet space…</p>
-        )}
-      </section>
-    </div>
+          <div className={styles.progress} aria-hidden="true">
+            <span
+              style={{
+                width: `${((currentStep ?? 0) / (checkIn ? completionStepFor(checkIn) : 1)) * 100}%`,
+              }}
+            />
+          </div>
+          {checkIn ? (
+            <div
+              ref={stepFrameRef}
+              key={`${checkIn.id}:${currentStep}`}
+              className={styles.stepFrame}
+            >
+              <ActiveStep checkIn={checkIn} onClose={close} />
+            </div>
+          ) : (
+            <p className={styles.loading}>Opening a quiet space…</p>
+          )}
+        </Dialog>
+      </Modal>
+    </ModalOverlay>
   );
 }
 
