@@ -146,8 +146,9 @@ the backend is unavailable.
 - Maintains a local map from reminder document IDs to native notification IDs.
 - Reconciles after reminder changes, startup, application resume, and app
   updates; Capacitor restores pending alarms after device reboot.
-- Leaves notification actions and explicit configured-timezone change handling
-  for the next native reminder slice.
+- Leaves notification actions for the next native reminder slice.
+- Defers explicit rescheduling triggered only by a configured-timezone change
+  to future scope.
 
 The native project lives at `apps/web/android` and uses application ID
 `app.mindfull`. Capacitor 8 development requires Node 22 or newer, Android
@@ -189,8 +190,9 @@ exists; remove the patch when an upstream release includes the same guard.
 
 ### macOS
 
-The first release uses the browser PWA. A Tauri shell for reliable closed-app
-local alerts is deferred.
+Mindfull remains usable in a macOS browser, but dedicated PWA installation and
+offline validation work is future scope. A Tauri shell for reliable closed-app
+local alerts is deferred with it.
 
 ## Resource behavior
 

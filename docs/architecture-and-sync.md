@@ -196,8 +196,9 @@ cursor, but never deletes local documents. Android routes fetch through
 Capacitor's native HTTP bridge so a private Pi or Tailscale origin does not need
 browser CORS configuration.
 
-A Tauri macOS shell is deferred. The browser PWA remains the initial macOS
-experience.
+Dedicated macOS PWA installation and offline validation work is deferred. A
+Tauri macOS shell remains a possible later addition rather than a first-release
+requirement.
 
 ## Testing strategy
 

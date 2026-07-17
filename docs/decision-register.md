@@ -85,7 +85,7 @@ topic documents contain the detailed rationale and behavior.
 
 ## Local first and sync
 
-- Android and macOS desktop browsers are primary platforms.
+- Android is the primary installed platform; desktop browsers remain supported.
 - Core functionality works with the backend stopped.
 - The PWA is the first target.
 - Capacitor Android follows; Tauri macOS is deferred.
@@ -144,6 +144,8 @@ topic documents contain the detailed rationale and behavior.
 - Browser-local inference
 - Chat-based exploration of personal history
 - Additional personal-data document types
+- Explicit native-reminder rescheduling after configured-timezone changes
+- Dedicated macOS PWA installation and offline validation
 - macOS Tauri wrapper
 - Data import/export UI
 - Attachments or voice journaling

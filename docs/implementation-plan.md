@@ -108,7 +108,9 @@ Journal entries now use the same typed document and synchronization path as the
 rest of the local-first domain. Writing autosaves to IndexedDB, survives an
 offline reload through its URL-addressed draft, and renders safely as Markdown
 when reading. Multiple entries per day appear in a chronological history and
-remain editable or deletable through synchronized tombstones.
+remain editable while they are drafts. Finished entries are immutable logs:
+they may be read or permanently deleted through synchronized tombstones, but
+not reopened for editing.
 
 Habits now have weekday schedules, an optional future reminder time, archive
 and restore behavior, and deterministic per-day log documents. Today shows only
@@ -196,7 +198,6 @@ check.
 - [x] Native exact-time local-notification adapter
 - [ ] Habit and task notification actions
 - [x] Rescheduling after reminder changes, reboot, and app updates
-- [ ] Explicit configured-timezone change handling
 - [ ] Real-device notification and backend-off tests
 
 The native adapter schedules one-time task alarms and weekday-based habit and
@@ -212,9 +213,15 @@ Android keeps its own IndexedDB; data moves between an existing browser
 installation and Android through normal document synchronization rather than
 shared local storage.
 
-After the Android foundation, validate installation and offline behavior as a
-macOS Safari web app. A Tauri shell remains deferred unless that validation
-shows that reliable closed-app local reminders justify a second native shell.
+### Deferred platform follow-ups
+
+Explicit native-alarm rescheduling solely in response to a configured-timezone
+change is future scope. Existing reconciliation after reminder edits, startup,
+resume, reboot, and app updates remains part of Milestone 3.
+
+Dedicated macOS browser/PWA installation and offline validation is also future
+scope. A Tauri shell remains deferred with it; neither is required to complete
+Milestone 3.
 
 ## Milestone 4 — Local AI and reflection
 

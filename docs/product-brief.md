@@ -87,10 +87,11 @@ intentional, and free from unnecessary layers.
 - Cloud-hosted AI as a required service
 - Conversational exploration of journal history
 - Data import/export UI
+- Dedicated macOS PWA installation and offline validation
 - macOS native shell in the first milestone
 
 Conversational exploration, additional personal-data document types, and a
-macOS shell are possible later additions.
+dedicated macOS installed experience are possible later additions.
 
 ## Success criteria
 
