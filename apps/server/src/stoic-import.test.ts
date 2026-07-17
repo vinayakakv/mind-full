@@ -101,6 +101,13 @@ describe('Stoic import', () => {
             date: '17/07/2026',
             answers: ['mood-answer', 'gratitude-answer'],
           },
+          {
+            uuid: 'afternoon-1',
+            timestamp: timestamp + 120_000,
+            type: 'afternoon',
+            date: '17/07/2026',
+            answers: ['afternoon-answer'],
+          },
         ],
         answers: [
           {
@@ -127,12 +134,22 @@ describe('Stoic import', () => {
             timestamp: timestamp + 60_000,
             text: '13108b96-6906-4a7d-a847-9122b0cee06f,79e74929-8f56-4e97-b43e-7941f46739d1',
           },
+          {
+            uuid: 'afternoon-answer',
+            question: 'afternoon-question',
+            timestamp: timestamp + 120_000,
+            text: 'A quiet pause.',
+          },
         ],
       },
       { timezone: 'Asia/Kolkata' },
     );
 
-    expect(result.counts).toEqual({ journals: 1, checkIns: 1 });
+    expect(result.counts).toEqual({
+      journals: 1,
+      checkIns: 1,
+      skippedRoutines: 1,
+    });
     expect(result.documents.map((document) => document.id)).toEqual([
       'stoic:journal:journal-1',
       'stoic:check-in:morning-1',

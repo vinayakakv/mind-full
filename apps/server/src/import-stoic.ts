@@ -230,6 +230,11 @@ const printReport = (
   console.log(`Stoic export${source ? `: ${source}` : ''}`);
   console.log(`Journals: ${result.counts.journals}`);
   console.log(`Check-ins: ${result.counts.checkIns}`);
+  if (result.counts.skippedRoutines > 0) {
+    console.log(
+      `Skipped non-morning/evening routines: ${result.counts.skippedRoutines}`,
+    );
+  }
   console.log(`Warnings: ${result.warnings.length}`);
   for (const warning of result.warnings) console.log(`  - ${warning}`);
 

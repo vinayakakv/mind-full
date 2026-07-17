@@ -52,7 +52,7 @@ const stoicJournalSchema = z.object({
 const stoicRoutineSchema = z.object({
   uuid: z.string().min(1),
   timestamp: timestampSchema,
-  type: z.enum(['morning', 'evening']),
+  type: z.string().min(1),
   date: z.string().optional(),
   answers: z.array(z.string()).default([]),
   isCompleted: z.boolean().optional(),
@@ -86,6 +86,7 @@ export type StoicImport = {
   counts: {
     journals: number;
     checkIns: number;
+    skippedRoutines: number;
   };
   source: {
     appVersion: string | null;
@@ -356,12 +357,16 @@ const checkInSources = (
   timezone: string,
 ): CheckInSource[] => {
   const routineSources: CheckInSource[] = routines
-    .filter((routine) => routine.answers.length > 0)
+    .filter(
+      (routine) =>
+        routine.answers.length > 0 &&
+        (routine.type === 'morning' || routine.type === 'evening'),
+    )
     .map((routine) => ({
       uuid: routine.uuid,
       timestamp: routine.timestamp,
       localDate: localDateFromStoic(routine.date, routine.timestamp, timezone),
-      kind: routine.type,
+      kind: routine.type === 'morning' ? 'morning' : 'evening',
       answerIds: routine.answers,
     }));
   const dailySources = journals
@@ -591,7 +596,16 @@ export const convertStoicExport = (
   return {
     documents,
     warnings,
-    counts: { journals: journals.length, checkIns: checkIns.length },
+    counts: {
+      journals: journals.length,
+      checkIns: checkIns.length,
+      skippedRoutines: source.routines.filter(
+        (routine) =>
+          routine.answers.length > 0 &&
+          routine.type !== 'morning' &&
+          routine.type !== 'evening',
+      ).length,
+    },
     source: {
       appVersion: source.manifest.appVersion ?? null,
       os: source.manifest.os ?? null,

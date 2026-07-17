@@ -33,6 +33,9 @@ is deliberately not part of this merge flow.
 - Dream Journal is recognized by its built-in Stoic template ID.
 - Morning Preparation and Evening Reflection become completed morning and
   evening check-ins.
+- Afternoon, midday, and any other routine types are intentionally skipped and
+  included in the import report. They do not fit Mindfull's two-part daily
+  check-in rhythm.
 - A Daily Check-In joins the closest morning or evening routine on the same
   local date. Without a routine, its local time selects morning or evening.
 - Recognized mood values become Mindfull mood labels. Other answers remain
