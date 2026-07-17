@@ -14,7 +14,7 @@ import {
   TextField,
 } from 'react-aria-components';
 import ReactMarkdown from 'react-markdown';
-import { Link, useNavigate, useSearchParams } from 'react-router';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router';
 
 import {
   completeJournal,
@@ -23,6 +23,7 @@ import {
   loadJournal,
   updateJournal,
 } from '../data/journals';
+import { returnToHistoryState } from './history-view';
 import styles from './JournalPage.module.css';
 
 const formatLocalDate = (localDate: string, style: 'long' | 'short'): string =>
@@ -167,9 +168,11 @@ function JournalEditor({
 function JournalReading({
   journal,
   onDelete,
+  historyState,
 }: {
   journal: JournalDocument;
   onDelete: () => Promise<void>;
+  historyState: ReturnType<typeof returnToHistoryState>;
 }) {
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const markdown = journalBody(journal.payload);
@@ -180,7 +183,7 @@ function JournalReading({
         <p className={styles.readingDate}>
           {formatLocalDate(journal.payload.localDate, 'long')}
         </p>
-        <Link className={styles.historyLink} to="/history">
+        <Link className={styles.historyLink} to="/history" state={historyState}>
           Back to history
         </Link>
       </div>
@@ -222,6 +225,8 @@ function JournalReading({
 export function JournalPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const historyState = returnToHistoryState(location.state);
   const selectedId = searchParams.get('entry');
   const selectedJournal = useLiveQuery(async () => {
     if (!selectedId) return null;
@@ -237,7 +242,7 @@ export function JournalPage() {
   const deleteSelected = async () => {
     if (!selectedJournal) return;
     await deleteJournal(selectedJournal.id);
-    navigate('/history');
+    navigate('/history', { state: historyState });
   };
 
   return (
@@ -263,13 +268,21 @@ export function JournalPage() {
       ) : null}
 
       {selectedJournal && !isDraft ? (
-        <JournalReading journal={selectedJournal} onDelete={deleteSelected} />
+        <JournalReading
+          journal={selectedJournal}
+          onDelete={deleteSelected}
+          historyState={historyState}
+        />
       ) : null}
 
       {selectedId && selectedJournal === null ? (
         <div className={styles.invitation}>
           <p>This journal entry is no longer available.</p>
-          <Link className={styles.historyLink} to="/history">
+          <Link
+            className={styles.historyLink}
+            to="/history"
+            state={historyState}
+          >
             Back to history
           </Link>
         </div>
