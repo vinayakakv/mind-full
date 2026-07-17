@@ -185,9 +185,14 @@ documents to Capacitor local notifications. One-time reminders become exact
 alarms; recurring reminders become one native weekday schedule per selected
 day. Reconciliation uses stable notification IDs, replaces changed schedules,
 cancels stale ones, and relies on Capacitor's boot receiver to restore pending
-alarms. Keeping the shell beside its web assets follows Capacitor's normal build
-and sync flow. The adapter sits behind a small capability interface so web and
-Android behavior differ without forking domain logic.
+alarms. A delivered one-time notification remains visible while its reminder is
+active; reconciliation does not mistake the consumed alarm for a stale
+notification. Habit and task notification actions open or resume the
+application and then reuse its ordinary local document commands, so completion
+and snoozing do not depend on the backend. Keeping the shell beside its web
+assets follows Capacitor's normal build and sync flow. The adapter sits behind a
+small capability interface so web and Android behavior differ without forking
+domain logic.
 
 Each installation keeps its backend address locally. An empty address means the
 web application's own origin; packaged Android installations use an absolute

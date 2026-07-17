@@ -975,6 +975,32 @@ export const setTaskCompleted = async (
   await saveDocuments([updatedTask, reminder]);
 };
 
+export const snoozeTaskReminder = async (
+  taskId: string,
+  reminderAt: string,
+): Promise<void> => {
+  const task = await getTask(taskId);
+  if (task.deletedAt || task.payload.completedAt) return;
+
+  const now = updatedNow(task);
+  const updatedTask: TaskDocument = {
+    ...task,
+    payload: { ...task.payload, reminderAt },
+    updatedAt: now,
+    updatedByDeviceId: getDeviceId(),
+  };
+  const reminder = await reminderDocument({
+    targetType: 'task',
+    targetId: task.id,
+    scheduledAt: reminderAt,
+    localTime: null,
+    weekdays: null,
+    enabled: true,
+  });
+
+  await saveDocuments([updatedTask, reminder]);
+};
+
 export const deleteTask = async (taskId: string): Promise<void> => {
   const task = await getTask(taskId);
   const now = updatedNow(task);

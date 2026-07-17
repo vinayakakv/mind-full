@@ -3,8 +3,12 @@ import { createReminderDocument } from '@mindfull/domain';
 import { describe, expect, it } from 'vitest';
 
 import {
+  nativeNotificationActions,
+  nativeNotificationActionTypeId,
+  nativeNotificationActionTypes,
   nativeNotificationId,
   nativeReminderSchedules,
+  shouldCancelNativeNotificationState,
 } from './native-notifications';
 
 const recurringReminder = createReminderDocument({
@@ -86,5 +90,106 @@ describe('native reminder projection', () => {
     expect(
       nativeNotificationId('reminder:task:tea:once', new Set([first])),
     ).not.toBe(first);
+  });
+
+  it('keeps a delivered one-time notification until its reminder is resolved', () => {
+    const reminder = createReminderDocument({
+      id: 'reminder:task:tea',
+      now: '2026-07-15T10:00:00.000Z',
+      deviceId: 'phone',
+      payload: {
+        targetType: 'task',
+        targetId: 'tea',
+        scheduledAt: '2026-07-15T12:00:00.000Z',
+        localTime: null,
+        weekdays: null,
+        enabled: true,
+      },
+    });
+    const state = {
+      key: `${reminder.id}:once`,
+      notificationId: 42,
+      reminderId: reminder.id,
+      reminderUpdatedAt: reminder.updatedAt,
+      projectionVersion: 2,
+    };
+
+    expect(
+      shouldCancelNativeNotificationState(
+        state,
+        reminder,
+        new Set(),
+        new Date('2026-07-15T12:01:00.000Z'),
+      ),
+    ).toBe(false);
+    expect(
+      shouldCancelNativeNotificationState(
+        state,
+        { ...reminder, payload: { ...reminder.payload, enabled: false } },
+        new Set(),
+        new Date('2026-07-15T12:01:00.000Z'),
+      ),
+    ).toBe(true);
+    expect(
+      shouldCancelNativeNotificationState(
+        state,
+        undefined,
+        new Set(),
+        new Date('2026-07-15T12:01:00.000Z'),
+      ),
+    ).toBe(true);
+  });
+
+  it('assigns calm actions only to habit and task reminders', () => {
+    const taskReminder = createReminderDocument({
+      id: 'reminder:task:tea',
+      now: '2026-07-15T10:00:00.000Z',
+      deviceId: 'phone',
+      payload: {
+        targetType: 'task',
+        targetId: 'tea',
+        scheduledAt: '2026-07-15T12:00:00.000Z',
+        localTime: null,
+        weekdays: null,
+        enabled: true,
+      },
+    });
+    const checkInReminder = createReminderDocument({
+      id: 'reminder:check-in:morning',
+      now: '2026-07-15T10:00:00.000Z',
+      deviceId: 'phone',
+      payload: {
+        targetType: 'check-in',
+        targetId: 'morning',
+        scheduledAt: null,
+        localTime: '08:00',
+        weekdays: [0, 1, 2, 3, 4, 5, 6],
+        enabled: true,
+      },
+    });
+
+    expect(nativeNotificationActionTypeId(recurringReminder)).toBe(
+      'mindfull-habit',
+    );
+    expect(nativeNotificationActionTypeId(taskReminder)).toBe('mindfull-task');
+    expect(nativeNotificationActionTypeId(checkInReminder)).toBeUndefined();
+    expect(nativeNotificationActionTypes).toEqual([
+      {
+        id: 'mindfull-habit',
+        actions: [
+          { id: nativeNotificationActions.completeHabit, title: 'Done' },
+        ],
+      },
+      {
+        id: 'mindfull-task',
+        actions: [
+          { id: nativeNotificationActions.completeTask, title: 'Complete' },
+          {
+            id: nativeNotificationActions.snoozeTask,
+            title: 'Remind me in one hour',
+          },
+        ],
+      },
+    ]);
   });
 });

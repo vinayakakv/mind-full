@@ -1,5 +1,7 @@
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, type PluginListenerHandle } from '@capacitor/core';
 import {
+  type ActionPerformed,
+  type ActionType,
   type LocalNotificationSchema,
   LocalNotifications,
   type PermissionStatus,
@@ -12,6 +14,36 @@ import type { ReminderDocument } from '@mindfull/domain';
 import { database, type NativeNotificationState } from './database';
 
 const channelId = 'mindfull-reminders';
+const notificationProjectionVersion = 2;
+
+export const nativeNotificationActions = {
+  tap: 'tap',
+  completeHabit: 'complete-habit',
+  completeTask: 'complete-task',
+  snoozeTask: 'snooze-task',
+} as const;
+
+const habitActionTypeId = 'mindfull-habit';
+const taskActionTypeId = 'mindfull-task';
+
+export const nativeNotificationActionTypes: ActionType[] = [
+  {
+    id: habitActionTypeId,
+    actions: [{ id: nativeNotificationActions.completeHabit, title: 'Done' }],
+  },
+  {
+    id: taskActionTypeId,
+    actions: [
+      { id: nativeNotificationActions.completeTask, title: 'Complete' },
+      {
+        id: nativeNotificationActions.snoozeTask,
+        title: 'Remind me in one hour',
+      },
+    ],
+  },
+];
+
+export type NativeNotificationAction = ActionPerformed;
 
 export type NotificationCopy = {
   title: string;
@@ -28,6 +60,26 @@ export const hasNativeNotifications = (): boolean =>
 
 export const hasNativeExactAlarms = (): boolean =>
   Capacitor.getPlatform() === 'android';
+
+export const nativeNotificationActionTypeId = (
+  reminder: ReminderDocument,
+): string | undefined => {
+  if (reminder.payload.targetType === 'habit') return habitActionTypeId;
+  if (reminder.payload.targetType === 'task') return taskActionTypeId;
+  return undefined;
+};
+
+export const startNativeNotificationActions = async (
+  onAction: (action: NativeNotificationAction) => void,
+): Promise<PluginListenerHandle> => {
+  await LocalNotifications.registerActionTypes({
+    types: nativeNotificationActionTypes,
+  });
+  return LocalNotifications.addListener(
+    'localNotificationActionPerformed',
+    onAction,
+  );
+};
 
 export const nativeReminderSchedules = (
   reminder: ReminderDocument,
@@ -76,6 +128,24 @@ export const nativeNotificationId = (
   return candidate;
 };
 
+export const shouldCancelNativeNotificationState = (
+  state: NativeNotificationState,
+  reminder: ReminderDocument | undefined,
+  desiredKeys: ReadonlySet<string>,
+  now: Date,
+): boolean => {
+  if (desiredKeys.has(state.key)) return false;
+  if (!reminder?.payload.enabled) return true;
+
+  const scheduledAt = reminder.payload.scheduledAt;
+  const isDeliveredOneTimeNotification =
+    state.key === `${reminder.id}:once` &&
+    scheduledAt !== null &&
+    scheduledAt <= now.toISOString();
+
+  return !isDeliveredOneTimeNotification;
+};
+
 const ensureChannel = async (): Promise<void> => {
   if (Capacitor.getPlatform() !== 'android') return;
 
@@ -103,18 +173,24 @@ export const requestNativeExactAlarmPermission =
     LocalNotifications.changeExactNotificationSetting();
 
 const notificationFor = (
+  reminder: ReminderDocument,
   state: NativeNotificationState,
   copy: NotificationCopy,
   schedule: Schedule,
-): LocalNotificationSchema => ({
-  id: state.notificationId,
-  title: copy.title,
-  body: copy.body,
-  schedule,
-  channelId,
-  autoCancel: true,
-  extra: { reminderId: state.reminderId },
-});
+): LocalNotificationSchema => {
+  const actionTypeId = nativeNotificationActionTypeId(reminder);
+
+  return {
+    id: state.notificationId,
+    title: copy.title,
+    body: copy.body,
+    schedule,
+    channelId,
+    autoCancel: true,
+    ...(actionTypeId ? { actionTypeId } : {}),
+    extra: { reminderId: state.reminderId },
+  };
+};
 
 export const reconcileNativeNotifications = async (
   reminders: ReminderDocument[],
@@ -126,6 +202,7 @@ export const reconcileNativeNotifications = async (
   if (permission.display !== 'granted') return;
 
   await ensureChannel();
+  const now = new Date();
   const [storedStates, pending] = await Promise.all([
     database.nativeNotificationState.toArray(),
     LocalNotifications.getPending(),
@@ -135,13 +212,23 @@ export const reconcileNativeNotifications = async (
     storedStates.map(({ notificationId }) => notificationId),
   );
   const desired = reminders.flatMap((reminder) =>
-    nativeReminderSchedules(reminder).map((nativeSchedule) => ({
+    nativeReminderSchedules(reminder, now).map((nativeSchedule) => ({
       reminder,
       ...nativeSchedule,
     })),
   );
   const desiredKeys = new Set(desired.map(({ key }) => key));
-  const staleStates = storedStates.filter(({ key }) => !desiredKeys.has(key));
+  const remindersById = new Map(
+    reminders.map((reminder) => [reminder.id, reminder]),
+  );
+  const staleStates = storedStates.filter((state) =>
+    shouldCancelNativeNotificationState(
+      state,
+      remindersById.get(state.reminderId),
+      desiredKeys,
+      now,
+    ),
+  );
 
   if (staleStates.length) {
     await LocalNotifications.cancel({
@@ -158,6 +245,7 @@ export const reconcileNativeNotifications = async (
     const stored = storedStates.find((state) => state.key === key);
     if (
       stored?.reminderUpdatedAt === reminder.updatedAt &&
+      stored.projectionVersion === notificationProjectionVersion &&
       pendingIds.has(stored.notificationId)
     ) {
       continue;
@@ -169,6 +257,7 @@ export const reconcileNativeNotifications = async (
         stored?.notificationId ?? nativeNotificationId(key, usedIds),
       reminderId: reminder.id,
       reminderUpdatedAt: reminder.updatedAt,
+      projectionVersion: notificationProjectionVersion,
     };
     usedIds.add(state.notificationId);
 
@@ -180,7 +269,7 @@ export const reconcileNativeNotifications = async (
 
     const copy = await copyFor(reminder);
     await LocalNotifications.schedule({
-      notifications: [notificationFor(state, copy, schedule)],
+      notifications: [notificationFor(reminder, state, copy, schedule)],
     });
     await database.nativeNotificationState.put(state);
   }

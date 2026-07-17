@@ -15,6 +15,7 @@ import {
   rejectTaskSuggestion,
   removeExpiredCompletedTasks,
   setTaskCompleted,
+  snoozeTaskReminder,
 } from './document-store';
 
 export {
@@ -25,6 +26,7 @@ export {
   rejectTaskSuggestion,
   removeExpiredCompletedTasks,
   setTaskCompleted,
+  snoozeTaskReminder,
 };
 
 export const loadTasks = async (): Promise<TaskDocument[]> => {

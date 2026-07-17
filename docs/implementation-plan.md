@@ -196,7 +196,7 @@ check.
 ### Native reminders
 
 - [x] Native exact-time local-notification adapter
-- [ ] Habit and task notification actions
+- [x] Habit and task notification actions
 - [x] Rescheduling after reminder changes, reboot, and app updates
 - [ ] Real-device notification and backend-off tests
 
@@ -208,6 +208,14 @@ after document changes and application resume. Capacitor's restore receiver
 recreates pending alarms after reboot. In an Android 13 emulator, a recurring
 check-in reminder fired at its exact minute while Mindfull was backgrounded and
 the next day's alarm remained scheduled.
+
+Habit alerts offer Done. Task alerts offer Complete and Remind me in one hour.
+Capacitor opens or resumes Mindfull for an action, then the ordinary local-first
+document commands apply it without waiting for the backend. Completing a task
+disables its reminder and removes any matching in-app notice; snoozing updates
+the task and reminder atomically before the native schedule is reconciled. A
+consumed one-time alarm is retained as a visible notification until its reminder
+is resolved instead of being cancelled by the next reconciliation pass.
 
 Android keeps its own IndexedDB; data moves between an existing browser
 installation and Android through normal document synchronization rather than

@@ -1,7 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import { App } from './App';
+import { App, router } from './App';
 import { startNotificationCoordinator } from './data/notifications';
 import { migrateLegacyHabitReminders } from './data/reminders';
 import { ensureSettings } from './data/settings';
@@ -22,7 +22,9 @@ const start = async () => {
       <App />
     </StrictMode>,
   );
-  startNotificationCoordinator();
+  startNotificationCoordinator({
+    openPath: (path) => void router.navigate(path),
+  });
 };
 
 void start();

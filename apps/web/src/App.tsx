@@ -4,7 +4,7 @@ import { AppShell } from './components/AppShell';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { TodayPage } from './pages/TodayPage';
 
-const router = createBrowserRouter([
+export const router = createBrowserRouter([
   {
     path: '/',
     Component: AppShell,

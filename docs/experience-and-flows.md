@@ -123,7 +123,7 @@ without approval.
 - Opening a missed habit offers an optional reason field. The evening check-in
   does not proactively interrogate missed habits.
 - Streaks count consecutive scheduled occurrences, not calendar days.
-- Notifications may offer a Mark complete action.
+- Android notifications offer a Done action.
 - Today keeps a simple completion list in the chosen habit order. Ordering is
   changed only from Manage habits.
 - Manage habits opens the dedicated `/habits` page. Its reorder actions remain
@@ -156,7 +156,8 @@ remain visible for seven days and are then automatically deleted from the
 visible domain through a deletion tombstone.
 
 Task reminders offer Complete and Remind me in one hour actions where the
-platform allows them.
+platform allows them. Completing a task immediately clears its in-app reminder;
+snoozing clears the current notice and schedules the next exact reminder.
 
 ## Journal
 

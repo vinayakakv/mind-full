@@ -4,15 +4,21 @@ import { nextReminderAt, type ReminderDocument } from '@mindfull/domain';
 
 import { database, type LocalNotificationState } from './database';
 import { documentsChanged } from './events';
+import { setHabitCompleted } from './habits';
 import {
   hasNativeExactAlarms,
   hasNativeNotifications,
+  type NativeNotificationAction,
   nativeExactAlarmPermission,
+  nativeNotificationActions,
   nativeNotificationPermission,
   reconcileNativeNotifications,
   requestNativeExactAlarmPermission,
   requestNativeNotificationPermission,
+  startNativeNotificationActions,
 } from './native-notifications';
+import { setTaskCompleted, snoozeTaskReminder } from './tasks';
+import { localDateFor } from './time';
 
 const maximumTimeoutMs = 2_147_000_000;
 
@@ -25,6 +31,12 @@ export type DeviceNotificationPermission =
   | PermissionState;
 
 export type ExactNotificationPermission = PermissionState | 'unsupported';
+
+export type ReminderNotice = {
+  reminder: ReminderDocument;
+  state: LocalNotificationState;
+  text: string;
+};
 
 export const browserNotificationPermission =
   (): BrowserNotificationPermission =>
@@ -50,6 +62,59 @@ export const notificationCopy = async (
         ? 'Take two quiet minutes to close the day.'
         : 'Take two quiet minutes to meet the day.',
   };
+};
+
+export const loadReminderNotices = async (): Promise<ReminderNotice[]> => {
+  const states = await database.notificationState
+    .filter(({ activeStatus }) => activeStatus !== null)
+    .toArray();
+
+  const notices = await Promise.all(
+    states.map(async (state): Promise<ReminderNotice | null> => {
+      const reminder = await database.documents.get(state.reminderId);
+      if (
+        reminder?.type !== 'reminder' ||
+        reminder.deletedAt ||
+        !reminder.payload.enabled
+      ) {
+        return null;
+      }
+
+      const target = await database.documents.get(reminder.payload.targetId);
+      if (reminder.payload.targetType === 'task') {
+        if (
+          target?.type !== 'task' ||
+          target.deletedAt ||
+          target.payload.completedAt
+        ) {
+          return null;
+        }
+        return { reminder, state, text: target.payload.text };
+      }
+
+      if (reminder.payload.targetType === 'habit') {
+        if (
+          target?.type !== 'habit' ||
+          target.deletedAt ||
+          target.payload.archivedAt
+        ) {
+          return null;
+        }
+        return { reminder, state, text: target.payload.name };
+      }
+
+      return {
+        reminder,
+        state,
+        text:
+          reminder.payload.targetId === 'evening'
+            ? 'Evening check-in'
+            : 'Morning check-in',
+      };
+    }),
+  );
+
+  return notices.filter((notice): notice is ReminderNotice => notice !== null);
 };
 
 const showBrowserNotification = async (
@@ -262,7 +327,71 @@ export const dismissActiveReminder = async (
   });
 };
 
-export const startNotificationCoordinator = (): (() => void) => {
+const reminderIdFromAction = (
+  action: NativeNotificationAction,
+): string | null => {
+  const reminderId = action.notification.extra?.reminderId;
+  return typeof reminderId === 'string' && reminderId ? reminderId : null;
+};
+
+export const applyNativeNotificationAction = async (
+  action: NativeNotificationAction,
+  now = new Date(),
+): Promise<'/' | null> => {
+  const reminderId = reminderIdFromAction(action);
+  if (!reminderId) return null;
+
+  const reminder = await database.documents.get(reminderId);
+  if (reminder?.type !== 'reminder' || reminder.deletedAt) return null;
+
+  if (action.actionId === nativeNotificationActions.tap) {
+    await dismissActiveReminder(reminder.id);
+    return '/';
+  }
+
+  const target = await database.documents.get(reminder.payload.targetId);
+  if (
+    action.actionId === nativeNotificationActions.completeTask ||
+    action.actionId === nativeNotificationActions.snoozeTask
+  ) {
+    if (reminder.payload.targetType !== 'task') return null;
+    if (
+      target?.type === 'task' &&
+      !target.deletedAt &&
+      !target.payload.completedAt
+    ) {
+      if (action.actionId === nativeNotificationActions.completeTask) {
+        await setTaskCompleted(target.id, true);
+      } else {
+        const reminderAt = new Date(now.getTime() + 60 * 60 * 1000);
+        await snoozeTaskReminder(target.id, reminderAt.toISOString());
+      }
+    }
+    await dismissActiveReminder(reminder.id);
+    return '/';
+  }
+
+  if (action.actionId === nativeNotificationActions.completeHabit) {
+    if (reminder.payload.targetType !== 'habit') return null;
+    if (
+      target?.type === 'habit' &&
+      !target.deletedAt &&
+      !target.payload.archivedAt
+    ) {
+      await setHabitCompleted(target.id, localDateFor(now), true);
+    }
+    await dismissActiveReminder(reminder.id);
+    return '/';
+  }
+
+  return null;
+};
+
+export const startNotificationCoordinator = ({
+  openPath,
+}: {
+  openPath?: (path: '/') => void;
+} = {}): (() => void) => {
   const reconcile = () => void reconcileNotifications();
   const reconcileWhenVisible = () => {
     if (document.visibilityState === 'visible') reconcile();
@@ -272,6 +401,7 @@ export const startNotificationCoordinator = (): (() => void) => {
   window.addEventListener('focus', reconcile);
   document.addEventListener('visibilitychange', reconcileWhenVisible);
   let removeNativeListener: (() => Promise<void>) | undefined;
+  let removeNativeActionListener: (() => Promise<void>) | undefined;
   let isStopped = false;
   if (hasNativeNotifications()) {
     void NativeApp.addListener('appStateChange', ({ isActive }) => {
@@ -280,6 +410,23 @@ export const startNotificationCoordinator = (): (() => void) => {
       if (isStopped) void listener.remove();
       else removeNativeListener = listener.remove;
     });
+    void startNativeNotificationActions((action) => {
+      void applyNativeNotificationAction(action)
+        .then(async (path) => {
+          if (path) openPath?.(path);
+          await reconcileNotifications();
+        })
+        .catch(() => {
+          // The app remains usable if a stale native action cannot be applied.
+        });
+    })
+      .then((listener) => {
+        if (isStopped) void listener.remove();
+        else removeNativeActionListener = listener.remove;
+      })
+      .catch(() => {
+        // In-app reminders remain available if action registration fails.
+      });
   }
   reconcile();
 
@@ -290,5 +437,6 @@ export const startNotificationCoordinator = (): (() => void) => {
     window.removeEventListener('focus', reconcile);
     document.removeEventListener('visibilitychange', reconcileWhenVisible);
     void removeNativeListener?.();
+    void removeNativeActionListener?.();
   };
 };

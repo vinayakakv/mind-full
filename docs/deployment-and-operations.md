@@ -146,7 +146,9 @@ the backend is unavailable.
 - Maintains a local map from reminder document IDs to native notification IDs.
 - Reconciles after reminder changes, startup, application resume, and app
   updates; Capacitor restores pending alarms after device reboot.
-- Leaves notification actions for the next native reminder slice.
+- Offers Done for habits and Complete or Remind me in one hour for tasks.
+- Opens or resumes Mindfull before applying an action locally; no backend is
+  required for the resulting task or habit write.
 - Defers explicit rescheduling triggered only by a configured-timezone change
   to future scope.
 

@@ -26,6 +26,7 @@ export type NativeNotificationState = {
   notificationId: number;
   reminderId: string;
   reminderUpdatedAt: string;
+  projectionVersion: number;
 };
 
 class MindfullDatabase extends Dexie {
