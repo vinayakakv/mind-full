@@ -149,6 +149,8 @@ describe('Stoic import', () => {
       journals: 1,
       checkIns: 1,
       skippedRoutines: 1,
+      skippedAnswers: 0,
+      skippedDocuments: 0,
     });
     expect(result.documents.map((document) => document.id)).toEqual([
       'stoic:journal:journal-1',
@@ -186,6 +188,83 @@ describe('Stoic import', () => {
       ],
     });
     expect(result.warnings).toEqual([]);
+  });
+
+  it('omits answers and documents whose labels are unavailable', () => {
+    const result = convertStoicExport(
+      {
+        manifest: {},
+        questions: [],
+        journals: [
+          {
+            uuid: 'unknown-journal',
+            timestamp,
+            calendarDate: '17/07/2026',
+            template: 'unknown-template',
+            text: '',
+            answers: ['unknown-journal-answer'],
+          },
+        ],
+        routines: [
+          {
+            uuid: 'mixed-check-in',
+            timestamp,
+            type: 'morning',
+            date: '17/07/2026',
+            answers: ['known-answer', 'unknown-answer', 'opaque-answer'],
+          },
+        ],
+        answers: [
+          {
+            uuid: 'unknown-journal-answer',
+            question: 'unknown-journal-question',
+            timestamp,
+            text: 'An answer without its prompt.',
+          },
+          {
+            uuid: 'known-answer',
+            question: 'a29747df-f2a6-4fdc-8f2e-b1a5459b6205',
+            timestamp,
+            text: 'A quiet morning.',
+          },
+          {
+            uuid: 'unknown-answer',
+            question: '3542e84f-3b8e-4172-85fc-426ded6ade90',
+            timestamp,
+            text: 'An answer without its prompt.',
+          },
+          {
+            uuid: 'opaque-answer',
+            question: 'ffec5c36-d6f0-40ac-ae9a-3ad08f7d69db',
+            timestamp,
+            text: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+          },
+        ],
+      },
+      { timezone: 'Asia/Kolkata' },
+    );
+
+    expect(result.documents).toHaveLength(1);
+    expect(result.documents[0]?.payload).toMatchObject({
+      responses: [
+        {
+          promptText: 'What are you grateful for?',
+          answer: 'A quiet morning.',
+        },
+      ],
+    });
+    expect(result.counts).toEqual({
+      journals: 0,
+      checkIns: 1,
+      skippedRoutines: 0,
+      skippedAnswers: 3,
+      skippedDocuments: 1,
+    });
+    expect(result.warnings).toEqual([
+      'Question 3542e84f-3b8e-4172-85fc-426ded6ade90 has no exported label.',
+      'Question ffec5c36-d6f0-40ac-ae9a-3ad08f7d69db contains choice IDs without exported labels.',
+      'Question unknown-journal-question has no exported label.',
+    ]);
   });
 
   it('gives known Stoic wellbeing ratings readable labels', () => {

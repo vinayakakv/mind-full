@@ -46,10 +46,10 @@ is deliberately not part of this merge flow.
 
 Stoic's Android export can omit labels for built-in choices. The importer maps
 the bundled focus-choice UUIDs to their English Stoic labels. An unfamiliar
-choice set shows the number of selections with a labels-unavailable note and a
-warning instead of displaying opaque IDs or guessing their meaning. Unknown
-question IDs receive the neutral label `Imported reflection` and are also
-reported.
+choice set or a question without a label is skipped and reported instead of
+displaying opaque IDs or guessing its meaning. Other answers in the same entry
+are preserved. A journal or check-in left without meaningful content is also
+skipped.
 
 Historical imports do not create reminders, notifications, tasks, or AI work.
 Imported journals and check-ins are completed immutable logs.

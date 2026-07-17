@@ -87,6 +87,8 @@ export type StoicImport = {
     journals: number;
     checkIns: number;
     skippedRoutines: number;
+    skippedAnswers: number;
+    skippedDocuments: number;
   };
   source: {
     appVersion: string | null;
@@ -319,11 +321,11 @@ const promptFor = (
   questionId: string,
   customLabels: Map<string, string>,
   unknownQuestionIds: Set<string>,
-): string => {
+): string | null => {
   const prompt = customLabels.get(questionId) ?? knownQuestions[questionId];
   if (prompt) return prompt;
   unknownQuestionIds.add(questionId);
-  return 'Imported reflection';
+  return null;
 };
 
 const answersFor = (
@@ -336,12 +338,35 @@ const guidedJournalMarkdown = (
   answersById: Map<string, StoicAnswer>,
   customLabels: Map<string, string>,
   unknownQuestionIds: Set<string>,
+  opaqueChoiceQuestionIds: Set<string>,
+  skippedAnswerIds: Set<string>,
 ): string => {
-  const responses = answersFor(journal.answers, answersById).map((answer) => {
-    const prompt = promptFor(answer.question, customLabels, unknownQuestionIds);
-    const text = verbalAnswer(answer.question, answerText(answer));
-    return `## ${prompt}\n\n${text}`.trim();
-  });
+  const responses = answersFor(journal.answers, answersById).flatMap(
+    (answer) => {
+      const prompt = promptFor(
+        answer.question,
+        customLabels,
+        unknownQuestionIds,
+      );
+      const exportedText = answerText(answer);
+      const hasOpaqueChoices =
+        exportedText.length > 0 && isOpaqueChoiceAnswer(exportedText);
+      const knownChoices = hasOpaqueChoices
+        ? labeledChoices(exportedText)
+        : null;
+
+      if (!prompt || (hasOpaqueChoices && !knownChoices)) {
+        skippedAnswerIds.add(answer.uuid);
+        if (hasOpaqueChoices && !knownChoices) {
+          opaqueChoiceQuestionIds.add(answer.question);
+        }
+        return [];
+      }
+
+      const text = knownChoices ?? verbalAnswer(answer.question, exportedText);
+      return [`## ${prompt}\n\n${text}`.trim()];
+    },
+  );
   const freeText = journal.text.trim();
   return [...responses, ...(freeText ? [freeText] : [])].join('\n\n');
 };
@@ -450,6 +475,8 @@ export const convertStoicExport = (
   const customLabels = customQuestionLabels(source.questions);
   const unknownQuestionIds = new Set<string>();
   const opaqueChoiceQuestionIds = new Set<string>();
+  const skippedAnswerIds = new Set<string>();
+  const skippedDocumentIds = new Set<string>();
 
   const journals = source.journals
     .filter((journal) => journal.template !== dailyCheckInTemplateId)
@@ -467,8 +494,13 @@ export const convertStoicExport = (
           answersById,
           customLabels,
           unknownQuestionIds,
+          opaqueChoiceQuestionIds,
+          skippedAnswerIds,
         );
-        if (!markdown) return [];
+        if (!markdown) {
+          skippedDocumentIds.add(journal.uuid);
+          return [];
+        }
         return [
           createJournalDocument({
             id: `stoic:journal:${journal.uuid}`,
@@ -527,7 +559,12 @@ export const convertStoicExport = (
       .at(-1);
     const responses = answers
       .filter((answer) => answer.question !== moodQuestionId)
-      .map((answer) => {
+      .flatMap((answer) => {
+        const promptText = promptFor(
+          answer.question,
+          customLabels,
+          unknownQuestionIds,
+        );
         const exportedText = answerText(answer);
         const hasOpaqueChoices =
           exportedText.length > 0 && isOpaqueChoiceAnswer(exportedText);
@@ -537,23 +574,28 @@ export const convertStoicExport = (
         if (hasOpaqueChoices && !knownChoices) {
           opaqueChoiceQuestionIds.add(answer.question);
         }
-        const text = knownChoices
-          ? knownChoices
-          : hasOpaqueChoices
-            ? `${exportedText.split(',').length} selections · labels unavailable in Stoic export`
-            : verbalAnswer(answer.question, exportedText);
-        return {
-          promptId: `stoic:${answer.question}:${answer.uuid}`,
-          promptText: promptFor(
-            answer.question,
-            customLabels,
-            unknownQuestionIds,
-          ),
-          source: 'curated' as const,
-          answer: text || null,
-          skipped: !text,
-        };
+
+        if (!promptText || (hasOpaqueChoices && !knownChoices)) {
+          skippedAnswerIds.add(answer.uuid);
+          return [];
+        }
+
+        const text =
+          knownChoices ?? verbalAnswer(answer.question, exportedText);
+        return [
+          {
+            promptId: `stoic:${answer.question}:${answer.uuid}`,
+            promptText,
+            source: 'curated' as const,
+            answer: text || null,
+            skipped: !text,
+          },
+        ];
       });
+    if (!mood && responses.length === 0) {
+      skippedDocumentIds.add(first.uuid);
+      return [];
+    }
     const occurredAt = instantFor(first.timestamp);
     const completedAt = instantFor(last.timestamp);
 
@@ -605,6 +647,8 @@ export const convertStoicExport = (
           routine.type !== 'morning' &&
           routine.type !== 'evening',
       ).length,
+      skippedAnswers: skippedAnswerIds.size,
+      skippedDocuments: skippedDocumentIds.size,
     },
     source: {
       appVersion: source.manifest.appVersion ?? null,

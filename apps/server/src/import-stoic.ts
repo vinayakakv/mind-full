@@ -235,6 +235,16 @@ const printReport = (
       `Skipped non-morning/evening routines: ${result.counts.skippedRoutines}`,
     );
   }
+  if (result.counts.skippedAnswers > 0) {
+    console.log(
+      `Skipped answers without labels: ${result.counts.skippedAnswers}`,
+    );
+  }
+  if (result.counts.skippedDocuments > 0) {
+    console.log(
+      `Skipped documents without meaningful content: ${result.counts.skippedDocuments}`,
+    );
+  }
   console.log(`Warnings: ${result.warnings.length}`);
   for (const warning of result.warnings) console.log(`  - ${warning}`);
 
