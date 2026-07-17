@@ -174,7 +174,7 @@ navigation and History; its chart dependency is isolated to the lazy route.
 
 ## Milestone 3 — Android capability
 
-Status: in progress as of July 15, 2026.
+Status: complete as of July 17, 2026.
 
 ### Android foundation
 
@@ -183,22 +183,23 @@ Status: in progress as of July 15, 2026.
 - [x] Calm app identity, splash screen, system bars, safe areas, and back behavior
 - [x] Configurable Pi address and pairing from the packaged application
 - [x] Android 13/WebView 101 emulator install and offline cold-start
-- [ ] Offline startup and IndexedDB persistence on a real Android device
+- [x] Offline startup and IndexedDB persistence on a real Android device
 - [x] Web/PWA and Docker builds remain unchanged
 
 The packaged app was paired from an Android 13 emulator to the local container
 at `http://10.0.2.2:3001`. A task created with emulator networking disabled was
 absent from a second client's pull, then appeared after networking returned and
 the normal focus retry ran. This verifies the native HTTP transport and the
-offline-to-online document path; real-device persistence remains a separate
-check.
+offline-to-online document path. Offline startup, persistence,
+synchronization, and the packaged daily experience were subsequently accepted
+on a real Android device.
 
 ### Native reminders
 
 - [x] Native exact-time local-notification adapter
 - [x] Habit and task notification actions
 - [x] Rescheduling after reminder changes, reboot, and app updates
-- [ ] Real-device notification and backend-off tests
+- [x] Real-device notification and backend-off tests
 
 The native adapter schedules one-time task alarms and weekday-based habit and
 check-in alarms without contacting the backend. It requests Android 13 display
@@ -221,6 +222,10 @@ Android keeps its own IndexedDB; data moves between an existing browser
 installation and Android through normal document synchronization rather than
 shared local storage.
 
+Milestone 3 was accepted after native reminders, notification actions, offline
+writes, restart persistence, and later synchronization worked on the real
+device with the backend unavailable during local actions.
+
 ### Deferred platform follow-ups
 
 Explicit native-alarm rescheduling solely in response to a configured-timezone
@@ -241,7 +246,7 @@ Milestone 3.
 - Local embeddings and semantic passage search
 - In-container scheduler and catch-up behavior
 - Weekly review snapshots
-- Daily SQLite backups
+- Daily SQLite backups (completed July 17, 2026)
 
 ## Commit strategy
 

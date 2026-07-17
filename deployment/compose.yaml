@@ -3,12 +3,17 @@ services:
     image: ghcr.io/vinayakakv/mind-full:${MINDFULL_VERSION:-latest}
     environment:
       MINDFULL_PAIRING_CODE: ${MINDFULL_PAIRING_CODE:?Set MINDFULL_PAIRING_CODE in .env}
+      MINDFULL_TIMEZONE: ${MINDFULL_TIMEZONE:-UTC}
+      BACKUP_LOCAL_TIME: ${BACKUP_LOCAL_TIME:-03:00}
+      BACKUP_DAILY_RETENTION: ${BACKUP_DAILY_RETENTION:-7}
+      BACKUP_WEEKLY_RETENTION: ${BACKUP_WEEKLY_RETENTION:-4}
     init: true
     ports:
       - "${MINDFULL_BIND_ADDRESS:-127.0.0.1}:${MINDFULL_PORT:-3001}:3001"
     restart: unless-stopped
     volumes:
       - mindfull-data:/data
+      - ${MINDFULL_BACKUP_PATH:-mindfull-backups}:/backups
     healthcheck:
       test:
         [
@@ -24,3 +29,4 @@ services:
 
 volumes:
   mindfull-data:
+  mindfull-backups:

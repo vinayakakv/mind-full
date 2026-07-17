@@ -6,6 +6,7 @@ import Fastify from 'fastify';
 import { z } from 'zod';
 
 import { authenticatedDeviceId, matchesSecret, pairDevice } from './auth.js';
+import { startBackupScheduler } from './backups.js';
 import type { ServerConfig } from './config.js';
 import { openDatabase } from './database/database.js';
 import { synchronizeDocuments } from './database/documents.js';
@@ -23,7 +24,7 @@ const syncRequestSchema = z.object({
 
 export type BuildServerOptions = Pick<
   ServerConfig,
-  'databasePath' | 'migrationsFolder' | 'pairingCode' | 'webRoot'
+  'databasePath' | 'migrationsFolder' | 'pairingCode' | 'webRoot' | 'backup'
 > & {
   logger?: boolean;
 };
@@ -33,12 +34,22 @@ export const buildServer = async ({
   migrationsFolder,
   pairingCode,
   webRoot,
+  backup,
   logger = false,
 }: BuildServerOptions) => {
   const server = Fastify({ logger });
   const { client, database } = openDatabase(databasePath, migrationsFolder);
 
-  server.addHook('onClose', async () => client.close());
+  const stopBackupScheduler = backup
+    ? startBackupScheduler(client, backup, (error) => {
+        server.log.error({ error }, 'SQLite backup failed');
+      })
+    : async () => {};
+
+  server.addHook('onClose', async () => {
+    await stopBackupScheduler();
+    client.close();
+  });
 
   server.get('/api/health', async () => ({
     status: 'ok',

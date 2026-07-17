@@ -41,3 +41,14 @@ export const devices = sqliteTable('devices', {
   createdAt: text('created_at').notNull(),
   revokedAt: text('revoked_at'),
 });
+
+export const backupRuns = sqliteTable('backup_runs', {
+  scheduledFor: text('scheduled_for').primaryKey(),
+  status: text('status').notNull(),
+  startedAt: text('started_at').notNull(),
+  completedAt: text('completed_at'),
+  path: text('path'),
+  sizeBytes: integer('size_bytes'),
+  error: text('error'),
+  removedAt: text('removed_at'),
+});

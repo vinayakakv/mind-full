@@ -26,11 +26,12 @@ ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=3001
 ENV DATABASE_PATH=/data/mindfull.sqlite
+ENV BACKUP_DIRECTORY=/backups
 ENV MIGRATIONS_DIR=/app/apps/server/drizzle
 ENV WEB_ROOT=/app/apps/web/dist
 WORKDIR /app
 
-RUN mkdir -p /data && chown node:node /data
+RUN mkdir -p /data /backups && chown node:node /data /backups
 
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/apps/server/node_modules ./apps/server/node_modules

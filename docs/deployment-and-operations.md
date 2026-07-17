@@ -69,9 +69,9 @@ tailscale serve status
 
 All application schedules run inside the `mindfull` backend container.
 
-The scheduler uses persisted SQLite job rows rather than relying solely on
-in-memory timers. A small polling loop claims due jobs with a lease, runs them,
-and records completion or retry state.
+Daily backups already use a persisted run row and a small in-container polling
+loop. The broader leased job queue arrives with AI work and weekly reviews.
+Neither scheduler relies on host timers.
 
 Scheduled work includes:
 
@@ -81,23 +81,63 @@ Scheduled work includes:
 - AI retry processing
 - Optional derived-data maintenance
 
-If the container is down at a scheduled time, overdue jobs run after startup.
-Jobs are idempotent and leases prevent duplicate execution after a crash.
+If the container is down at the daily backup time, the latest elapsed backup
+slot runs after startup. Its slot is claimed idempotently, and a stale or failed
+run can be retried. Future AI jobs use leases to prevent duplicate work after a
+crash.
 
 The default weekly review time is Sunday at 7:00 PM in the configured timezone.
 
 ## Backups
 
-- Create one consistent SQLite snapshot daily.
-- Retain seven daily snapshots.
-- Retain four weekly snapshots.
-- Store snapshots in a Docker-mounted backup directory.
-- Record success, path, size, and error metadata in an operational table.
-- Use SQLite-safe backup/checkpoint behavior rather than copying an actively
-  changing database blindly.
+- The backend creates one consistent SQLite snapshot daily using SQLite's
+  online-backup API; it does not copy an active database file blindly.
+- The default schedule is 3:00 AM in `MINDFULL_TIMEZONE`.
+- The latest seven daily snapshots and four older weekly snapshots are kept.
+- Success, path, size, and failure details are recorded in `backup_runs`.
+- Each completed snapshot is checked with `PRAGMA quick_check` before it
+  replaces the dated destination file.
+- Backups do not require Ollama, a browser, or an external scheduler.
+
+The container always writes snapshots to `/backups`. `MINDFULL_BACKUP_PATH`
+controls where Compose mounts that directory. Its default is the managed
+`mindfull-backups` Docker volume. For files that are directly visible on the
+Pi, set an absolute host path in `deployment/.env`:
+
+```dotenv
+MINDFULL_BACKUP_PATH=/srv/mindfull/backups
+MINDFULL_TIMEZONE=Asia/Kolkata
+BACKUP_LOCAL_TIME=03:00
+BACKUP_DAILY_RETENTION=7
+BACKUP_WEEKLY_RETENTION=4
+```
+
+The target directory must be writable by the container's `node` user. After a
+deployment, confirm that a dated `mindfull-YYYY-MM-DD.sqlite` file appears
+after the configured time or the first restart following it.
+
+### Restore
+
+Stop Mindfull before replacing its live database. Choose a dated snapshot,
+preserve the current database beside the backups, copy the snapshot into
+`/data`, and remove stale WAL sidecars before starting again:
+
+```sh
+docker compose down
+docker compose run --rm --no-deps --entrypoint sh mindfull -c \
+  'cp /data/mindfull.sqlite /backups/mindfull-before-restore.sqlite && \
+   cp /backups/mindfull-YYYY-MM-DD.sqlite /data/mindfull.sqlite && \
+   rm -f /data/mindfull.sqlite-wal /data/mindfull.sqlite-shm'
+docker compose up -d
+curl http://127.0.0.1:3001/api/health
+```
+
+Replace `YYYY-MM-DD` with the snapshot being restored. The server runs normal
+database migrations at startup, so an older compatible snapshot is brought up
+to the current schema automatically.
 
 An import/export UI is not part of the first release. Restore instructions
-should nevertheless be documented before production use.
+remain deliberately operational rather than becoming a product workflow.
 
 ## Pairing and authentication
 

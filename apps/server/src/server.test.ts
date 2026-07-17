@@ -21,6 +21,7 @@ const createTestServer = async () => {
     migrationsFolder: resolve('drizzle'),
     pairingCode: 'quiet-code',
     webRoot: null,
+    backup: null,
   });
 };
 
