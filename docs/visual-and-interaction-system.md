@@ -57,6 +57,9 @@ to avoid adding a route.
 
 - A soft serif is used for reflection prompts, journal reading, review content,
   and selected moments of emphasis.
+- The compact wordmark uses a quiet, self-hosted cursive face. Script type does
+  not extend into headings, reflection text, or controls. Its visual spelling,
+  `mindfulll`, adds a final loop while the product name remains Mindfull.
 - A clear humanist sans-serif is used for controls, navigation, labels, task
   text, and compact metadata.
 - Line length remains comfortable for reading, roughly 60–72 characters for

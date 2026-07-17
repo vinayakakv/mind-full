@@ -63,7 +63,7 @@ export function AppShell() {
             className={styles.wordmark}
             aria-label="Mindfull home"
           >
-            mindfull
+            mindfulll
           </NavLink>
           <PrimaryNavigation
             className={`${styles.navigation} ${styles.desktopNavigation}`}

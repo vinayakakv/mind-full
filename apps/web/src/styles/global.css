@@ -1,3 +1,11 @@
+@font-face {
+  font-display: swap;
+  font-family: "Sacramento";
+  font-style: normal;
+  font-weight: 400;
+  src: url("/fonts/sacramento/Sacramento-Regular.ttf") format("truetype");
+}
+
 :root {
   color-scheme: light;
   --font-control:
@@ -5,6 +13,7 @@
     "Segoe UI", sans-serif;
   --font-reflection:
     Charter, "Bitstream Charter", "Iowan Old Style", Georgia, serif;
+  --font-wordmark: "Sacramento", cursive;
   --surface-canvas: #f4f0e8;
   --surface-soft: #ebe6dc;
   --text-primary: #2d332e;
