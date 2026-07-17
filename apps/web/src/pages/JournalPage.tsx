@@ -184,7 +184,7 @@ function JournalReading({
           Back to history
         </Link>
       </div>
-      <h2>{entryHeading(journal)}</h2>
+      <h2 className={styles.entryTitle}>{entryHeading(journal)}</h2>
       {markdown ? (
         <div className={styles.markdown}>
           <ReactMarkdown>{markdown}</ReactMarkdown>

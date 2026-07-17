@@ -37,11 +37,16 @@ is deliberately not part of this merge flow.
   local date. Without a routine, its local time selects morning or evening.
 - Recognized mood values become Mindfull mood labels. Other answers remain
   ordered check-in responses.
+- Known sleep, rest, motivation, and day scales become readable words rather
+  than raw zero-based ratings. Built-in yes/no feedback values also regain
+  their Stoic labels.
 
-Stoic's Android export can omit labels for built-in choices. The importer keeps
-those exported choice IDs and reports a warning instead of guessing their
-meaning. Unknown question IDs receive the neutral label `Imported reflection`
-and are also reported.
+Stoic's Android export can omit labels for built-in choices. The importer maps
+the bundled focus-choice UUIDs to their English Stoic labels. An unfamiliar
+choice set shows the number of selections with a labels-unavailable note and a
+warning instead of displaying opaque IDs or guessing their meaning. Unknown
+question IDs receive the neutral label `Imported reflection` and are also
+reported.
 
 Historical imports do not create reminders, notifications, tasks, or AI work.
 Imported journals and check-ins are completed immutable logs.

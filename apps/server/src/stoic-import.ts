@@ -141,6 +141,88 @@ const moodLabels: Readonly<Record<string, string>> = {
   '4': 'Great',
 };
 
+const sleepLabels: Readonly<Record<string, string>> = {
+  '0': 'Very poorly',
+  '1': 'Poorly',
+  '2': 'Okay',
+  '3': 'Well',
+  '4': 'Very well',
+};
+
+const motivationLabels: Readonly<Record<string, string>> = {
+  '0': 'Not at all',
+  '1': 'A little',
+  '2': 'Somewhat',
+  '3': 'Motivated',
+  '4': 'Very motivated',
+};
+
+const restedLabels: Readonly<Record<string, string>> = {
+  '0': 'Not rested',
+  '1': 'Slightly rested',
+  '2': 'Moderately rested',
+  '3': 'Well rested',
+  '4': 'Fully rested',
+};
+
+const dayLabels: Readonly<Record<string, string>> = {
+  '0': 'Very difficult',
+  '1': 'Difficult',
+  '2': 'Okay',
+  '3': 'Good',
+  '4': 'Very good',
+};
+
+const focusChoiceLabels: Readonly<Record<string, string>> = {
+  '13108b96-6906-4a7d-a847-9122b0cee06f': 'Work',
+  '93bdeaae-be0f-48d0-a308-be275034843e': 'Relaxing',
+  '93f58a07-86e3-49ad-9552-d9d36657a1d7': 'Friends',
+  '79e74929-8f56-4e97-b43e-7941f46739d1': 'Family',
+  'f66c74d0-0805-4df2-8ef0-f29535e9ceb8': 'Fitness',
+  '88d52119-3ece-40c0-88a5-571daf1abb9d': 'Party',
+  '443f7bf7-4305-4fe2-a8b6-f70a3d26e7d2': 'Movies',
+  'c0c5e1cd-6ed4-4b43-a268-12d3fdd013b0': 'Reading',
+  '71031334-083a-4bb2-bfab-aa36e2cfb1a2': 'Gaming',
+  '52a2466e-1556-43fa-b63f-af725786f2cd': 'Shopping',
+  'bb4247fb-6cd3-4e91-869f-ffc3fe1faaec': 'Good Meal',
+  '89a4d6f6-d393-4bf7-9d51-5f43aa0a9b33': 'Learning',
+  'ef00916d-21f4-4f65-b4d2-001e5f1ee64d': 'Travel',
+  'cde6ed88-4884-41e2-b541-82dafdcafca5': 'Date',
+  '8d7c33c6-d61a-4cb8-8c0f-6bb41bd5e59a': 'Cleaning',
+  '417b09ff-cc98-4b5e-b1dc-c7a357ad49bf': 'Pets',
+  'c7106f94-5b4c-4a68-add3-fdea6bc0af53': 'Nature',
+  '32f0af22-bf2f-4adb-8338-8d1ac20b418f': 'Music',
+  '4d3c3193-3147-453f-8ec8-a2a29061eb7d': 'Creativity',
+  'c6516cca-6b46-4275-88a9-fc4581fedb49': 'Spirituality',
+  'eb9eaa7b-7cd8-4713-b6f8-addf03a0a59d': 'Time Alone',
+  '723e9f7b-4f1f-4ae2-be8d-d3d16c3f1bbb': 'Helping Others',
+  '355de73c-134d-4591-8542-53b763235e71': 'Health',
+  '78ec341a-7be6-49d9-8430-dcd1ca5881e7': 'Self-care',
+  '877c7009-5765-4817-aa2c-4e4817c0b21d': 'Partner',
+};
+
+const verbalAnswer = (questionId: string, answer: string): string => {
+  if (questionId === 'f896b5df-08a0-44f5-aec8-36fafcc4c9c2') {
+    return sleepLabels[answer] ?? answer;
+  }
+  if (questionId === 'dd8b7043-baad-46f2-a6ca-fb64852eaae8') {
+    return motivationLabels[answer] ?? answer;
+  }
+  if (questionId === '01ae8ffb-6f03-4826-a8e1-76b0f18049b1') {
+    return restedLabels[answer] ?? answer;
+  }
+  if (questionId === 'ff4855f1-fa40-42d3-b403-dcb00fabeb40') {
+    return dayLabels[answer] ?? answer;
+  }
+  if (questionId === '8b5b787d-d8d8-4d43-bfbc-cc7062ac3d04') {
+    return { '0': 'No', '1': 'Yes' }[answer] ?? answer;
+  }
+  if (questionId === 'cacd5a93-0b06-4a49-aeb5-c20a99634bd5') {
+    return { '0': 'Yes', '5': 'No', '6': 'A little' }[answer] ?? answer;
+  }
+  return answer;
+};
+
 const instantFor = (timestamp: number): string =>
   new Date(timestamp).toISOString();
 
@@ -256,7 +338,8 @@ const guidedJournalMarkdown = (
 ): string => {
   const responses = answersFor(journal.answers, answersById).map((answer) => {
     const prompt = promptFor(answer.question, customLabels, unknownQuestionIds);
-    return `## ${prompt}\n\n${answerText(answer)}`.trim();
+    const text = verbalAnswer(answer.question, answerText(answer));
+    return `## ${prompt}\n\n${text}`.trim();
   });
   const freeText = journal.text.trim();
   return [...responses, ...(freeText ? [freeText] : [])].join('\n\n');
@@ -341,6 +424,15 @@ const isOpaqueChoiceAnswer = (text: string): boolean =>
       ),
     );
 
+const labeledChoices = (text: string): string | null => {
+  const labels = text
+    .split(',')
+    .map((id) => focusChoiceLabels[id.trim().toLowerCase()]);
+  return labels.every((label) => label !== undefined)
+    ? labels.join(', ')
+    : null;
+};
+
 export const convertStoicExport = (
   input: unknown,
   options: { timezone: string; deviceId?: string },
@@ -403,7 +495,7 @@ export const convertStoicExport = (
           deviceId,
           occurredAt,
           payload: {
-            title: hasValidTitle ? title : null,
+            title: hasValidTitle ? title : title ? 'Journal' : null,
             markdown,
             localDate,
             timezone: options.timezone,
@@ -431,10 +523,20 @@ export const convertStoicExport = (
     const responses = answers
       .filter((answer) => answer.question !== moodQuestionId)
       .map((answer) => {
-        const text = answerText(answer);
-        if (text && isOpaqueChoiceAnswer(text)) {
+        const exportedText = answerText(answer);
+        const hasOpaqueChoices =
+          exportedText.length > 0 && isOpaqueChoiceAnswer(exportedText);
+        const knownChoices = hasOpaqueChoices
+          ? labeledChoices(exportedText)
+          : null;
+        if (hasOpaqueChoices && !knownChoices) {
           opaqueChoiceQuestionIds.add(answer.question);
         }
+        const text = knownChoices
+          ? knownChoices
+          : hasOpaqueChoices
+            ? `${exportedText.split(',').length} selections · labels unavailable in Stoic export`
+            : verbalAnswer(answer.question, exportedText);
         return {
           promptId: `stoic:${answer.question}:${answer.uuid}`,
           promptText: promptFor(

@@ -146,7 +146,7 @@
   transform: translateY(-1px);
 }
 
-.reading h2 {
+.entryTitle {
   font-family: var(--font-reflection);
   font-size: clamp(2.2rem, 8vw, 3.75rem);
   font-weight: 400;
@@ -170,10 +170,14 @@
 .markdown h1,
 .markdown h2,
 .markdown h3 {
+  color: var(--text-muted);
+  font-family: var(--font-control);
+  font-size: 0.75rem;
   font-weight: 500;
-  letter-spacing: -0.02em;
-  line-height: 1.25;
-  margin: 2rem 0 0.75rem;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  margin: 2.25rem 0 0.65rem;
+  text-transform: uppercase;
 }
 
 .markdown blockquote {
