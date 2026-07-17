@@ -139,6 +139,10 @@ reduced-motion always receives the still treatment.
   wider screens it may include the short label Write.
 - A floating action should remain visually quiet: one action, no speed dial,
   no attention-seeking pulse, and no collision with navigation or content.
+- Journal writing uses the document as its only vertical scroll surface. The
+  writing area grows with the entry, and its Finish action steps away while the
+  on-screen keyboard is open so the active text remains unobstructed. The mobile
+  navigation also withdraws while typing and returns when the keyboard closes.
 - History uses a single reading column grouped by date, not a dashboard grid.
 
 ## Motion

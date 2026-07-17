@@ -62,10 +62,6 @@
   padding-bottom: 3.5rem;
 }
 
-.editor {
-  padding-bottom: clamp(10rem, 30dvh, 18rem);
-}
-
 .editorMeta {
   color: var(--text-muted);
   display: flex;
@@ -108,8 +104,8 @@
   line-height: 1.75;
   margin-top: 1.75rem;
   min-height: 22rem;
-  resize: vertical;
-  scroll-padding-bottom: clamp(6rem, 20dvh, 12rem);
+  overflow-y: hidden;
+  resize: none;
 }
 
 .finishAction {
@@ -128,7 +124,18 @@
   padding: 0.75rem 1rem;
   position: fixed;
   right: max(1.5rem, calc((100vw - 70rem) / 2));
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease,
+    visibility 160ms;
   z-index: 8;
+}
+
+.editor[data-keyboard-visible] .finishAction {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(0.5rem);
+  visibility: hidden;
 }
 
 .finishAction svg {
@@ -248,6 +255,10 @@
     align-items: center;
   }
 
+  .writingField textarea {
+    padding-bottom: calc(2.5rem + env(safe-area-inset-bottom));
+  }
+
   .finishAction {
     bottom: calc(4.7rem + env(safe-area-inset-bottom));
     height: 3.25rem;
@@ -271,5 +282,9 @@
 @media (prefers-reduced-motion: reduce) {
   .page {
     animation: none;
+  }
+
+  .finishAction {
+    transition: none;
   }
 }

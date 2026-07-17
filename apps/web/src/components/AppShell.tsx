@@ -8,6 +8,7 @@ import { useCurrentTime } from '../hooks/use-current-time';
 import { useHousekeeping } from '../hooks/use-housekeeping';
 import { useResolvedTheme } from '../hooks/use-resolved-theme';
 import { useSync } from '../hooks/use-sync';
+import { useIsVisualKeyboardOpen } from '../hooks/use-visual-keyboard';
 import { AmbientBackdrop } from './AmbientBackdrop';
 import styles from './AppShell.module.css';
 import { SyncIndicator } from './SyncIndicator';
@@ -40,6 +41,7 @@ function PrimaryNavigation({ className }: { className: string }) {
 export function AppShell() {
   useSync();
   useHousekeeping();
+  const isKeyboardOpen = useIsVisualKeyboardOpen();
   const now = useCurrentTime('minute');
   const settings = useLiveQuery(loadSettings);
 
@@ -100,7 +102,7 @@ export function AppShell() {
         <Outlet />
       </main>
       <PrimaryNavigation
-        className={`${styles.navigation} ${styles.mobileNavigation}`}
+        className={`${styles.navigation} ${styles.mobileNavigation} ${isKeyboardOpen ? styles.mobileNavigationHidden : ''}`}
       />
     </div>
   );
