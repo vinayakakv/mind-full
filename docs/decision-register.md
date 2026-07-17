@@ -138,6 +138,9 @@ topic documents contain the detailed rationale and behavior.
 - Default weekly review schedule is Sunday at 7:00 PM.
 - Daily SQLite backups retain seven daily and four weekly snapshots.
 - Import/export UI is deferred.
+- The one-time Stoic migration is a dry-run-first operational command. It adds
+  namespaced documents through normal sync and never restores over the live
+  database.
 
 ## Deferred ideas
 

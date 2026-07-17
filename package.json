@@ -25,6 +25,7 @@
     "dev": "pnpm --filter @mindfull/domain build && pnpm --parallel --filter @mindfull/web --filter @mindfull/server dev",
     "format": "biome format --write .",
     "format:check": "biome format .",
+    "import:stoic": "pnpm --filter @mindfull/domain build && pnpm --filter @mindfull/server import:stoic",
     "lint": "biome lint .",
     "test": "pnpm -r test",
     "test:e2e": "playwright test",

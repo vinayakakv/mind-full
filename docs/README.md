@@ -30,6 +30,8 @@ defaults.
   typography, themes, layout, and motion.
 - [Deployment and operations](./deployment-and-operations.md) — Raspberry Pi,
   Docker Compose, scheduling, notifications, pairing, and backups.
+- [One-time Stoic migration](./stoic-migration.md) — additive CLI import,
+  record mapping, dry-run review, and application steps.
 - [Implementation plan](./implementation-plan.md) — vertical milestones, exit
   criteria, and commit strategy.
 - [Frontend maintainability plan](./frontend-maintainability.md) — data and UI
