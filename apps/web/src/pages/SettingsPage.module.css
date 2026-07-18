@@ -17,9 +17,13 @@
   align-items: start;
   border-top: 1px solid var(--border-subtle);
   display: grid;
-  gap: 2rem;
-  grid-template-columns: 1fr auto;
+  gap: 1.25rem;
+  grid-template-columns: minmax(0, 1fr);
   padding: 1.5rem 0;
+}
+
+.setting > div:first-child {
+  max-width: 38rem;
 }
 
 .setting h2 {
@@ -37,7 +41,7 @@
 .appearanceChoices {
   display: grid;
   gap: 0.85rem;
-  justify-items: end;
+  justify-items: start;
 }
 
 .themeChoices {
@@ -101,8 +105,10 @@
   width: 100%;
 }
 
-.aiForm {
-  width: min(100%, 22rem);
+.pairingForm,
+.aiForm,
+.scheduleForm {
+  width: min(100%, 30rem);
 }
 
 .modelRow {
@@ -244,14 +250,4 @@
   font-size: 0.8rem;
   min-height: 2.65rem;
   padding: 0.65rem 0.8rem;
-}
-
-@media (max-width: 36rem) {
-  .setting {
-    grid-template-columns: 1fr;
-  }
-
-  .appearanceChoices {
-    justify-items: start;
-  }
 }
