@@ -238,15 +238,23 @@ Milestone 3.
 
 ## Milestone 4 — Local AI and reflection
 
-- Optional Ollama Compose service
-- Persisted AI work queue with leases and idempotency
-- Task extraction with mandatory approval
-- Journal/check-in summaries and recurring themes
-- Ahead-of-time one-time prompt candidates
-- Local embeddings and semantic passage search
-- In-container scheduler and catch-up behavior
-- Weekly review snapshots
-- Daily SQLite backups (completed July 17, 2026)
+- [x] Backend-owned OpenAI-compatible URL, key, and model configuration
+- [x] Provider status, model discovery, invalid-configuration warning, and pause
+- [x] Persisted chronological AI work queue with leases and idempotency
+- [x] Provider-level exponential backoff and restart reconciliation
+- [x] User-visible bounded reflection memory with reset
+- [x] Optional one-year initial memory built in chronological batches
+- [x] Atomic journal/check-in analysis, memory update, and task extraction
+- [x] Journal/check-in summaries, themes, and unfinished commitments
+- [ ] Ahead-of-time one-time prompt candidates
+- [ ] Local embeddings and semantic passage search
+- [ ] In-container weekly-review scheduling and catch-up behavior
+- [ ] Weekly review snapshots
+- [x] Daily SQLite backups (completed July 17, 2026)
+
+The model is user-configured rather than part of Mindfull's Compose deployment.
+llama.cpp's `llama-server` is the reference local provider; the Vercel AI SDK
+preserves the generic OpenAI-compatible boundary.
 
 ## Commit strategy
 

@@ -193,6 +193,16 @@ content hash, state, summaries, themes, unfinished commitments, timestamps, and
 provider/model metadata. Keeping it separate prevents an AI status update from
 overwriting an offline journal edit.
 
+### Reflection memory
+
+One server-authored synchronized document contains the current bounded
+Markdown memory, a monotonically increasing revision, the documents involved
+in its latest transition, generation time, model/provider metadata, and the
+analysis version. It is user-visible and resettable but initially read-only.
+
+Memory and task-specific analysis are one atomic transition. The backend writes
+neither when either half fails validation or the input memory revision is stale.
+
 ### Insight
 
 A concise derived observation with a type, text, supporting date range, source
@@ -290,6 +300,8 @@ Infrastructure records are relational tables rather than domain documents:
 - Server change sequence and client sync cursors
 - Scheduled jobs and execution leases
 - AI work queue and attempt history
+- AI provider configuration and availability backoff
+- In-progress initial-memory staging
 - Embeddings and their source content hashes
 - Backup execution records
 

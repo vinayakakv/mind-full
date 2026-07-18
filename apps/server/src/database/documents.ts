@@ -15,7 +15,7 @@ type DatabaseTransaction = Parameters<
 >[0];
 type DocumentDatabase = Pick<DatabaseTransaction, 'insert' | 'select'>;
 
-const documentFromRow = (row: DocumentRow): DomainDocument =>
+export const documentFromRow = (row: DocumentRow): DomainDocument =>
   parseDomainDocument({
     id: row.id,
     type: row.type,
@@ -44,7 +44,7 @@ const rowFromDocument = (document: DomainDocument) => ({
   deletedAt: document.deletedAt,
 });
 
-const findDocument = (
+export const findDocument = (
   database: DocumentDatabase,
   documentId: string,
 ): DomainDocument | undefined => {
@@ -57,7 +57,7 @@ const findDocument = (
   return row ? documentFromRow(row) : undefined;
 };
 
-const storeDocument = (
+export const storeDocument = (
   database: DocumentDatabase,
   document: DomainDocument,
 ): void => {

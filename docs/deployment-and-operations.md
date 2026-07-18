@@ -16,14 +16,14 @@ The intended Compose stack contains:
 
 - `mindfull` — built SPA, API, sync engine, scheduler, backups, and AI
   orchestration
-- `ollama` — local inference service with a persistent model volume
 
-SQLite data, backups, and Ollama models use explicit mounted volumes. The web UI
-and API are served from the same Mindfull origin.
+SQLite data and backups use explicit mounted volumes. The web UI and API are
+served from the same Mindfull origin.
 
-Ollama is part of the self-hosted stack but remains an optional capability from
-the application's perspective. Mindfull must start and work if Ollama is
-unavailable.
+Mindfull expects a configured OpenAI-compatible API but does not deploy or own
+it. llama.cpp's `llama-server` is the reference local provider and may run on
+the Pi or another reachable machine. Mindfull must start and work when the
+provider is unavailable.
 
 ## Container publishing
 

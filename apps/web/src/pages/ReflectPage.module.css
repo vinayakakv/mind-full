@@ -1,0 +1,173 @@
+.page {
+  animation: arrive 300ms ease both;
+}
+
+.eyebrow,
+.sectionLabel {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.page > h1 {
+  font-family: var(--font-reflection);
+  font-size: clamp(3.5rem, 11vw, 6rem);
+  font-weight: 400;
+  letter-spacing: -0.06em;
+  line-height: 0.9;
+  margin: 1rem 0 1.25rem;
+}
+
+.status,
+.updatedAt,
+.sources,
+.error {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.status {
+  margin-bottom: clamp(3rem, 9vh, 6rem);
+}
+
+.memory,
+.emptyMemory {
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 3.5rem;
+}
+
+.memoryHeading {
+  align-items: start;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.updatedAt {
+  margin: 0.45rem 0 0;
+}
+
+.markdown {
+  color: var(--text-primary);
+  font-family: var(--font-reflection);
+  font-size: 1.1rem;
+  line-height: 1.75;
+  margin-top: 2.5rem;
+}
+
+.markdown h1,
+.markdown h2,
+.markdown h3 {
+  color: var(--text-muted);
+  font-family: var(--font-control);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  margin: 2.25rem 0 0.65rem;
+  text-transform: uppercase;
+}
+
+.sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.8rem;
+  margin-top: 2rem;
+}
+
+.sources a {
+  color: var(--text-primary);
+  text-underline-offset: 0.2rem;
+}
+
+.emptyMemory h2 {
+  font-family: var(--font-reflection);
+  font-size: clamp(2rem, 7vw, 3rem);
+  font-weight: 400;
+  line-height: 1.1;
+  margin: 1.25rem 0;
+}
+
+.emptyMemory > p:not(.sectionLabel) {
+  color: var(--text-muted);
+  font-family: var(--font-reflection);
+  line-height: 1.65;
+  max-width: 30rem;
+}
+
+.primaryButton,
+.dangerButton,
+.textButton {
+  cursor: pointer;
+  font: inherit;
+}
+
+.primaryButton {
+  background: var(--accent-strong);
+  border: 1px solid var(--accent-strong);
+  border-radius: 2rem;
+  color: var(--on-accent);
+  margin-top: 1rem;
+  padding: 0.7rem 1.05rem;
+}
+
+.primaryButton[data-disabled] {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.textButton {
+  background: transparent;
+  border: 0;
+  color: var(--text-muted);
+  padding: 0.4rem;
+}
+
+.insights {
+  padding-top: 3.5rem;
+}
+
+.analysis {
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 1.5rem 0;
+}
+
+.analysis > p:first-child {
+  font-family: var(--font-reflection);
+  font-size: 1.08rem;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.themes {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  margin: 0.75rem 0 0;
+}
+
+.error {
+  color: var(--text-danger);
+  margin-top: 1rem;
+}
+
+.dialogCopy {
+  color: var(--text-muted);
+  font-family: var(--font-reflection);
+  line-height: 1.6;
+}
+
+.dialogActions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+}
+
+.dangerButton {
+  background: var(--text-danger);
+  border: 0;
+  border-radius: 2rem;
+  color: var(--surface-canvas);
+  padding: 0.65rem 1rem;
+}

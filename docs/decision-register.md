@@ -130,9 +130,14 @@ topic documents contain the detailed rationale and behavior.
 - The backend runs on a Raspberry Pi 5 with 4 GB RAM.
 - Deployment uses pnpm, Docker, and Docker Compose.
 - UI and API are normally served from the Pi as one origin.
-- Primary AI inference runs on the Pi and is provider-pluggable through the
-  Vercel AI SDK boundary.
-- Ollama is the first local provider.
+- AI inference uses one backend-owned OpenAI-compatible URL, API key, and model
+  through the Vercel AI SDK boundary.
+- llama.cpp's `llama-server` is the reference local provider, but Mindfull does
+  not deploy or lifecycle-manage it.
+- The backend uses a stateful push contract: Mindfull supplies bounded memory
+  and task input; the model receives no tools.
+- Global Markdown reflection memory is visible, resettable, bounded, and
+  updated atomically with task-specific output.
 - AI jobs are asynchronous and do not block product flows.
 - Scheduler jobs run inside the backend container, never host crontab.
 - Default weekly review schedule is Sunday at 7:00 PM.

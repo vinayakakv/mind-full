@@ -52,3 +52,48 @@ export const backupRuns = sqliteTable('backup_runs', {
   error: text('error'),
   removedAt: text('removed_at'),
 });
+
+export const aiConfiguration = sqliteTable('ai_configuration', {
+  id: text('id').primaryKey(),
+  baseUrl: text('base_url').notNull(),
+  apiKey: text('api_key').notNull(),
+  model: text('model'),
+  paused: integer('paused', { mode: 'boolean' }).notNull(),
+  activatedAt: text('activated_at'),
+  status: text('status').notNull(),
+  lastCheckedAt: text('last_checked_at'),
+  lastSucceededAt: text('last_succeeded_at'),
+  nextCheckAt: text('next_check_at'),
+  failureCount: integer('failure_count').notNull(),
+  errorCode: text('error_code'),
+  updatedAt: text('updated_at').notNull(),
+});
+
+export const aiJobs = sqliteTable(
+  'ai_jobs',
+  {
+    id: text('id').primaryKey(),
+    kind: text('kind').notNull(),
+    sourceDocumentId: text('source_document_id'),
+    sourceContentHash: text('source_content_hash'),
+    recordedAt: text('recorded_at').notNull(),
+    state: text('state').notNull(),
+    attemptCount: integer('attempt_count').notNull(),
+    leaseOwner: text('lease_owner'),
+    leaseExpiresAt: text('lease_expires_at'),
+    lastErrorCode: text('last_error_code'),
+    createdAt: text('created_at').notNull(),
+    completedAt: text('completed_at'),
+  },
+  (table) => [index('ai_jobs_by_state_time').on(table.state, table.recordedAt)],
+);
+
+export const aiMemoryBuilds = sqliteTable('ai_memory_builds', {
+  jobId: text('job_id')
+    .primaryKey()
+    .references(() => aiJobs.id),
+  markdown: text('markdown').notNull(),
+  nextSourceIndex: integer('next_source_index').notNull(),
+  sourceDocumentIds: text('source_document_ids').notNull(),
+  updatedAt: text('updated_at').notNull(),
+});

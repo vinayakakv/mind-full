@@ -7,6 +7,14 @@ import { useAtomValue } from 'jotai';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Form, Input, Label, TextField } from 'react-aria-components';
 import {
+  type AiConfigurationView,
+  loadAiConfiguration,
+  loadAiModels,
+  pauseAi,
+  retryFailedAiJobs,
+  saveAiConfiguration,
+} from '../data/ai';
+import {
   type DeviceNotificationPermission,
   deviceNotificationPermission,
   type ExactNotificationPermission,
@@ -31,6 +39,206 @@ import {
 import { deviceName } from '../platform/native-shell';
 import { syncStatusAtom, syncStatusDescriptions } from '../state/sync';
 import styles from './SettingsPage.module.css';
+
+const aiStatusText: Record<AiConfigurationView['status'], string> = {
+  'not-configured': 'Add a model server to begin.',
+  checking: 'Checking the model server…',
+  available: 'The model is online.',
+  unavailable: 'The model is offline. Mindfull will try again quietly.',
+  'invalid-configuration': 'The model configuration needs attention.',
+  paused: 'Reflection is paused. Waiting work is safe.',
+};
+
+function AiSettings({ isPaired }: { isPaired: boolean }) {
+  const [configuration, setConfiguration] =
+    useState<AiConfigurationView | null>(null);
+  const [baseUrl, setBaseUrl] = useState('');
+  const [apiKey, setApiKey] = useState('');
+  const [model, setModel] = useState('');
+  const [models, setModels] = useState<string[]>([]);
+  const [state, setState] = useState<'idle' | 'loading' | 'saving'>('idle');
+  const [error, setError] = useState<string | null>(null);
+
+  const refresh = useCallback(async () => {
+    if (!isPaired) return;
+    try {
+      const next = await loadAiConfiguration();
+      setConfiguration(next);
+      setBaseUrl(next.baseUrl);
+      setModel(next.model ?? '');
+    } catch {
+      setError('Mindfull could not read the model configuration.');
+    }
+  }, [isPaired]);
+
+  useEffect(() => void refresh(), [refresh]);
+
+  const findModels = async () => {
+    setState('loading');
+    setError(null);
+    try {
+      const choices = await loadAiModels(
+        baseUrl,
+        apiKey || (configuration?.hasApiKey ? null : ''),
+      );
+      setModels(choices);
+      if (choices.length === 1) setModel(choices[0] ?? '');
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : 'Mindfull could not load models.',
+      );
+    } finally {
+      setState('idle');
+    }
+  };
+
+  const save = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setState('saving');
+    setError(null);
+    try {
+      await saveAiConfiguration({
+        baseUrl,
+        apiKey: apiKey || (configuration?.hasApiKey ? null : ''),
+        model: model || null,
+      });
+      setApiKey('');
+      await refresh();
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : 'Mindfull could not save the model configuration.',
+      );
+    } finally {
+      setState('idle');
+    }
+  };
+
+  const togglePause = async () => {
+    if (!configuration) return;
+    setError(null);
+    try {
+      await pauseAi(!configuration.paused);
+      await refresh();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'That did not work.');
+    }
+  };
+
+  const retryFailed = async () => {
+    setError(null);
+    try {
+      await retryFailedAiJobs();
+      await refresh();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'That did not work.');
+    }
+  };
+
+  if (!isPaired) {
+    return (
+      <p className={styles.fieldHint}>
+        Pair this device before configuring reflection.
+      </p>
+    );
+  }
+
+  const modelChoices = Array.from(
+    new Set([
+      ...(configuration?.model ? [configuration.model] : []),
+      ...models,
+    ]),
+  );
+
+  return (
+    <Form className={styles.aiForm} onSubmit={save}>
+      <TextField value={baseUrl} onChange={setBaseUrl} isRequired>
+        <Label>OpenAI-compatible API URL</Label>
+        <Input
+          type="url"
+          inputMode="url"
+          placeholder="http://llama-server:8080/v1"
+          autoCapitalize="none"
+          autoComplete="url"
+        />
+      </TextField>
+      <TextField value={apiKey} onChange={setApiKey}>
+        <Label>API key</Label>
+        <Input
+          type="password"
+          autoComplete="new-password"
+          placeholder={
+            configuration?.hasApiKey
+              ? 'Saved — leave empty to keep'
+              : 'Optional'
+          }
+        />
+      </TextField>
+      <div className={styles.modelRow}>
+        <Button
+          className={styles.quietButton}
+          onPress={findModels}
+          isDisabled={!baseUrl || state !== 'idle'}
+        >
+          {state === 'loading' ? 'Finding…' : 'Find models'}
+        </Button>
+        {modelChoices.length ? (
+          <label className={styles.modelField}>
+            Model
+            <select
+              value={model}
+              onChange={(event) => setModel(event.target.value)}
+            >
+              <option value="">Choose one</option>
+              {modelChoices.map((choice) => (
+                <option key={choice} value={choice}>
+                  {choice}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+      </div>
+      {configuration ? (
+        <p className={styles.aiStatus} data-status={configuration.status}>
+          {aiStatusText[configuration.status]}
+          {configuration.pendingJobs
+            ? ` ${configuration.pendingJobs} reflection${configuration.pendingJobs === 1 ? '' : 's'} waiting.`
+            : ''}
+        </p>
+      ) : null}
+      {error ? <p className={styles.error}>{error}</p> : null}
+      <div className={styles.syncActions}>
+        {configuration?.failedJobs ? (
+          <Button
+            className={`${styles.quietButton} ${styles.secondaryAction}`}
+            onPress={retryFailed}
+          >
+            Retry reflection
+          </Button>
+        ) : null}
+        {configuration?.model ? (
+          <Button
+            className={`${styles.quietButton} ${styles.secondaryAction}`}
+            onPress={togglePause}
+          >
+            {configuration.paused ? 'Resume reflection' : 'Pause reflection'}
+          </Button>
+        ) : null}
+        <Button
+          className={styles.syncButton}
+          type="submit"
+          isDisabled={!baseUrl || !model || state !== 'idle'}
+        >
+          {state === 'saving' ? 'Saving…' : 'Save model'}
+        </Button>
+      </div>
+    </Form>
+  );
+}
 
 const themes: Array<SettingsDocument['payload']['theme']> = [
   'system',
@@ -325,6 +533,16 @@ export function SettingsPage() {
       <h1>Settings</h1>
       <div className={styles.setting}>
         <div>
+          <h2>Reflection model</h2>
+          <p>
+            Connect an OpenAI-compatible model. Mindfull prepares the context;
+            the model receives no tools.
+          </p>
+        </div>
+        <AiSettings isPaired={isPaired} />
+      </div>
+      <div className={styles.setting}>
+        <div>
           <h2>Appearance</h2>
           <p>Choose a dedicated theme or follow this device.</p>
         </div>
@@ -406,7 +624,10 @@ export function SettingsPage() {
               <p className={styles.error}>{pairingError}</p>
             ) : null}
             <div className={styles.syncActions}>
-              <Button className={styles.quietButton} type="submit">
+              <Button
+                className={`${styles.quietButton} ${styles.secondaryAction}`}
+                type="submit"
+              >
                 Save address
               </Button>
               <Button className={styles.syncButton} onPress={synchronize}>

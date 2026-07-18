@@ -73,6 +73,7 @@
 }
 
 .pairingForm,
+.aiForm,
 .scheduleForm {
   display: grid;
   gap: 0.75rem;
@@ -80,6 +81,7 @@
 }
 
 .pairingForm label,
+.aiForm label,
 .scheduleForm label {
   color: var(--text-muted);
   display: block;
@@ -88,6 +90,8 @@
 }
 
 .pairingForm input,
+.aiForm input,
+.aiForm select,
 .scheduleForm input {
   background: var(--surface-soft);
   border: 1px solid var(--border-control);
@@ -95,6 +99,52 @@
   color: var(--text-primary);
   padding: 0.65rem 0.75rem;
   width: 100%;
+}
+
+.aiForm {
+  width: min(100%, 22rem);
+}
+
+.modelRow {
+  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.modelField {
+  display: grid;
+  flex: 1;
+  gap: 0.35rem;
+  min-width: 11rem;
+}
+
+.modelField select {
+  width: 100%;
+}
+
+.setting p.aiStatus {
+  font-family: var(--font-control);
+  font-size: 0.75rem;
+}
+
+.aiStatus::before {
+  background: var(--text-muted);
+  border-radius: 50%;
+  content: "";
+  display: inline-block;
+  height: 0.45rem;
+  margin-right: 0.45rem;
+  width: 0.45rem;
+}
+
+.aiStatus[data-status="available"]::before {
+  background: var(--accent-strong);
+}
+
+.aiStatus[data-status="invalid-configuration"]::before {
+  background: var(--text-danger);
 }
 
 .timeFields {
@@ -174,6 +224,10 @@
   font: inherit;
   font-size: 0.75rem;
   padding: 0.4rem 0.65rem;
+}
+
+.secondaryAction {
+  padding: 0.65rem 1rem;
 }
 
 @media (max-width: 36rem) {

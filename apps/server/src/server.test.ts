@@ -8,11 +8,15 @@ import {
 } from '@mindfull/domain';
 import { afterEach, describe, expect, it } from 'vitest';
 
+import type { AiInvoker } from './ai/provider.js';
 import { buildServer } from './server.js';
 
 const temporaryDirectories: string[] = [];
 
-const createTestServer = async () => {
+const createTestServer = async (ai?: {
+  invoker: AiInvoker;
+  modelLoader: () => Promise<string[]>;
+}) => {
   const directory = mkdtempSync(join(tmpdir(), 'mindfull-server-'));
   temporaryDirectories.push(directory);
 
@@ -22,6 +26,7 @@ const createTestServer = async () => {
     pairingCode: 'quiet-code',
     webRoot: null,
     backup: null,
+    ...(ai ? { aiInvoker: ai.invoker, aiModelLoader: ai.modelLoader } : {}),
   });
 };
 
@@ -193,6 +198,93 @@ describe('Mindfull server', () => {
     });
     expect(deleteSync.statusCode).toBe(200);
 
+    await server.close();
+  });
+
+  it('turns a synchronized reflection into one atomic memory transition', async () => {
+    const server = await createTestServer({
+      modelLoader: async () => ['quiet-model'],
+      invoker: {
+        reflect: async (_configuration, input) => ({
+          updatedMemoryMarkdown: [
+            '# Reflection memory',
+            '## Context worth remembering',
+            'Rainy afternoons can feel restorative.',
+            '## What appears supportive',
+            'Quiet observation.',
+            '## Recurring themes',
+            'Weather and rest.',
+            '## Ongoing commitments',
+            'None noted.',
+            '## Open questions',
+            'None.',
+            '## Uncertain impressions',
+            'This may be a temporary preference.',
+          ].join('\n\n'),
+          summary: `A quiet reflection: ${input.sourceText}`,
+          themes: ['rest'],
+          unfinishedCommitments: [],
+          taskSuggestions: ['Make time to watch the rain'],
+        }),
+      },
+    });
+    const token = await pairDevice(server, 'phone');
+    const authorization = { authorization: `Bearer ${token}` };
+
+    const configuration = await server.inject({
+      method: 'PUT',
+      url: '/api/ai/configuration',
+      headers: authorization,
+      payload: {
+        baseUrl: 'http://llama.local:8080/v1',
+        apiKey: '',
+        model: 'quiet-model',
+      },
+    });
+    expect(configuration.statusCode).toBe(200);
+
+    const completedAt = new Date(Date.now() + 60_000).toISOString();
+    const journal = createJournalDocument({
+      id: 'reflection-journal',
+      now: completedAt,
+      deviceId: 'phone',
+      payload: {
+        title: null,
+        markdown: 'I sat by the window and listened to the rain.',
+        localDate: completedAt.slice(0, 10),
+        timezone: 'UTC',
+        status: 'completed',
+        completedAt,
+      },
+    });
+    const firstSync = await server.inject({
+      method: 'POST',
+      url: '/api/sync',
+      headers: authorization,
+      payload: { cursor: 0, documents: [journal] },
+    });
+    expect(firstSync.statusCode).toBe(200);
+
+    let generated: Array<{ type: string }> = [];
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      const pull = await server.inject({
+        method: 'POST',
+        url: '/api/sync',
+        headers: authorization,
+        payload: { cursor: 0, documents: [] },
+      });
+      generated = pull.json<{ documents: Array<{ type: string }> }>().documents;
+      if (generated.some(({ type }) => type === 'reflection-memory')) break;
+    }
+
+    expect(generated).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: 'reflection-memory' }),
+        expect.objectContaining({ type: 'analysis-result' }),
+        expect.objectContaining({ type: 'task-suggestion' }),
+      ]),
+    );
     await server.close();
   });
 });

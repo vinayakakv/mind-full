@@ -66,6 +66,19 @@ export const configureSyncServer = async (value: string): Promise<string> => {
 
 const syncEndpoint = (path: string): string => `${syncServerAddress()}${path}`;
 
+export const authenticatedServerRequest = async (
+  path: string,
+  init: RequestInit = {},
+): Promise<Response> => {
+  const token = window.localStorage.getItem(tokenKey);
+  if (!token)
+    throw new Error('Pair this device with the Mindfull server first.');
+
+  const headers = new Headers(init.headers);
+  headers.set('authorization', `Bearer ${token}`);
+  return fetch(syncEndpoint(path), { ...init, headers });
+};
+
 export const pairWithServer = async (
   pairingCode: string,
   deviceName: string,

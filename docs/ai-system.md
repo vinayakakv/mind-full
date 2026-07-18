@@ -16,25 +16,69 @@ Initial AI capabilities:
 - Weekly reviews and grounded encouragement
 - Local embeddings for semantic passage search
 
+## Three layers
+
+AI support has three deliberately small layers:
+
+1. **Configuration** — one backend-owned OpenAI-compatible URL, API key, and
+   selected model.
+2. **Infrastructure** — durable chronological jobs, one worker, leases,
+   provider availability, and retry.
+3. **Data** — synchronized reflection memory and task-specific derived
+   documents.
+
+Provider configuration and jobs are operational SQLite rows. They do not
+synchronize. Reflection memory and generated results are documents because
+they are part of the user's readable data.
+
 ## Provider boundary
 
-The backend uses the Vercel AI SDK behind a local provider registry. The first
-provider is Ollama on the Raspberry Pi. OpenAI-compatible endpoints and other
-AI SDK providers may be configured later without changing domain services.
+The backend uses the Vercel AI SDK OpenAI-compatible provider. Mindfull does
+not install, start, or otherwise own inference. The user supplies an API base
+URL and API key in Settings, then selects a model returned by `/models`.
+
+The reference local provider is llama.cpp's `llama-server`. Other compatible
+local or remote services may be used without changing domain services.
 
 Provider-specific objects must not leak into domain documents. Analysis results
 may record provider and model names for reproducibility, but domain commands
 consume validated structured results.
 
-Primary inference runs on a Raspberry Pi 5 with 4 GB RAM. Model selection must
-favor small quantized models and predictable memory use. A separate lightweight
-embedding model is acceptable. Browser inference is deferred but the provider
-boundary must not prevent it later.
+The provider may run on the Pi or another Tailscale-reachable machine. Model
+selection should favor small quantized models and predictable memory use.
+Embedding configuration is deferred until semantic search.
+
+Ordinary HTTP endpoints are accepted. Settings visibly names the destination
+host because completed journal and check-in content is sent there. The API key
+is stored in backend SQLite, never returned after saving, never synchronized,
+and never logged.
+
+Saving configuration does not require reachability. Settings shows Not
+configured, Checking, Online, Offline, Invalid configuration, or Paused.
+Invalid configuration adds a warning to the Settings utility icon; ordinary
+downtime does not make the core application unhealthy.
+
+## Stateful push contract
+
+Mindfull prepares every input. The model receives no application tools and
+cannot pull additional history.
+
+```text
+(current memory, task-specific input)
+    -> (proposed updated memory, task-specific output)
+```
+
+The entire structured response is validated and committed atomically. If the
+memory or output is invalid, neither is stored. The commit also compares the
+memory revision used for inference with the current revision; stale results
+are retried against current memory.
 
 ## Asynchronous work
 
-AI work is always queued. A check-in or journal save completes before analysis
-begins.
+AI work is always queued in the backend. A check-in or journal save completes
+before analysis begins. Eligible completed reflections are queued when they
+reach the backend through sync, and startup reconciliation recovers missed
+work.
 
 The AI work queue is a backend operational table with:
 
@@ -48,9 +92,34 @@ The AI work queue is a backend operational table with:
 - Last error
 - Created and completed times
 
-Jobs are idempotent by job type, source document, and content hash. Editing a
-source queues analysis for the new hash. Pending suggestions from an older hash
-become superseded; accepted tasks remain untouched.
+Jobs are idempotent by job type, source document, content hash, and analysis
+version. Jobs run one at a time and in source chronology.
+
+Provider availability has one backoff independent of the queue. While the
+provider is unavailable, no job attempts are consumed and chronology does not
+change. Transient failures back off to a quiet maximum of six hours and recover
+automatically. Authentication, missing-model, and structured-output capability
+errors pause processing until configuration changes. Invalid structured output
+receives one corrective retry, then remains failed for manual retry.
+
+## Reflection memory
+
+Mindfull maintains one compact, user-visible Markdown memory. Journals and
+check-ins remain canonical; memory is a derived interpretation that can be
+reset.
+
+Memory is limited to roughly 1,500–2,000 words and uses stable sections for
+context worth remembering, supportive patterns, recurring themes, ongoing
+commitments, open questions, and uncertain impressions. It is initially
+read-only. Reflect shows when it last changed and links only to the documents
+that caused that latest change.
+
+When memory is empty, Reflect offers an explicit one-time action to build it
+from the previous year of completed journals and check-ins. The backend folds
+bounded chronological batches through private staging memory and publishes
+only the completed result. Historical entries do not receive individual
+summaries or task suggestions. Rebuilding after deleting an influencing source
+is future scope.
 
 ## Structured output
 
@@ -146,4 +215,3 @@ reflection. A failed scheduled generation can be retried or run on demand.
   Unavailable without creating alarm.
 - Curated prompts and deterministic task/habit behavior provide useful
   fallbacks when AI is absent.
-

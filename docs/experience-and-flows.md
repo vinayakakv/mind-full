@@ -202,6 +202,17 @@ Reflect includes:
 - Gentle encouragement grounded in recorded data
 - Semantic search
 
+Reflect begins with the user-visible global memory: compact Markdown covering
+context, supportive patterns, recurring themes, ongoing commitments, open
+questions, and uncertain impressions. It shows what caused only its latest
+update and may be reset. When empty, an optional button builds initial memory
+from the previous year of completed journals and check-ins.
+
+AI configuration lives in Settings. URL and API key reveal a model dropdown
+from `/models`; a compact status shows provider availability. A configuration
+problem adds a warning to the Settings icon, while ordinary provider downtime
+does not affect local writing.
+
 Semantic search initially returns matching passages with dates, context, and
 links to their source. It does not synthesize a conversational answer in the
 first release.

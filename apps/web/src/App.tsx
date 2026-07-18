@@ -1,7 +1,6 @@
 import { createBrowserRouter, RouterProvider } from 'react-router';
 
 import { AppShell } from './components/AppShell';
-import { PlaceholderPage } from './pages/PlaceholderPage';
 import { TodayPage } from './pages/TodayPage';
 
 export const router = createBrowserRouter([
@@ -56,12 +55,10 @@ export const router = createBrowserRouter([
       },
       {
         path: 'reflect',
-        element: (
-          <PlaceholderPage eyebrow="Look back gently" title="Reflect">
-            Reviews and patterns will gather here without turning life into a
-            dashboard.
-          </PlaceholderPage>
-        ),
+        lazy: async () => {
+          const { ReflectPage } = await import('./pages/ReflectPage');
+          return { Component: ReflectPage };
+        },
       },
       {
         path: 'settings',

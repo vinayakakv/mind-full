@@ -4,6 +4,7 @@ import { NavLink, Outlet } from 'react-router';
 
 import { loadSettings } from '../data/settings';
 import { localTimeFor } from '../data/time';
+import { useAiStatus } from '../hooks/use-ai-status';
 import { useCurrentTime } from '../hooks/use-current-time';
 import { useHousekeeping } from '../hooks/use-housekeeping';
 import { useResolvedTheme } from '../hooks/use-resolved-theme';
@@ -42,6 +43,7 @@ export function AppShell() {
   useSync();
   useHousekeeping();
   const isKeyboardOpen = useIsVisualKeyboardOpen();
+  const aiStatus = useAiStatus();
   const now = useCurrentTime('minute');
   const settings = useLiveQuery(loadSettings);
 
@@ -85,10 +87,17 @@ export function AppShell() {
             </NavLink>
             <NavLink
               to="/settings"
+              data-warning={
+                aiStatus === 'invalid-configuration' ? 'true' : undefined
+              }
               className={({ isActive }) =>
                 `${styles.utilityLink} ${isActive ? styles.utilityLinkActive : ''}`
               }
-              aria-label="Settings"
+              aria-label={
+                aiStatus === 'invalid-configuration'
+                  ? 'Settings, reflection model needs attention'
+                  : 'Settings'
+              }
             >
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M12 8.25a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5Z" />

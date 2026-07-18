@@ -164,6 +164,28 @@ export const checkInPayloadSchema = z.object({
   completedAt: instantSchema.nullable(),
 });
 
+export const reflectionMemoryPayloadSchema = z.object({
+  revision: z.number().int().positive(),
+  markdown: z.string().trim().min(1).max(20_000),
+  updatedFromDocumentIds: z.array(z.string().min(1)).max(100),
+  generatedAt: instantSchema,
+  provider: z.string().min(1).max(100),
+  model: z.string().min(1).max(200),
+  analysisVersion: z.number().int().positive(),
+});
+
+export const analysisResultPayloadSchema = z.object({
+  sourceDocumentId: z.string().min(1),
+  sourceContentHash: z.string().min(1),
+  summary: z.string().trim().min(1).max(2_000),
+  themes: z.array(z.string().trim().min(1).max(120)).max(8),
+  unfinishedCommitments: z.array(z.string().trim().min(1).max(500)).max(8),
+  generatedAt: instantSchema,
+  provider: z.string().min(1).max(100),
+  model: z.string().min(1).max(200),
+  analysisVersion: z.number().int().positive(),
+});
+
 const envelopeFields = {
   id: z.string().min(1),
   schemaVersion: z.literal(1),
@@ -236,6 +258,18 @@ export const checkInDocumentSchema = z.object({
   payload: checkInPayloadSchema,
 });
 
+export const reflectionMemoryDocumentSchema = z.object({
+  ...envelopeFields,
+  type: z.literal('reflection-memory'),
+  payload: reflectionMemoryPayloadSchema,
+});
+
+export const analysisResultDocumentSchema = z.object({
+  ...envelopeFields,
+  type: z.literal('analysis-result'),
+  payload: analysisResultPayloadSchema,
+});
+
 export const domainDocumentSchema = z.discriminatedUnion('type', [
   settingsDocumentSchema,
   taskDocumentSchema,
@@ -247,6 +281,8 @@ export const domainDocumentSchema = z.discriminatedUnion('type', [
   habitLogDocumentSchema,
   reminderDocumentSchema,
   checkInDocumentSchema,
+  reflectionMemoryDocumentSchema,
+  analysisResultDocumentSchema,
 ]);
 
 export type SettingsPayload = z.infer<typeof settingsPayloadSchema>;
@@ -261,6 +297,10 @@ export type HabitPayload = z.infer<typeof habitPayloadSchema>;
 export type HabitLogPayload = z.infer<typeof habitLogPayloadSchema>;
 export type ReminderPayload = z.infer<typeof reminderPayloadSchema>;
 export type CheckInPayload = z.infer<typeof checkInPayloadSchema>;
+export type ReflectionMemoryPayload = z.infer<
+  typeof reflectionMemoryPayloadSchema
+>;
+export type AnalysisResultPayload = z.infer<typeof analysisResultPayloadSchema>;
 export type SettingsDocument = z.infer<typeof settingsDocumentSchema>;
 export type TaskDocument = z.infer<typeof taskDocumentSchema>;
 export type TaskSuggestionDocument = z.infer<
@@ -275,6 +315,12 @@ export type HabitDocument = z.infer<typeof habitDocumentSchema>;
 export type HabitLogDocument = z.infer<typeof habitLogDocumentSchema>;
 export type ReminderDocument = z.infer<typeof reminderDocumentSchema>;
 export type CheckInDocument = z.infer<typeof checkInDocumentSchema>;
+export type ReflectionMemoryDocument = z.infer<
+  typeof reflectionMemoryDocumentSchema
+>;
+export type AnalysisResultDocument = z.infer<
+  typeof analysisResultDocumentSchema
+>;
 export type DomainDocument = z.infer<typeof domainDocumentSchema>;
 export type DocumentType = DomainDocument['type'];
 
@@ -389,6 +435,22 @@ export const createCheckInDocument = (
   checkInDocumentSchema.parse({
     ...createEnvelope(input),
     type: 'check-in',
+  });
+
+export const createReflectionMemoryDocument = (
+  input: NewDocument<ReflectionMemoryPayload>,
+): ReflectionMemoryDocument =>
+  reflectionMemoryDocumentSchema.parse({
+    ...createEnvelope({ ...input, occurredAt: null }),
+    type: 'reflection-memory',
+  });
+
+export const createAnalysisResultDocument = (
+  input: NewDocument<AnalysisResultPayload>,
+): AnalysisResultDocument =>
+  analysisResultDocumentSchema.parse({
+    ...createEnvelope(input),
+    type: 'analysis-result',
   });
 
 export const parseDomainDocument = (input: unknown): DomainDocument =>

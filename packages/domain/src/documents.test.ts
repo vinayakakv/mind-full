@@ -5,6 +5,7 @@ import {
   createHabitDocument,
   createHabitLogDocument,
   createJournalDocument,
+  createReflectionMemoryDocument,
   createReminderDocument,
   createSettingsDocument,
   createTaskDocument,
@@ -138,6 +139,25 @@ describe('domain documents', () => {
     });
 
     expect(migrateDomainDocument(journal)).toEqual(journal);
+  });
+
+  it('keeps reflection memory versioned and linked to its latest source', () => {
+    const memory = createReflectionMemoryDocument({
+      id: 'reflection-memory',
+      now,
+      deviceId: 'mindfull-server',
+      payload: {
+        revision: 1,
+        markdown: '# Reflection memory\n\nA quiet walk often helps.',
+        updatedFromDocumentIds: ['01-journal'],
+        generatedAt: now,
+        provider: 'openai-compatible',
+        model: 'quiet-model',
+        analysisVersion: 1,
+      },
+    });
+
+    expect(migrateDomainDocument(memory)).toEqual(memory);
   });
 
   it('treats journals from before completion state as completed logs', () => {

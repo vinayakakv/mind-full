@@ -1,0 +1,363 @@
+import { createHash } from 'node:crypto';
+import type {
+  CheckInDocument,
+  DomainDocument,
+  JournalDocument,
+  ReflectionMemoryDocument,
+} from '@mindfull/domain';
+import { and, asc, eq, inArray, isNull, lte, or } from 'drizzle-orm';
+import type { MindfullDatabase } from '../database/database.js';
+import { documentFromRow } from '../database/documents.js';
+import {
+  aiConfiguration,
+  aiJobs,
+  aiMemoryBuilds,
+  documents,
+} from '../database/schema.js';
+
+export const aiConfigurationId = 'primary';
+export const reflectionMemoryId = 'reflection-memory';
+export const analysisVersion = 1;
+
+export type AiProviderStatus =
+  | 'not-configured'
+  | 'checking'
+  | 'available'
+  | 'unavailable'
+  | 'invalid-configuration'
+  | 'paused';
+
+export type StoredAiConfiguration = {
+  baseUrl: string;
+  apiKey: string;
+  model: string | null;
+  paused: boolean;
+  activatedAt: string | null;
+  status: AiProviderStatus;
+  lastCheckedAt: string | null;
+  lastSucceededAt: string | null;
+  nextCheckAt: string | null;
+  failureCount: number;
+  errorCode: string | null;
+  updatedAt: string;
+};
+
+export const readAiConfiguration = (
+  database: MindfullDatabase,
+): StoredAiConfiguration | null => {
+  const row = database
+    .select()
+    .from(aiConfiguration)
+    .where(eq(aiConfiguration.id, aiConfigurationId))
+    .get();
+
+  return row
+    ? {
+        ...row,
+        status: row.status as AiProviderStatus,
+      }
+    : null;
+};
+
+export const saveAiConfiguration = (
+  database: MindfullDatabase,
+  input: { baseUrl: string; apiKey: string; model: string | null },
+  now: string,
+): StoredAiConfiguration => {
+  const existing = readAiConfiguration(database);
+  const activatedAt = existing?.activatedAt ?? (input.model ? now : null);
+
+  database
+    .insert(aiConfiguration)
+    .values({
+      id: aiConfigurationId,
+      ...input,
+      paused: false,
+      activatedAt,
+      status: input.model ? 'checking' : 'not-configured',
+      lastCheckedAt: null,
+      lastSucceededAt: existing?.lastSucceededAt ?? null,
+      nextCheckAt: null,
+      failureCount: 0,
+      errorCode: null,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: aiConfiguration.id,
+      set: {
+        ...input,
+        activatedAt,
+        status: input.model ? 'checking' : 'not-configured',
+        nextCheckAt: null,
+        failureCount: 0,
+        errorCode: null,
+        updatedAt: now,
+      },
+    })
+    .run();
+
+  const saved = readAiConfiguration(database);
+  if (!saved) throw new Error('AI configuration was not saved.');
+  return saved;
+};
+
+export const setAiPaused = (
+  database: MindfullDatabase,
+  paused: boolean,
+  now: string,
+): void => {
+  database
+    .update(aiConfiguration)
+    .set({
+      paused,
+      status: paused ? 'paused' : 'checking',
+      nextCheckAt: null,
+      updatedAt: now,
+    })
+    .where(eq(aiConfiguration.id, aiConfigurationId))
+    .run();
+};
+
+export const recordProviderState = (
+  database: MindfullDatabase,
+  state: {
+    status: AiProviderStatus;
+    checkedAt: string;
+    nextCheckAt: string | null;
+    failureCount: number;
+    errorCode: string | null;
+  },
+): void => {
+  database
+    .update(aiConfiguration)
+    .set({
+      status: state.status,
+      lastCheckedAt: state.checkedAt,
+      lastSucceededAt:
+        state.status === 'available' ? state.checkedAt : undefined,
+      nextCheckAt: state.nextCheckAt,
+      failureCount: state.failureCount,
+      errorCode: state.errorCode,
+      updatedAt: state.checkedAt,
+    })
+    .where(eq(aiConfiguration.id, aiConfigurationId))
+    .run();
+};
+
+export const sourceText = (
+  document: JournalDocument | CheckInDocument,
+): string => {
+  if (document.type === 'journal') {
+    return [document.payload.title, document.payload.markdown]
+      .filter(Boolean)
+      .join('\n\n');
+  }
+
+  const namedValues = [
+    ['Mood', document.payload.mood],
+    ['Energy', document.payload.energy],
+    ['Stress', document.payload.stress],
+    ['Emotions', document.payload.emotions.join(', ')],
+  ]
+    .filter(([, value]) => value)
+    .map(([name, value]) => `${name}: ${value}`);
+  const responses = document.payload.responses
+    .filter(({ skipped, answer }) => !skipped && answer)
+    .map(({ promptText, answer }) => `${promptText}\n${answer}`);
+
+  return [...namedValues, ...responses, document.payload.reflectionMarkdown]
+    .filter(Boolean)
+    .join('\n\n');
+};
+
+export const sourceContentHash = (
+  document: JournalDocument | CheckInDocument,
+): string => createHash('sha256').update(sourceText(document)).digest('hex');
+
+const completedSources = (database: MindfullDatabase) =>
+  database
+    .select()
+    .from(documents)
+    .where(
+      and(
+        inArray(documents.type, ['journal', 'check-in']),
+        isNull(documents.deletedAt),
+      ),
+    )
+    .orderBy(asc(documents.occurredAt))
+    .all()
+    .map(documentFromRow)
+    .filter(
+      (document): document is JournalDocument | CheckInDocument =>
+        (document.type === 'journal' &&
+          document.payload.status === 'completed') ||
+        (document.type === 'check-in' &&
+          document.payload.status === 'completed'),
+    );
+
+export const reconcileReflectionJobs = (
+  database: MindfullDatabase,
+  now: string,
+): number => {
+  const configuration = readAiConfiguration(database);
+  if (!configuration?.activatedAt) return 0;
+
+  let created = 0;
+  for (const source of completedSources(database)) {
+    const completedAt = source.payload.completedAt ?? source.occurredAt;
+    if (!completedAt || completedAt < configuration.activatedAt) continue;
+    const hash = sourceContentHash(source);
+    const id = `analyze:${source.id}:${hash}:v${analysisVersion}`;
+    const result = database
+      .insert(aiJobs)
+      .values({
+        id,
+        kind: 'analyze-reflection',
+        sourceDocumentId: source.id,
+        sourceContentHash: hash,
+        recordedAt: completedAt,
+        state: 'waiting',
+        attemptCount: 0,
+        leaseOwner: null,
+        leaseExpiresAt: null,
+        lastErrorCode: null,
+        createdAt: now,
+        completedAt: null,
+      })
+      .onConflictDoNothing()
+      .run();
+    created += Number(result.changes);
+  }
+  return created;
+};
+
+export const queueInitialMemory = (
+  database: MindfullDatabase,
+  now: string,
+): boolean => {
+  const existingMemory = findReflectionMemory(database);
+  if (existingMemory) return false;
+
+  const id = 'initialize-memory:v1';
+  const result = database
+    .insert(aiJobs)
+    .values({
+      id,
+      kind: 'initialize-memory',
+      sourceDocumentId: null,
+      sourceContentHash: null,
+      recordedAt: '0000-01-01T00:00:00.000Z',
+      state: 'waiting',
+      attemptCount: 0,
+      leaseOwner: null,
+      leaseExpiresAt: null,
+      lastErrorCode: null,
+      createdAt: now,
+      completedAt: null,
+    })
+    .onConflictDoNothing()
+    .run();
+
+  if (result.changes) {
+    database
+      .insert(aiMemoryBuilds)
+      .values({
+        jobId: id,
+        markdown: '',
+        nextSourceIndex: 0,
+        sourceDocumentIds: '[]',
+        updatedAt: now,
+      })
+      .run();
+  }
+  return result.changes > 0;
+};
+
+export const historicalSources = (
+  database: MindfullDatabase,
+  now: string,
+): Array<JournalDocument | CheckInDocument> => {
+  const oneYearAgo = new Date(now);
+  oneYearAgo.setUTCFullYear(oneYearAgo.getUTCFullYear() - 1);
+  return completedSources(database).filter((source) => {
+    const completedAt = source.payload.completedAt ?? source.occurredAt;
+    return (
+      completedAt &&
+      completedAt >= oneYearAgo.toISOString() &&
+      completedAt < now
+    );
+  });
+};
+
+export const findDomainDocument = (
+  database: MindfullDatabase,
+  id: string,
+): DomainDocument | null => {
+  const row = database
+    .select()
+    .from(documents)
+    .where(eq(documents.id, id))
+    .get();
+  return row ? documentFromRow(row) : null;
+};
+
+export const findReflectionMemory = (
+  database: MindfullDatabase,
+): ReflectionMemoryDocument | null => {
+  const document = findDomainDocument(database, reflectionMemoryId);
+  return document?.type === 'reflection-memory' && !document.deletedAt
+    ? document
+    : null;
+};
+
+export const nextWaitingJob = (database: MindfullDatabase, now: string) =>
+  database
+    .select()
+    .from(aiJobs)
+    .where(
+      and(
+        or(eq(aiJobs.state, 'waiting'), eq(aiJobs.state, 'running')),
+        or(isNull(aiJobs.leaseExpiresAt), lte(aiJobs.leaseExpiresAt, now)),
+      ),
+    )
+    .orderBy(asc(aiJobs.recordedAt), asc(aiJobs.createdAt))
+    .get();
+
+export const pendingJobCount = (database: MindfullDatabase): number =>
+  database
+    .select()
+    .from(aiJobs)
+    .where(inArray(aiJobs.state, ['waiting', 'running']))
+    .all().length;
+
+export const failedJobCount = (database: MindfullDatabase): number =>
+  database.select().from(aiJobs).where(eq(aiJobs.state, 'failed')).all().length;
+
+export const retryFailedJobs = (
+  database: MindfullDatabase,
+  now: string,
+): number => {
+  const result = database
+    .update(aiJobs)
+    .set({
+      state: 'waiting',
+      attemptCount: 0,
+      leaseOwner: null,
+      leaseExpiresAt: null,
+      lastErrorCode: null,
+      completedAt: null,
+    })
+    .where(eq(aiJobs.state, 'failed'))
+    .run();
+  const configuration = readAiConfiguration(database);
+  if (configuration?.status === 'invalid-configuration') {
+    recordProviderState(database, {
+      status: 'checking',
+      checkedAt: now,
+      nextCheckAt: null,
+      failureCount: 0,
+      errorCode: null,
+    });
+  }
+  return Number(result.changes);
+};

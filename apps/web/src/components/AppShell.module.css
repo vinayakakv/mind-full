@@ -54,7 +54,20 @@
   display: inline-flex;
   height: 2.15rem;
   justify-content: center;
+  position: relative;
   width: 2.15rem;
+}
+
+.utilityLink[data-warning="true"]::after {
+  background: var(--text-danger);
+  border: 2px solid var(--surface-canvas);
+  border-radius: 50%;
+  content: "";
+  height: 0.42rem;
+  position: absolute;
+  right: 0.18rem;
+  top: 0.18rem;
+  width: 0.42rem;
 }
 
 .utilityLink svg {
