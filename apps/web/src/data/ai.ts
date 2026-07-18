@@ -7,6 +7,7 @@ export type AiConfigurationView = {
   baseUrl: string;
   hasApiKey: boolean;
   model: string | null;
+  responseTimeoutMinutes: 2 | 5 | 10 | 20;
   paused: boolean;
   status: AiStatus;
   lastCheckedAt: string | null;
@@ -76,6 +77,7 @@ export const saveAiConfiguration = async (input: {
   baseUrl: string;
   apiKey: string | null;
   model: string | null;
+  responseTimeoutMinutes: 2 | 5 | 10 | 20;
 }): Promise<void> => {
   await request('/api/ai/configuration', {
     method: 'PUT',

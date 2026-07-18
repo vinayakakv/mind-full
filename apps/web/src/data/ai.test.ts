@@ -6,6 +6,7 @@ const configuration = {
   baseUrl: 'http://model.local/v1',
   hasApiKey: false,
   model: 'quiet-model',
+  responseTimeoutMinutes: 5,
   paused: false,
   status: 'available',
   lastCheckedAt: null,

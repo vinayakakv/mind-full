@@ -1,0 +1,1 @@
+ALTER TABLE `ai_configuration` ADD `response_timeout_minutes` integer DEFAULT 5 NOT NULL;

@@ -20,6 +20,9 @@ export const aiConfigurationId = 'primary';
 export const reflectionMemoryId = 'reflection-memory';
 export const currentWeekReflectionId = 'current-week-reflection';
 export const analysisVersion = 2;
+export const defaultResponseTimeoutMinutes = 5;
+export const responseTimeoutMinutes = [2, 5, 10, 20] as const;
+export type ResponseTimeoutMinutes = (typeof responseTimeoutMinutes)[number];
 
 export type AiProviderStatus =
   | 'not-configured'
@@ -33,6 +36,7 @@ export type StoredAiConfiguration = {
   baseUrl: string;
   apiKey: string;
   model: string | null;
+  responseTimeoutMinutes: ResponseTimeoutMinutes;
   paused: boolean;
   activatedAt: string | null;
   status: AiProviderStatus;
@@ -57,13 +61,20 @@ export const readAiConfiguration = (
     ? {
         ...row,
         status: row.status as AiProviderStatus,
+        responseTimeoutMinutes:
+          row.responseTimeoutMinutes as ResponseTimeoutMinutes,
       }
     : null;
 };
 
 export const saveAiConfiguration = (
   database: MindfullDatabase,
-  input: { baseUrl: string; apiKey: string; model: string | null },
+  input: {
+    baseUrl: string;
+    apiKey: string;
+    model: string | null;
+    responseTimeoutMinutes: ResponseTimeoutMinutes;
+  },
   now: string,
 ): StoredAiConfiguration => {
   const existing = readAiConfiguration(database);

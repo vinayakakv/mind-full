@@ -58,6 +58,9 @@ export const aiConfiguration = sqliteTable('ai_configuration', {
   baseUrl: text('base_url').notNull(),
   apiKey: text('api_key').notNull(),
   model: text('model'),
+  responseTimeoutMinutes: integer('response_timeout_minutes')
+    .notNull()
+    .default(5),
   paused: integer('paused', { mode: 'boolean' }).notNull(),
   activatedAt: text('activated_at'),
   status: text('status').notNull(),

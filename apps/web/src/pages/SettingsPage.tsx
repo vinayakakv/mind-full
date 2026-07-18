@@ -81,6 +81,8 @@ function AiSettings({ isPaired }: { isPaired: boolean }) {
   const [baseUrl, setBaseUrl] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [model, setModel] = useState('');
+  const [responseTimeoutMinutes, setResponseTimeoutMinutes] =
+    useState<AiConfigurationView['responseTimeoutMinutes']>(5);
   const [models, setModels] = useState<string[]>([]);
   const [state, setState] = useState<'idle' | 'loading' | 'saving'>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -94,6 +96,7 @@ function AiSettings({ isPaired }: { isPaired: boolean }) {
         if (updateFields) {
           setBaseUrl(next.baseUrl);
           setModel(next.model ?? '');
+          setResponseTimeoutMinutes(next.responseTimeoutMinutes ?? 5);
         }
       } catch {
         if (updateFields) {
@@ -140,6 +143,7 @@ function AiSettings({ isPaired }: { isPaired: boolean }) {
         baseUrl,
         apiKey: apiKey || (configuration?.hasApiKey ? null : ''),
         model: model || null,
+        responseTimeoutMinutes,
       });
       setApiKey('');
       await refresh();
@@ -239,6 +243,24 @@ function AiSettings({ isPaired }: { isPaired: boolean }) {
           </label>
         ) : null}
       </div>
+      <label className={styles.modelField}>
+        Response timeout
+        <select
+          value={responseTimeoutMinutes}
+          onChange={(event) =>
+            setResponseTimeoutMinutes(
+              Number(
+                event.target.value,
+              ) as AiConfigurationView['responseTimeoutMinutes'],
+            )
+          }
+        >
+          <option value={2}>2 minutes</option>
+          <option value={5}>5 minutes</option>
+          <option value={10}>10 minutes</option>
+          <option value={20}>20 minutes</option>
+        </select>
+      </label>
       {!error && configuration ? (
         <div className={styles.aiStatusBlock}>
           <p className={styles.aiStatus} data-status={configuration.status}>

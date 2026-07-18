@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  jobLeaseDurationMs,
   providerBackoffMs,
   reflectionMemoryMarkdown,
   reflectionMemoryMarkdownFor,
@@ -12,6 +13,12 @@ describe('AI provider backoff', () => {
     expect(providerBackoffMs(1)).toBe(15_000);
     expect(providerBackoffMs(3)).toBe(5 * 60_000);
     expect(providerBackoffMs(20)).toBe(6 * 3_600_000);
+  });
+});
+
+describe('AI job lease', () => {
+  it('stays one minute beyond the selected response timeout', () => {
+    expect(jobLeaseDurationMs(10)).toBe(11 * 60_000);
   });
 });
 

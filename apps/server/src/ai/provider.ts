@@ -12,6 +12,7 @@ export type ProviderConfiguration = {
   baseUrl: string;
   apiKey: string;
   model: string;
+  responseTimeoutMinutes: number;
 };
 
 export type ReflectionInput = {
@@ -157,7 +158,9 @@ export const aiInvoker: AiInvoker = {
       system: systemPrompt,
       prompt: promptFor(input),
       temperature: 0,
-      abortSignal: AbortSignal.timeout(120_000),
+      abortSignal: AbortSignal.timeout(
+        configuration.responseTimeoutMinutes * 60_000,
+      ),
       output: Output.object({
         name: 'mindfull_reflection',
         description:

@@ -42,7 +42,7 @@ import {
 } from './store.js';
 
 const workerIntervalMs = 5_000;
-const leaseDurationMs = 5 * 60_000;
+const leaseMarginMs = 60_000;
 const initialBatchCharacters = 20_000;
 const serverDeviceId = 'mindfull-server';
 
@@ -59,6 +59,9 @@ export const providerBackoffMs = (failureCount: number): number =>
   backoffMs[Math.min(Math.max(failureCount - 1, 0), backoffMs.length - 1)] ??
   6 * 3_600_000;
 
+export const jobLeaseDurationMs = (responseTimeoutMinutes: number): number =>
+  responseTimeoutMinutes * 60_000 + leaseMarginMs;
+
 class InvalidOutputError extends Error {}
 class StaleMemoryError extends Error {}
 
@@ -70,6 +73,7 @@ const providerConfiguration = (
         baseUrl: configuration.baseUrl,
         apiKey: configuration.apiKey,
         model: configuration.model,
+        responseTimeoutMinutes: configuration.responseTimeoutMinutes,
       }
     : null;
 
@@ -664,7 +668,8 @@ export const startAiWorker = (
           state: 'running',
           leaseOwner: workerId,
           leaseExpiresAt: new Date(
-            Date.parse(now) + leaseDurationMs,
+            Date.parse(now) +
+              jobLeaseDurationMs(configuration.responseTimeoutMinutes),
           ).toISOString(),
           attemptCount: job.attemptCount + 1,
         })

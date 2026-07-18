@@ -206,7 +206,8 @@ describe('Mindfull server', () => {
     const server = await createTestServer({
       modelLoader: async () => ['quiet-model'],
       invoker: {
-        reflect: async (_configuration, input) => {
+        reflect: async (configuration, input) => {
+          expect(configuration.responseTimeoutMinutes).toBe(10);
           expect(input.activeTasks).toContain('Water the plants');
           expect(input.activeHabits).toContainEqual({
             name: 'Open the curtains',
@@ -254,6 +255,7 @@ describe('Mindfull server', () => {
         baseUrl: 'http://llama.local:8080/v1',
         apiKey: '',
         model: 'quiet-model',
+        responseTimeoutMinutes: 10,
       },
     });
     expect(configuration.statusCode).toBe(200);
@@ -355,6 +357,7 @@ describe('Mindfull server', () => {
         baseUrl: 'http://quiet-model.local/v1',
         apiKey: '',
         model: 'quiet-model',
+        responseTimeoutMinutes: 5,
       },
     });
 

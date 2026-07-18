@@ -20,8 +20,8 @@ Initial AI capabilities:
 
 AI support has three deliberately small layers:
 
-1. **Configuration** — one backend-owned OpenAI-compatible URL, API key, and
-   selected model.
+1. **Configuration** — one backend-owned OpenAI-compatible URL, API key,
+   selected model, and response timeout.
 2. **Infrastructure** — durable chronological jobs, one worker, leases,
    provider availability, and retry.
 3. **Data** — synchronized reflection memory and task-specific derived
@@ -36,6 +36,9 @@ they are part of the user's readable data.
 The backend uses the Vercel AI SDK OpenAI-compatible provider. Mindfull does
 not install, start, or otherwise own inference. The user supplies an API base
 URL and API key in Settings, then selects a model returned by `/models`.
+The response timeout is selected there as a bounded 2, 5, 10, or 20 minutes;
+five minutes is the default. A job lease lasts one minute longer than the
+selected timeout so a healthy slow invocation is not reclaimed.
 
 The reference local provider is llama.cpp's `llama-server`. Other compatible
 local or remote services may be used without changing domain services.

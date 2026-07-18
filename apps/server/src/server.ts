@@ -13,6 +13,7 @@ import {
   providerErrorMessage,
 } from './ai/provider.js';
 import {
+  defaultResponseTimeoutMinutes,
   failedJobCount,
   historicalSources,
   memoryInitializationProgress,
@@ -21,6 +22,7 @@ import {
   readAiConfiguration,
   reconcileReflectionJobs,
   reflectionMemoryId,
+  responseTimeoutMinutes,
   retryFailedJobs,
   saveAiConfiguration,
   setAiPaused,
@@ -57,6 +59,16 @@ const aiConfigurationSchema = z.object({
   baseUrl: z.string().min(1).max(2_000),
   apiKey: z.string().max(2_000).nullable(),
   model: z.string().min(1).max(200).nullable(),
+  responseTimeoutMinutes: z
+    .custom<(typeof responseTimeoutMinutes)[number]>(
+      (value) =>
+        typeof value === 'number' &&
+        responseTimeoutMinutes.includes(
+          value as (typeof responseTimeoutMinutes)[number],
+        ),
+      'Choose a supported response timeout.',
+    )
+    .optional(),
 });
 
 export type BuildServerOptions = Pick<
@@ -186,6 +198,8 @@ export const buildServer = async ({
       baseUrl: configuration?.baseUrl ?? '',
       hasApiKey: Boolean(configuration?.apiKey),
       model: configuration?.model ?? null,
+      responseTimeoutMinutes:
+        configuration?.responseTimeoutMinutes ?? defaultResponseTimeoutMinutes,
       paused: configuration?.paused ?? false,
       status: configuration?.status ?? 'not-configured',
       lastCheckedAt: configuration?.lastCheckedAt ?? null,
@@ -236,7 +250,15 @@ export const buildServer = async ({
     const apiKey = parsed.data.apiKey ?? existing?.apiKey ?? '';
     const configuration = saveAiConfiguration(
       database,
-      { baseUrl, apiKey, model: parsed.data.model },
+      {
+        baseUrl,
+        apiKey,
+        model: parsed.data.model,
+        responseTimeoutMinutes:
+          parsed.data.responseTimeoutMinutes ??
+          existing?.responseTimeoutMinutes ??
+          defaultResponseTimeoutMinutes,
+      },
       new Date().toISOString(),
     );
     reconcileReflectionJobs(database, new Date().toISOString());
