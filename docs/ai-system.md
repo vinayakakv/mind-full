@@ -84,11 +84,12 @@ memory or output is invalid, neither is stored. The commit also compares the
 memory revision used for inference with the current revision; stale results
 are retried against current memory.
 
-When both structured-output attempts fail, the backend logs privacy-safe
-diagnostics from the provider-facing schema and Mindfull's stricter contract.
-The log includes the job kind, retry attempt, finish reason, token counts, and
-validation issue paths and codes. Generated JSON and journal content are never
-logged.
+Structured output uses one canonical Zod schema for both provider-facing
+generation and Mindfull acceptance. Array counts, string bounds, and required
+fields therefore cannot drift between two validation layers. When both
+attempts fail, the backend logs the job kind, retry attempt, finish reason,
+token counts, and privacy-safe validation issue paths and codes. Generated JSON
+and journal content are never logged.
 
 ## Asynchronous work
 

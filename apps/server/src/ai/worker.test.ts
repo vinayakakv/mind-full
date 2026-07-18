@@ -1,7 +1,6 @@
 import { NoObjectGeneratedError } from 'ai';
 import { describe, expect, it } from 'vitest';
 
-import { ProviderOutputValidationError } from './provider.js';
 import {
   jobLeaseDurationMs,
   outputAttemptDiagnostic,
@@ -63,7 +62,19 @@ describe('AI output diagnostics', () => {
     const diagnostics = [
       outputAttemptDiagnostic(sdkError, 1),
       outputAttemptDiagnostic(
-        new ProviderOutputValidationError(['taskSuggestions:too_big']),
+        new NoObjectGeneratedError({
+          cause: Object.assign(new Error('contains private output'), {
+            issues: [{ code: 'too_big', path: ['taskSuggestions'] }],
+          }),
+          text: 'private generated JSON',
+          response: {
+            id: 'response-id-2',
+            timestamp: new Date('2026-07-18T00:00:01.000Z'),
+            modelId: 'quiet-model',
+          },
+          usage,
+          finishReason: 'stop',
+        }),
         2,
       ),
     ];
@@ -71,7 +82,7 @@ describe('AI output diagnostics', () => {
     expect(diagnostics).toEqual([
       {
         attempt: 1,
-        failure: 'provider-schema',
+        failure: 'schema-validation',
         finishReason: 'length',
         inputTokens: 5_419,
         outputTokens: 2_121,
@@ -80,11 +91,11 @@ describe('AI output diagnostics', () => {
       },
       {
         attempt: 2,
-        failure: 'mindfull-contract',
-        finishReason: null,
-        inputTokens: null,
-        outputTokens: null,
-        totalTokens: null,
+        failure: 'schema-validation',
+        finishReason: 'stop',
+        inputTokens: 5_419,
+        outputTokens: 2_121,
+        totalTokens: 7_540,
         issues: ['taskSuggestions:too_big'],
       },
     ]);

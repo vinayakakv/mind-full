@@ -19,7 +19,6 @@ import {
   aiInvoker,
   loadProviderModels,
   type ProviderConfiguration,
-  ProviderOutputValidationError,
   ProviderResponseError,
   providerErrorCode,
   type ReflectionInput,
@@ -64,7 +63,7 @@ export const jobLeaseDurationMs = (responseTimeoutMinutes: number): number =>
 
 export type AiOutputAttemptDiagnostic = {
   attempt: 1 | 2;
-  failure: 'json-parse' | 'provider-schema' | 'mindfull-contract';
+  failure: 'json-parse' | 'schema-validation';
   finishReason: string | null;
   inputTokens: number | null;
   outputTokens: number | null;
@@ -103,28 +102,14 @@ const validationIssuesFrom = (error: unknown): string[] => {
 };
 
 export const outputAttemptDiagnostic = (
-  error:
-    | InstanceType<typeof NoObjectGeneratedError>
-    | ProviderOutputValidationError,
+  error: InstanceType<typeof NoObjectGeneratedError>,
   attempt: 1 | 2,
 ): AiOutputAttemptDiagnostic => {
-  if (error instanceof ProviderOutputValidationError) {
-    return {
-      attempt,
-      failure: 'mindfull-contract',
-      finishReason: null,
-      inputTokens: null,
-      outputTokens: null,
-      totalTokens: null,
-      issues: error.issues,
-    };
-  }
-
   return {
     attempt,
     failure: error.message.includes('could not parse')
       ? 'json-parse'
-      : 'provider-schema',
+      : 'schema-validation',
     finishReason: error.finishReason ?? null,
     inputTokens: error.usage?.inputTokens ?? null,
     outputTokens: error.usage?.outputTokens ?? null,
@@ -167,10 +152,7 @@ const invokeReflection = async (
   try {
     return await invoker.reflect(configuration, input);
   } catch (error) {
-    if (
-      !NoObjectGeneratedError.isInstance(error) &&
-      !(error instanceof ProviderOutputValidationError)
-    ) {
+    if (!NoObjectGeneratedError.isInstance(error)) {
       throw error;
     }
     firstFailure = outputAttemptDiagnostic(error, 1);
@@ -183,10 +165,7 @@ const invokeReflection = async (
         'The previous response did not match the required schema. Return only a complete valid result.',
     });
   } catch (error) {
-    if (
-      NoObjectGeneratedError.isInstance(error) ||
-      error instanceof ProviderOutputValidationError
-    ) {
+    if (NoObjectGeneratedError.isInstance(error)) {
       throw new InvalidOutputError([
         firstFailure,
         outputAttemptDiagnostic(error, 2),
