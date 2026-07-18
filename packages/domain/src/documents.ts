@@ -196,7 +196,12 @@ export const reflectionMemorySectionsSchema = z.object({
 });
 
 export const weeklyReflectionSectionsSchema = z.object({
-  summary: z.string().trim().min(1).max(2_000),
+  summary: z
+    .string()
+    .trim()
+    .min(1)
+    .max(500)
+    .describe('A concise weekly summary in a short paragraph.'),
   brightSpots: boundedReflectionItems(3),
   difficultParts: boundedReflectionItems(3),
   supportiveActions: boundedReflectionItems(3),

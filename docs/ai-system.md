@@ -91,6 +91,10 @@ attempts fail, the backend logs the job kind, retry attempt, finish reason,
 token counts, and privacy-safe validation issue paths and codes. Generated JSON
 and journal content are never logged.
 
+String bounds also remain small enough for llama.cpp to compile into grammar
+repetitions. The weekly summary is limited to 500 characters; supporting
+details belong in its bounded lists.
+
 ## Asynchronous work
 
 AI work is always queued in the backend. A check-in or journal save completes
