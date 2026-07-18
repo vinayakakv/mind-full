@@ -1,12 +1,27 @@
+import { NoObjectGeneratedError } from 'ai';
 import { describe, expect, it } from 'vitest';
 
+import { ProviderOutputValidationError } from './provider.js';
 import {
   jobLeaseDurationMs,
+  outputAttemptDiagnostic,
   providerBackoffMs,
   reflectionMemoryMarkdown,
   reflectionMemoryMarkdownFor,
   weekBounds,
 } from './worker.js';
+
+const usage = {
+  inputTokens: 5_419,
+  inputTokenDetails: {
+    noCacheTokens: 31,
+    cacheReadTokens: 5_388,
+    cacheWriteTokens: 0,
+  },
+  outputTokens: 2_121,
+  outputTokenDetails: { textTokens: 2_121, reasoningTokens: 0 },
+  totalTokens: 7_540,
+};
 
 describe('AI provider backoff', () => {
   it('becomes quiet without exceeding six hours', () => {
@@ -19,6 +34,61 @@ describe('AI provider backoff', () => {
 describe('AI job lease', () => {
   it('stays one minute beyond the selected response timeout', () => {
     expect(jobLeaseDurationMs(10)).toBe(11 * 60_000);
+  });
+});
+
+describe('AI output diagnostics', () => {
+  it('keeps safe SDK and Mindfull validation details without output text', () => {
+    const cause = Object.assign(new Error('contains private output'), {
+      issues: [
+        {
+          code: 'too_small',
+          path: ['updatedWeek', 'summary'],
+          input: 'private output',
+        },
+      ],
+    });
+    const sdkError = new NoObjectGeneratedError({
+      cause,
+      text: 'private generated JSON',
+      response: {
+        id: 'response-id',
+        timestamp: new Date('2026-07-18T00:00:00.000Z'),
+        modelId: 'quiet-model',
+      },
+      usage,
+      finishReason: 'length',
+    });
+
+    const diagnostics = [
+      outputAttemptDiagnostic(sdkError, 1),
+      outputAttemptDiagnostic(
+        new ProviderOutputValidationError(['taskSuggestions:too_big']),
+        2,
+      ),
+    ];
+
+    expect(diagnostics).toEqual([
+      {
+        attempt: 1,
+        failure: 'provider-schema',
+        finishReason: 'length',
+        inputTokens: 5_419,
+        outputTokens: 2_121,
+        totalTokens: 7_540,
+        issues: ['updatedWeek.summary:too_small'],
+      },
+      {
+        attempt: 2,
+        failure: 'mindfull-contract',
+        finishReason: null,
+        inputTokens: null,
+        outputTokens: null,
+        totalTokens: null,
+        issues: ['taskSuggestions:too_big'],
+      },
+    ]);
+    expect(JSON.stringify(diagnostics)).not.toContain('private');
   });
 });
 

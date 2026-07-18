@@ -62,7 +62,76 @@ export const providerBackoffMs = (failureCount: number): number =>
 export const jobLeaseDurationMs = (responseTimeoutMinutes: number): number =>
   responseTimeoutMinutes * 60_000 + leaseMarginMs;
 
-class InvalidOutputError extends Error {}
+export type AiOutputAttemptDiagnostic = {
+  attempt: 1 | 2;
+  failure: 'json-parse' | 'provider-schema' | 'mindfull-contract';
+  finishReason: string | null;
+  inputTokens: number | null;
+  outputTokens: number | null;
+  totalTokens: number | null;
+  issues: string[];
+};
+
+class InvalidOutputError extends Error {
+  constructor(readonly attempts: AiOutputAttemptDiagnostic[]) {
+    super('The model returned invalid structured output.');
+  }
+}
+
+const validationIssuesFrom = (error: unknown): string[] => {
+  let current = error;
+  for (let depth = 0; depth < 5; depth += 1) {
+    if (typeof current !== 'object' || current === null) return [];
+    const candidate = current as { cause?: unknown; issues?: unknown };
+    if (Array.isArray(candidate.issues)) {
+      return candidate.issues
+        .flatMap((issue) => {
+          if (typeof issue !== 'object' || issue === null) return [];
+          const detail = issue as { code?: unknown; path?: unknown };
+          const code =
+            typeof detail.code === 'string' ? detail.code : 'invalid';
+          const path = Array.isArray(detail.path)
+            ? detail.path.map(String).join('.')
+            : '';
+          return [`${path || 'output'}:${code}`];
+        })
+        .slice(0, 20);
+    }
+    current = candidate.cause;
+  }
+  return [];
+};
+
+export const outputAttemptDiagnostic = (
+  error:
+    | InstanceType<typeof NoObjectGeneratedError>
+    | ProviderOutputValidationError,
+  attempt: 1 | 2,
+): AiOutputAttemptDiagnostic => {
+  if (error instanceof ProviderOutputValidationError) {
+    return {
+      attempt,
+      failure: 'mindfull-contract',
+      finishReason: null,
+      inputTokens: null,
+      outputTokens: null,
+      totalTokens: null,
+      issues: error.issues,
+    };
+  }
+
+  return {
+    attempt,
+    failure: error.message.includes('could not parse')
+      ? 'json-parse'
+      : 'provider-schema',
+    finishReason: error.finishReason ?? null,
+    inputTokens: error.usage?.inputTokens ?? null,
+    outputTokens: error.usage?.outputTokens ?? null,
+    totalTokens: error.usage?.totalTokens ?? null,
+    issues: validationIssuesFrom(error),
+  };
+};
 class StaleMemoryError extends Error {}
 
 const providerConfiguration = (
@@ -94,6 +163,7 @@ const invokeReflection = async (
   configuration: ProviderConfiguration,
   input: ReflectionInput,
 ): Promise<ReflectionOutput> => {
+  let firstFailure: AiOutputAttemptDiagnostic;
   try {
     return await invoker.reflect(configuration, input);
   } catch (error) {
@@ -103,6 +173,7 @@ const invokeReflection = async (
     ) {
       throw error;
     }
+    firstFailure = outputAttemptDiagnostic(error, 1);
   }
 
   try {
@@ -116,9 +187,10 @@ const invokeReflection = async (
       NoObjectGeneratedError.isInstance(error) ||
       error instanceof ProviderOutputValidationError
     ) {
-      throw new InvalidOutputError(
-        'The model returned invalid structured output.',
-      );
+      throw new InvalidOutputError([
+        firstFailure,
+        outputAttemptDiagnostic(error, 2),
+      ]);
     }
     throw error;
   }
@@ -594,12 +666,21 @@ export type AiWorker = {
   stop: () => Promise<void>;
 };
 
+export type AiWorkerFailure = {
+  terminal: boolean;
+  jobId: string;
+  jobKind: string;
+  attemptCount: number;
+  errorCode: string;
+  outputAttempts: AiOutputAttemptDiagnostic[];
+};
+
 export const startAiWorker = (
   database: MindfullDatabase,
   options: {
     invoker?: AiInvoker;
     modelLoader?: typeof loadProviderModels;
-    onError?: (error: unknown) => void;
+    onError?: (failure: AiWorkerFailure) => void;
   } = {},
 ): AiWorker => {
   const invoker = options.invoker ?? aiInvoker;
@@ -712,7 +793,15 @@ export const startAiWorker = (
         if (terminal) {
           providerFailure(database, 0, now, 'structured-output', true);
         }
-        options.onError?.(error);
+        options.onError?.({
+          terminal,
+          jobId: job.id,
+          jobKind: job.kind,
+          attemptCount: job.attemptCount + 1,
+          errorCode: terminal ? 'structured-output' : providerErrorCode(error),
+          outputAttempts:
+            error instanceof InvalidOutputError ? error.attempts : [],
+        });
       }
     } finally {
       isRunning = false;

@@ -95,7 +95,13 @@ export const buildServer = async ({
   const aiWorker = startAiWorker(database, {
     ...(aiInvoker ? { invoker: aiInvoker } : {}),
     ...(aiModelLoader ? { modelLoader: aiModelLoader } : {}),
-    onError: () => server.log.warn('AI work is waiting'),
+    onError: (failure) => {
+      const message = failure.terminal
+        ? 'AI work failed'
+        : 'AI work is waiting';
+      if (failure.terminal) server.log.error(failure, message);
+      else server.log.warn(failure, message);
+    },
   });
 
   const stopBackupScheduler = backup
