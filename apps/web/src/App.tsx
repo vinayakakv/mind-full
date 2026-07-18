@@ -61,6 +61,15 @@ export const router = createBrowserRouter([
         },
       },
       {
+        path: 'reflect/memory',
+        lazy: async () => {
+          const { ReflectionMemoryPage } = await import(
+            './pages/ReflectionMemoryPage'
+          );
+          return { Component: ReflectionMemoryPage };
+        },
+      },
+      {
         path: 'settings',
         lazy: async () => {
           const { SettingsPage } = await import('./pages/SettingsPage');

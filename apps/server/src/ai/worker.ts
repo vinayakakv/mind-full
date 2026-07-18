@@ -1,9 +1,12 @@
 import { createHash, randomUUID } from 'node:crypto';
 import {
-  createAnalysisResultDocument,
+  createHabitSuggestionDocument,
   createReflectionMemoryDocument,
   createTaskSuggestionDocument,
+  createWeeklyReflectionDocument,
   type ReflectionMemoryDocument,
+  type ReflectionMemorySections,
+  type WeeklyReflectionDocument,
 } from '@mindfull/domain';
 import { NoObjectGeneratedError } from 'ai';
 import { eq } from 'drizzle-orm';
@@ -24,6 +27,8 @@ import {
 } from './provider.js';
 import {
   analysisVersion,
+  currentWeekReflectionId,
+  findCurrentWeekReflection,
   findDomainDocument,
   findReflectionMemory,
   historicalSources,
@@ -32,6 +37,7 @@ import {
   reconcileReflectionJobs,
   recordProviderState,
   reflectionMemoryId,
+  reflectionOrganization,
   sourceText,
 } from './store.js';
 
@@ -116,7 +122,7 @@ const invokeReflection = async (
 
 const memoryDocument = (
   existing: ReflectionMemoryDocument | null,
-  markdown: string,
+  sections: ReflectionMemorySections,
   updatedFromDocumentIds: string[],
   configuration: ProviderConfiguration,
   now: string,
@@ -126,7 +132,8 @@ const memoryDocument = (
       id: reflectionMemoryId,
       payload: {
         revision: 1,
-        markdown,
+        markdown: reflectionMemoryMarkdownFor(sections),
+        sections,
         updatedFromDocumentIds,
         generatedAt: now,
         provider: 'openai-compatible',
@@ -143,7 +150,8 @@ const memoryDocument = (
     payload: {
       ...existing.payload,
       revision: existing.payload.revision + 1,
-      markdown,
+      markdown: reflectionMemoryMarkdownFor(sections),
+      sections,
       updatedFromDocumentIds,
       generatedAt: now,
       model: configuration.model,
@@ -154,11 +162,108 @@ const memoryDocument = (
   };
 };
 
-const deterministicSuggestionId = (jobId: string, index: number): string =>
-  `suggestion:${createHash('sha256').update(`${jobId}:${index}`).digest('hex').slice(0, 24)}`;
+const deterministicSuggestionId = (
+  kind: 'task' | 'habit',
+  jobId: string,
+  index: number,
+): string =>
+  `${kind}-suggestion:${createHash('sha256').update(`${jobId}:${kind}:${index}`).digest('hex').slice(0, 24)}`;
 
 export const reflectionMemoryMarkdown = (markdown: string): string =>
   markdown.replace(/^\s*#\s+[^\n]+\n+/u, '').trim();
+
+const memorySectionLabels: Array<[keyof ReflectionMemorySections, string]> = [
+  ['context', 'Context worth remembering'],
+  ['supportivePatterns', 'What appears supportive'],
+  ['recurringThemes', 'Recurring themes'],
+  ['ongoingCommitments', 'Ongoing commitments'],
+  ['openQuestions', 'Open questions'],
+  ['uncertainImpressions', 'Uncertain impressions'],
+];
+
+export const reflectionMemoryMarkdownFor = (
+  sections: ReflectionMemorySections,
+): string =>
+  memorySectionLabels
+    .map(([key, label]) => {
+      const items = sections[key];
+      return [
+        `## ${label}`,
+        ...(items.length
+          ? items.map((item) => `- ${item}`)
+          : ['- None noted.']),
+      ].join('\n');
+    })
+    .join('\n\n');
+
+const shiftLocalDate = (localDate: string, days: number): string => {
+  const [year, month, day] = localDate.split('-').map(Number);
+  return new Date(Date.UTC(year ?? 0, (month ?? 1) - 1, (day ?? 1) + days))
+    .toISOString()
+    .slice(0, 10);
+};
+
+export const weekBounds = (localDate: string) => {
+  const weekday = new Date(`${localDate}T12:00:00Z`).getUTCDay();
+  const daysSinceMonday = weekday === 0 ? 6 : weekday - 1;
+  const weekStart = shiftLocalDate(localDate, -daysSinceMonday);
+  return { weekStart, weekEnd: shiftLocalDate(weekStart, 6) };
+};
+
+const weeklyDocument = (
+  existing: WeeklyReflectionDocument | null,
+  output: ReflectionOutput['updatedWeek'],
+  sourceId: string,
+  localDate: string,
+  configuration: ProviderConfiguration,
+  now: string,
+): WeeklyReflectionDocument => {
+  const bounds = weekBounds(localDate);
+  const continuesWeek = existing?.payload.weekStart === bounds.weekStart;
+  const sourceIds = continuesWeek
+    ? [...existing.payload.updatedFromDocumentIds, sourceId].slice(-100)
+    : [sourceId];
+
+  if (!existing) {
+    return createWeeklyReflectionDocument({
+      id: currentWeekReflectionId,
+      payload: {
+        revision: 1,
+        ...bounds,
+        sections: output,
+        updatedFromDocumentIds: sourceIds,
+        generatedAt: now,
+        provider: 'openai-compatible',
+        model: configuration.model,
+        analysisVersion,
+      },
+      now,
+      deviceId: serverDeviceId,
+    });
+  }
+
+  return {
+    ...existing,
+    payload: {
+      revision: existing.payload.revision + 1,
+      ...bounds,
+      sections: output,
+      updatedFromDocumentIds: sourceIds,
+      generatedAt: now,
+      provider: 'openai-compatible',
+      model: configuration.model,
+      analysisVersion,
+    },
+    updatedAt: now,
+    updatedByDeviceId: serverDeviceId,
+  };
+};
+
+const normalizedSuggestion = (text: string): string =>
+  text
+    .toLocaleLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
 
 const completeAnalysis = (
   database: MindfullDatabase,
@@ -166,6 +271,7 @@ const completeAnalysis = (
   output: ReflectionOutput,
   configuration: ProviderConfiguration,
   expectedMemory: ReflectionMemoryDocument | null,
+  expectedWeek: WeeklyReflectionDocument | null,
   now: string,
 ): void => {
   const source = job.sourceDocumentId
@@ -181,57 +287,105 @@ const completeAnalysis = (
 
   const nextMemory = memoryDocument(
     expectedMemory,
-    reflectionMemoryMarkdown(output.updatedMemoryMarkdown),
+    output.updatedMemory,
     [source.id],
     configuration,
     now,
   );
-  const analysis = createAnalysisResultDocument({
-    id: `analysis:${source.id}:${job.sourceContentHash}:v${analysisVersion}`,
-    payload: {
-      sourceDocumentId: source.id,
-      sourceContentHash: job.sourceContentHash,
-      summary: output.summary,
-      themes: output.themes,
-      unfinishedCommitments: output.unfinishedCommitments,
-      generatedAt: now,
-      provider: 'openai-compatible',
-      model: configuration.model,
-      analysisVersion,
-    },
+  const nextWeek = weeklyDocument(
+    expectedWeek,
+    output.updatedWeek,
+    source.id,
+    source.payload.localDate,
+    configuration,
     now,
-    occurredAt: source.occurredAt,
-    parentId: source.id,
-    deviceId: serverDeviceId,
-  });
-  const suggestions = output.taskSuggestions.map((proposedText, index) =>
-    createTaskSuggestionDocument({
-      id: deterministicSuggestionId(job.id, index),
-      payload: {
-        proposedText,
-        availableFrom: null,
-        sourceDocumentId: source.id,
-        sourceContentHash: job.sourceContentHash ?? '',
-        state: 'pending',
-        acceptedTaskId: null,
-      },
-      now,
-      parentId: source.id,
-      deviceId: serverDeviceId,
-    }),
   );
+  const organization = reflectionOrganization(database);
+  const existingTaskTexts = new Set(
+    [...organization.activeTasks, ...organization.pendingTaskSuggestions].map(
+      normalizedSuggestion,
+    ),
+  );
+  const existingHabitNames = new Set(
+    [
+      ...organization.activeHabits.map(({ name }) => name),
+      ...organization.pendingHabitSuggestions,
+    ].map(normalizedSuggestion),
+  );
+  const taskSuggestions = output.taskSuggestions
+    .filter(({ text }) => {
+      const normalized = normalizedSuggestion(text);
+      if (!normalized || existingTaskTexts.has(normalized)) return false;
+      existingTaskTexts.add(normalized);
+      return true;
+    })
+    .map(({ text, reason }, index) =>
+      createTaskSuggestionDocument({
+        id: deterministicSuggestionId('task', job.id, index),
+        payload: {
+          proposedText: text,
+          reason,
+          availableFrom: null,
+          sourceDocumentId: source.id,
+          sourceContentHash: job.sourceContentHash ?? '',
+          state: 'pending',
+          acceptedTaskId: null,
+        },
+        now,
+        parentId: source.id,
+        deviceId: serverDeviceId,
+      }),
+    );
+  const habitSuggestions = output.habitSuggestions
+    .filter(({ text }) => {
+      const normalized = normalizedSuggestion(text);
+      if (!normalized || existingHabitNames.has(normalized)) return false;
+      existingHabitNames.add(normalized);
+      return true;
+    })
+    .map(({ text, reason }, index) =>
+      createHabitSuggestionDocument({
+        id: deterministicSuggestionId('habit', job.id, index),
+        payload: {
+          proposedName: text,
+          reason,
+          sourceDocumentId: source.id,
+          sourceContentHash: job.sourceContentHash ?? '',
+          state: 'pending',
+          acceptedHabitId: null,
+        },
+        now,
+        parentId: source.id,
+        deviceId: serverDeviceId,
+      }),
+    );
 
   database.transaction((transaction) => {
     const currentMemory = findDocument(transaction, reflectionMemoryId);
     const currentRevision =
-      currentMemory?.type === 'reflection-memory'
+      currentMemory?.type === 'reflection-memory' && !currentMemory.deletedAt
         ? currentMemory.payload.revision
         : null;
     if (currentRevision !== (expectedMemory?.payload.revision ?? null)) {
       throw new StaleMemoryError('Reflection memory changed during inference.');
     }
+    const currentWeek = findDocument(transaction, currentWeekReflectionId);
+    const currentWeekRevision =
+      currentWeek?.type === 'weekly-reflection' && !currentWeek.deletedAt
+        ? currentWeek.payload.revision
+        : null;
+    if (currentWeekRevision !== (expectedWeek?.payload.revision ?? null)) {
+      throw new StaleMemoryError(
+        'The current-week reflection changed during inference.',
+      );
+    }
 
-    for (const document of [nextMemory, analysis, ...suggestions]) {
+    for (const document of [
+      nextMemory,
+      nextWeek,
+      ...taskSuggestions,
+      ...habitSuggestions,
+    ]) {
       storeDocument(transaction, document);
     }
     transaction
@@ -272,12 +426,34 @@ const processAnalysis = async (
   }
 
   const memory = findReflectionMemory(database);
+  const currentWeek = findCurrentWeekReflection(database);
+  const bounds = weekBounds(source.payload.localDate);
+  const organization = reflectionOrganization(database);
   const output = await invokeReflection(invoker, configuration, {
     memoryMarkdown: memory?.payload.markdown ?? '',
+    memorySections: memory?.payload.sections ?? null,
+    currentWeek:
+      currentWeek?.payload.weekStart === bounds.weekStart
+        ? {
+            weekStart: currentWeek.payload.weekStart,
+            weekEnd: currentWeek.payload.weekEnd,
+            sections: currentWeek.payload.sections,
+          }
+        : null,
+    ...organization,
     sourceKind: source.type,
+    sourceLocalDate: source.payload.localDate,
     sourceText: text,
   });
-  completeAnalysis(database, job, output, configuration, memory, now);
+  completeAnalysis(
+    database,
+    job,
+    output,
+    configuration,
+    memory,
+    currentWeek,
+    now,
+  );
 };
 
 const initialBatch = (
@@ -314,7 +490,14 @@ const processInitialMemory = async (
   if (!batch.length) throw new Error('There are no reflections to remember.');
   const output = await invokeReflection(invoker, configuration, {
     memoryMarkdown: build.markdown,
+    memorySections: null,
+    currentWeek: null,
+    activeTasks: [],
+    activeHabits: [],
+    pendingTaskSuggestions: [],
+    pendingHabitSuggestions: [],
     sourceKind: 'memory-batch',
+    sourceLocalDate: null,
     sourceText: batch
       .map((source) =>
         [`[${source.occurredAt ?? source.createdAt}]`, sourceText(source)].join(
@@ -334,7 +517,7 @@ const processInitialMemory = async (
       transaction
         .update(aiMemoryBuilds)
         .set({
-          markdown: reflectionMemoryMarkdown(output.updatedMemoryMarkdown),
+          markdown: reflectionMemoryMarkdownFor(output.updatedMemory),
           nextSourceIndex: nextIndex,
           sourceDocumentIds: JSON.stringify(sourceDocumentIds),
           updatedAt: now,
@@ -352,13 +535,14 @@ const processInitialMemory = async (
 
   const memory = memoryDocument(
     null,
-    reflectionMemoryMarkdown(output.updatedMemoryMarkdown),
+    output.updatedMemory,
     sourceDocumentIds.slice(-100),
     configuration,
     now,
   );
   database.transaction((transaction) => {
-    if (findDocument(transaction, reflectionMemoryId)) {
+    const currentMemory = findDocument(transaction, reflectionMemoryId);
+    if (currentMemory && !currentMemory.deletedAt) {
       throw new StaleMemoryError(
         'Reflection memory was created during initialization.',
       );

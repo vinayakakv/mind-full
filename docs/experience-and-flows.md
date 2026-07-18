@@ -179,8 +179,8 @@ snoozing clears the current notice and schedules the next exact reminder.
 
 ## Suggestions
 
-Unresolved AI task suggestions appear in a shared Suggestions area reachable
-from Today and relevant History entries.
+Unresolved AI task and habit suggestions appear in Reflect. Task suggestions
+may also remain visible from Today where they are immediately actionable.
 
 Each suggestion shows:
 
@@ -188,25 +188,32 @@ Each suggestion shows:
 - Its journal or check-in source
 - Accept and reject controls
 
-Acceptance creates a normal task with source provenance. Rejection resolves the
-suggestion permanently. AI never bypasses this review.
+Task acceptance creates a normal task with source provenance. A habit
+suggestion opens ordinary habit setup with the name prefilled; weekdays and
+reminders are never assumed. Rejection resolves a suggestion permanently. AI
+never bypasses this review.
 
 ## Reflect
 
-Reflect includes:
+Reflect is a finite collection of calm cards or sections:
 
-- Read-only weekly-review snapshots
-- Habit consistency and correlations
-- Recurring journal and check-in themes
-- Unfinished commitments
-- Gentle encouragement grounded in recorded data
-- Semantic search
+- pending task suggestions;
+- pending habit suggestions;
+- the bounded current-week reflection;
+- questions to carry; and
+- a long-term memory preview with a clear Read memory action.
 
-Reflect begins with the user-visible global memory: compact Markdown covering
-context, supportive patterns, recurring themes, ongoing commitments, open
-questions, and uncertain impressions. It shows what caused only its latest
-update and may be reset. When empty, an optional button builds initial memory
-from the previous year of completed journals and check-ins.
+Suggestions lead because they may need a decision. Long-term memory closes the
+page as the quieter, least time-sensitive layer.
+
+Concrete one-off commitments appear as task suggestions, repeated practices as
+habit suggestions, and broader intentions in long-term memory. There is no
+separate passive open-commitments card.
+
+The full memory is a dedicated editorial reading page with source provenance
+and the reset action. When empty, Reflect offers an optional button to build it
+from the previous year of completed journals and check-ins. Empty suggestion
+sections are omitted.
 
 AI configuration lives in Settings. URL and API key reveal a model dropdown
 from `/models`; a compact status shows provider availability. A configuration

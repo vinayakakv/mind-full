@@ -1,6 +1,7 @@
 import {
   type HabitDocument,
   type HabitLogDocument,
+  type HabitSuggestionDocument,
   habitStreak,
   recentScheduledDates,
 } from '@mindfull/domain';
@@ -15,6 +16,7 @@ import {
 } from 'react-aria-components';
 
 import {
+  acceptHabitSuggestion,
   createHabit,
   recordHabitMiss,
   reorderHabits,
@@ -46,14 +48,18 @@ const formatDate = (localDate: string): string =>
 
 function HabitForm({
   habit,
+  suggestion,
   onSaved,
   onCancel,
 }: {
   habit: HabitDocument | undefined;
+  suggestion: HabitSuggestionDocument | undefined;
   onSaved: (habitId: string) => void;
   onCancel: () => void;
 }) {
-  const [name, setName] = useState(habit?.payload.name ?? '');
+  const [name, setName] = useState(
+    habit?.payload.name ?? suggestion?.payload.proposedName ?? '',
+  );
   const [selectedWeekdays, setSelectedWeekdays] = useState<number[]>(
     habit?.payload.weekdays ?? weekdays.map(({ value }) => value),
   );
@@ -80,7 +86,9 @@ function HabitForm({
     };
     const saved = habit
       ? await updateHabit(habit.id, input)
-      : await createHabit(input);
+      : suggestion
+        ? await acceptHabitSuggestion(suggestion.id, input)
+        : await createHabit(input);
     onSaved(saved.id);
   };
 
@@ -118,7 +126,7 @@ function HabitForm({
       </TextField>
       <div className={styles.formActions}>
         <Button className={styles.primaryButton} type="submit">
-          {habit ? 'Save changes' : 'Add habit'}
+          {habit ? 'Save changes' : suggestion ? 'Add this habit' : 'Add habit'}
         </Button>
         <Button className={styles.textButton} onPress={onCancel}>
           Cancel
@@ -270,13 +278,17 @@ export function HabitManagement({
   habits,
   logs,
   today,
+  suggestion,
+  onLeaveSuggestion,
 }: {
   habits: HabitDocument[];
   logs: HabitLogDocument[];
   today: string;
+  suggestion?: HabitSuggestionDocument;
+  onLeaveSuggestion?: () => void;
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(Boolean(suggestion));
   const [showArchived, setShowArchived] = useState(false);
   const [reorderingId, setReorderingId] = useState<string | null>(null);
   const [draggedId, setDraggedId] = useState<string | null>(null);
@@ -295,6 +307,10 @@ export function HabitManagement({
   };
 
   const returnToAllHabits = () => {
+    if (suggestion) {
+      onLeaveSuggestion?.();
+      return;
+    }
     setSelectedId(null);
     setIsEditing(false);
   };
@@ -362,20 +378,28 @@ export function HabitManagement({
 
   return (
     <section className={styles.management} aria-label="Manage habits">
-      {isEditing || selectedHabit ? (
+      {(isEditing || selectedHabit) && !suggestion ? (
         <Button className={styles.backButton} onPress={returnToAllHabits}>
-          ← Back to all habits
+          {suggestion ? '← Back to reflect' : '← Back to all habits'}
         </Button>
       ) : null}
 
       {isEditing ? (
         <HabitForm
           habit={selectedHabit}
+          suggestion={suggestion}
           onSaved={(habitId) => {
+            if (suggestion) {
+              onLeaveSuggestion?.();
+              return;
+            }
             setSelectedId(habitId);
             setIsEditing(false);
           }}
-          onCancel={() => setIsEditing(false)}
+          onCancel={() => {
+            if (suggestion) onLeaveSuggestion?.();
+            else setIsEditing(false);
+          }}
         />
       ) : selectedHabit ? (
         <HabitDetails

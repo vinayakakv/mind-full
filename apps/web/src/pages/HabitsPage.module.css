@@ -38,6 +38,16 @@
   color: var(--text-primary);
 }
 
+.unavailable {
+  color: var(--text-muted);
+  font-family: var(--font-reflection);
+  line-height: 1.6;
+}
+
+.unavailable a {
+  color: var(--text-primary);
+}
+
 @keyframes arrive {
   from {
     opacity: 0;

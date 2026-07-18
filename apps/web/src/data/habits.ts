@@ -1,9 +1,16 @@
-import type { HabitDocument, HabitLogDocument } from '@mindfull/domain';
+import type {
+  HabitDocument,
+  HabitLogDocument,
+  HabitSuggestionDocument,
+} from '@mindfull/domain';
 
 import {
+  acceptHabitSuggestion,
   createHabit,
   documentTable,
+  loadHabitSuggestion,
   recordHabitMiss,
+  rejectHabitSuggestion,
   reorderHabits,
   setHabitArchived,
   setHabitCompleted,
@@ -11,13 +18,21 @@ import {
 } from './document-store';
 
 export {
+  acceptHabitSuggestion,
   createHabit,
+  loadHabitSuggestion,
   recordHabitMiss,
+  rejectHabitSuggestion,
   reorderHabits,
   setHabitArchived,
   setHabitCompleted,
   updateHabit,
 };
+
+export const loadPendingHabitSuggestion = async (
+  suggestionId: string,
+): Promise<HabitSuggestionDocument | undefined> =>
+  loadHabitSuggestion(suggestionId);
 
 const habitOrder = (habit: HabitDocument): string =>
   habit.sortKey ?? `habit:${habit.createdAt}:${habit.id}`;

@@ -1,7 +1,9 @@
+import { createHabitSuggestionDocument } from '@mindfull/domain';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { database } from './database';
 import {
+  acceptHabitSuggestion,
   acceptTaskSuggestion,
   addBodyMeasurement,
   addTask,
@@ -20,6 +22,7 @@ import {
   getOrCreateCheckIn,
   getOrCreateMorningCheckIn,
   recordHabitMiss,
+  rejectHabitSuggestion,
   rejectTaskSuggestion,
   removeExpiredCompletedTasks,
   reorderHabits,
@@ -285,6 +288,65 @@ describe('local documents', () => {
 
     expect(await database.documents.get(suggestion.id)).toMatchObject({
       payload: { state: 'rejected', acceptedTaskId: null },
+    });
+  });
+
+  it('turns an approved habit suggestion into a configured habit', async () => {
+    const journal = await createJournal();
+    const suggestion = createHabitSuggestionDocument({
+      id: 'habit-suggestion:walk',
+      now: '2026-07-15T08:00:00.000Z',
+      deviceId: 'server',
+      payload: {
+        proposedName: 'Take a short walk',
+        reason: 'A short walk has helped more than once.',
+        sourceDocumentId: journal.id,
+        sourceContentHash: 'journal-hash',
+        state: 'pending',
+        acceptedHabitId: null,
+      },
+    });
+    await saveDocument(suggestion);
+
+    const habit = await acceptHabitSuggestion(suggestion.id, {
+      name: suggestion.payload.proposedName,
+      weekdays: [1, 3, 5],
+      reminderTime: '08:30',
+    });
+
+    expect(habit).toMatchObject({
+      id: `habit:from-suggestion:${suggestion.id}`,
+      payload: { name: 'Take a short walk', weekdays: [1, 3, 5] },
+    });
+    expect(await findReminder('habit', habit.id)).toMatchObject({
+      payload: { localTime: '08:30', weekdays: [1, 3, 5] },
+    });
+    expect(await database.documents.get(suggestion.id)).toMatchObject({
+      payload: { state: 'accepted', acceptedHabitId: habit.id },
+    });
+  });
+
+  it('permanently resolves a dismissed habit suggestion', async () => {
+    const suggestion = createHabitSuggestionDocument({
+      id: 'habit-suggestion:stretch',
+      now: '2026-07-15T08:00:00.000Z',
+      deviceId: 'server',
+      payload: {
+        proposedName: 'Stretch after lunch',
+        reason: 'It may support a gentler afternoon.',
+        sourceDocumentId: 'journal:one',
+        sourceContentHash: 'journal-hash',
+        state: 'pending',
+        acceptedHabitId: null,
+      },
+    });
+    await saveDocument(suggestion);
+
+    await rejectHabitSuggestion(suggestion.id);
+    await rejectHabitSuggestion(suggestion.id);
+
+    expect(await database.documents.get(suggestion.id)).toMatchObject({
+      payload: { state: 'rejected', acceptedHabitId: null },
     });
   });
 

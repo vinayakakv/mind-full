@@ -39,6 +39,7 @@ export const taskPayloadSchema = z.object({
 export const taskSuggestionPayloadSchema = z
   .object({
     proposedText: z.string().trim().min(1).max(500),
+    reason: z.string().trim().min(1).max(500).nullable().optional(),
     availableFrom: instantSchema.nullable(),
     sourceDocumentId: z.string().min(1),
     sourceContentHash: z.string().min(1),
@@ -51,6 +52,24 @@ export const taskSuggestionPayloadSchema = z
     {
       message: 'Only an accepted suggestion can name its task.',
       path: ['acceptedTaskId'],
+    },
+  );
+
+export const habitSuggestionPayloadSchema = z
+  .object({
+    proposedName: z.string().trim().min(1).max(100),
+    reason: z.string().trim().min(1).max(500).nullable(),
+    sourceDocumentId: z.string().min(1),
+    sourceContentHash: z.string().min(1),
+    state: z.enum(['pending', 'accepted', 'rejected', 'superseded']),
+    acceptedHabitId: z.string().min(1).nullable(),
+  })
+  .refine(
+    ({ state, acceptedHabitId }) =>
+      (state === 'accepted') === (acceptedHabitId !== null),
+    {
+      message: 'Only an accepted suggestion can name its habit.',
+      path: ['acceptedHabitId'],
     },
   );
 
@@ -164,9 +183,42 @@ export const checkInPayloadSchema = z.object({
   completedAt: instantSchema.nullable(),
 });
 
+const boundedReflectionItems = (maximum: number) =>
+  z.array(z.string().trim().min(1).max(500)).max(maximum);
+
+export const reflectionMemorySectionsSchema = z.object({
+  context: boundedReflectionItems(8),
+  supportivePatterns: boundedReflectionItems(8),
+  recurringThemes: boundedReflectionItems(8),
+  ongoingCommitments: boundedReflectionItems(8),
+  openQuestions: boundedReflectionItems(8),
+  uncertainImpressions: boundedReflectionItems(8),
+});
+
+export const weeklyReflectionSectionsSchema = z.object({
+  summary: z.string().trim().min(1).max(2_000),
+  brightSpots: boundedReflectionItems(3),
+  difficultParts: boundedReflectionItems(3),
+  supportiveActions: boundedReflectionItems(3),
+  questionsToCarry: boundedReflectionItems(3),
+});
+
 export const reflectionMemoryPayloadSchema = z.object({
   revision: z.number().int().positive(),
   markdown: z.string().trim().min(1).max(20_000),
+  sections: reflectionMemorySectionsSchema.optional(),
+  updatedFromDocumentIds: z.array(z.string().min(1)).max(100),
+  generatedAt: instantSchema,
+  provider: z.string().min(1).max(100),
+  model: z.string().min(1).max(200),
+  analysisVersion: z.number().int().positive(),
+});
+
+export const weeklyReflectionPayloadSchema = z.object({
+  revision: z.number().int().positive(),
+  weekStart: localDateSchema,
+  weekEnd: localDateSchema,
+  sections: weeklyReflectionSectionsSchema,
   updatedFromDocumentIds: z.array(z.string().min(1)).max(100),
   generatedAt: instantSchema,
   provider: z.string().min(1).max(100),
@@ -214,6 +266,12 @@ export const taskSuggestionDocumentSchema = z.object({
   ...envelopeFields,
   type: z.literal('task-suggestion'),
   payload: taskSuggestionPayloadSchema,
+});
+
+export const habitSuggestionDocumentSchema = z.object({
+  ...envelopeFields,
+  type: z.literal('habit-suggestion'),
+  payload: habitSuggestionPayloadSchema,
 });
 
 export const bodyMetricDocumentSchema = z.object({
@@ -264,6 +322,12 @@ export const reflectionMemoryDocumentSchema = z.object({
   payload: reflectionMemoryPayloadSchema,
 });
 
+export const weeklyReflectionDocumentSchema = z.object({
+  ...envelopeFields,
+  type: z.literal('weekly-reflection'),
+  payload: weeklyReflectionPayloadSchema,
+});
+
 export const analysisResultDocumentSchema = z.object({
   ...envelopeFields,
   type: z.literal('analysis-result'),
@@ -274,6 +338,7 @@ export const domainDocumentSchema = z.discriminatedUnion('type', [
   settingsDocumentSchema,
   taskDocumentSchema,
   taskSuggestionDocumentSchema,
+  habitSuggestionDocumentSchema,
   bodyMetricDocumentSchema,
   bodyMeasurementDocumentSchema,
   journalDocumentSchema,
@@ -282,12 +347,16 @@ export const domainDocumentSchema = z.discriminatedUnion('type', [
   reminderDocumentSchema,
   checkInDocumentSchema,
   reflectionMemoryDocumentSchema,
+  weeklyReflectionDocumentSchema,
   analysisResultDocumentSchema,
 ]);
 
 export type SettingsPayload = z.infer<typeof settingsPayloadSchema>;
 export type TaskPayload = z.infer<typeof taskPayloadSchema>;
 export type TaskSuggestionPayload = z.infer<typeof taskSuggestionPayloadSchema>;
+export type HabitSuggestionPayload = z.infer<
+  typeof habitSuggestionPayloadSchema
+>;
 export type BodyMetricPayload = z.infer<typeof bodyMetricPayloadSchema>;
 export type BodyMeasurementPayload = z.infer<
   typeof bodyMeasurementPayloadSchema
@@ -300,11 +369,23 @@ export type CheckInPayload = z.infer<typeof checkInPayloadSchema>;
 export type ReflectionMemoryPayload = z.infer<
   typeof reflectionMemoryPayloadSchema
 >;
+export type ReflectionMemorySections = z.infer<
+  typeof reflectionMemorySectionsSchema
+>;
+export type WeeklyReflectionPayload = z.infer<
+  typeof weeklyReflectionPayloadSchema
+>;
+export type WeeklyReflectionSections = z.infer<
+  typeof weeklyReflectionSectionsSchema
+>;
 export type AnalysisResultPayload = z.infer<typeof analysisResultPayloadSchema>;
 export type SettingsDocument = z.infer<typeof settingsDocumentSchema>;
 export type TaskDocument = z.infer<typeof taskDocumentSchema>;
 export type TaskSuggestionDocument = z.infer<
   typeof taskSuggestionDocumentSchema
+>;
+export type HabitSuggestionDocument = z.infer<
+  typeof habitSuggestionDocumentSchema
 >;
 export type BodyMetricDocument = z.infer<typeof bodyMetricDocumentSchema>;
 export type BodyMeasurementDocument = z.infer<
@@ -317,6 +398,9 @@ export type ReminderDocument = z.infer<typeof reminderDocumentSchema>;
 export type CheckInDocument = z.infer<typeof checkInDocumentSchema>;
 export type ReflectionMemoryDocument = z.infer<
   typeof reflectionMemoryDocumentSchema
+>;
+export type WeeklyReflectionDocument = z.infer<
+  typeof weeklyReflectionDocumentSchema
 >;
 export type AnalysisResultDocument = z.infer<
   typeof analysisResultDocumentSchema
@@ -381,6 +465,14 @@ export const createTaskSuggestionDocument = (
     type: 'task-suggestion',
   });
 
+export const createHabitSuggestionDocument = (
+  input: NewDocument<HabitSuggestionPayload>,
+): HabitSuggestionDocument =>
+  habitSuggestionDocumentSchema.parse({
+    ...createEnvelope(input),
+    type: 'habit-suggestion',
+  });
+
 export const createBodyMetricDocument = (
   input: NewDocument<BodyMetricPayload>,
 ): BodyMetricDocument =>
@@ -443,6 +535,14 @@ export const createReflectionMemoryDocument = (
   reflectionMemoryDocumentSchema.parse({
     ...createEnvelope({ ...input, occurredAt: null }),
     type: 'reflection-memory',
+  });
+
+export const createWeeklyReflectionDocument = (
+  input: NewDocument<WeeklyReflectionPayload>,
+): WeeklyReflectionDocument =>
+  weeklyReflectionDocumentSchema.parse({
+    ...createEnvelope({ ...input, occurredAt: null }),
+    type: 'weekly-reflection',
   });
 
 export const createAnalysisResultDocument = (

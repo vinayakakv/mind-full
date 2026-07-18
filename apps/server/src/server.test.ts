@@ -2,6 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import {
+  createHabitDocument,
   createJournalDocument,
   createReminderDocument,
   createTaskDocument,
@@ -205,27 +206,41 @@ describe('Mindfull server', () => {
     const server = await createTestServer({
       modelLoader: async () => ['quiet-model'],
       invoker: {
-        reflect: async (_configuration, input) => ({
-          updatedMemoryMarkdown: [
-            '# Reflection memory',
-            '## Context worth remembering',
-            'Rainy afternoons can feel restorative.',
-            '## What appears supportive',
-            'Quiet observation.',
-            '## Recurring themes',
-            'Weather and rest.',
-            '## Ongoing commitments',
-            'None noted.',
-            '## Open questions',
-            'None.',
-            '## Uncertain impressions',
-            'This may be a temporary preference.',
-          ].join('\n\n'),
-          summary: `A quiet reflection: ${input.sourceText}`,
-          themes: ['rest'],
-          unfinishedCommitments: [],
-          taskSuggestions: ['Make time to watch the rain'],
-        }),
+        reflect: async (_configuration, input) => {
+          expect(input.activeTasks).toContain('Water the plants');
+          expect(input.activeHabits).toContainEqual({
+            name: 'Open the curtains',
+            weekdays: [1, 2, 3, 4, 5],
+          });
+          return {
+            updatedMemory: {
+              context: ['Rainy afternoons can feel restorative.'],
+              supportivePatterns: ['Quiet observation.'],
+              recurringThemes: ['Weather and rest.'],
+              ongoingCommitments: [],
+              openQuestions: [],
+              uncertainImpressions: ['This may be a temporary preference.'],
+            },
+            updatedWeek: {
+              summary: `A quiet reflection: ${input.sourceText}`,
+              brightSpots: ['Listening to rain'],
+              difficultParts: [],
+              supportiveActions: ['Sitting quietly by the window'],
+              questionsToCarry: [],
+            },
+            taskSuggestions: [
+              { text: 'Water the plants', reason: null },
+              { text: 'Make time to watch the rain', reason: null },
+            ],
+            habitSuggestions: [
+              { text: 'Open the curtains', reason: null },
+              {
+                text: 'Sit quietly by the window',
+                reason: 'Quiet observation felt supportive.',
+              },
+            ],
+          };
+        },
       },
     });
     const token = await pairDevice(server, 'phone');
@@ -244,6 +259,29 @@ describe('Mindfull server', () => {
     expect(configuration.statusCode).toBe(200);
 
     const completedAt = new Date(Date.now() + 60_000).toISOString();
+    const task = createTaskDocument({
+      id: 'active-task',
+      now: completedAt,
+      deviceId: 'phone',
+      payload: {
+        text: 'Water the plants',
+        completedAt: null,
+        availableFrom: null,
+        reminderAt: null,
+        source: { kind: 'manual' },
+      },
+    });
+    const habit = createHabitDocument({
+      id: 'active-habit',
+      now: completedAt,
+      deviceId: 'phone',
+      payload: {
+        name: 'Open the curtains',
+        weekdays: [1, 2, 3, 4, 5],
+        reminderTime: null,
+        archivedAt: null,
+      },
+    });
     const journal = createJournalDocument({
       id: 'reflection-journal',
       now: completedAt,
@@ -261,7 +299,7 @@ describe('Mindfull server', () => {
       method: 'POST',
       url: '/api/sync',
       headers: authorization,
-      payload: { cursor: 0, documents: [journal] },
+      payload: { cursor: 0, documents: [task, habit, journal] },
     });
     expect(firstSync.statusCode).toBe(200);
 
@@ -281,10 +319,17 @@ describe('Mindfull server', () => {
     expect(generated).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ type: 'reflection-memory' }),
-        expect.objectContaining({ type: 'analysis-result' }),
+        expect.objectContaining({ type: 'weekly-reflection' }),
         expect.objectContaining({ type: 'task-suggestion' }),
+        expect.objectContaining({ type: 'habit-suggestion' }),
       ]),
     );
+    expect(
+      generated.filter(({ type }) => type === 'task-suggestion'),
+    ).toHaveLength(1);
+    expect(
+      generated.filter(({ type }) => type === 'habit-suggestion'),
+    ).toHaveLength(1);
     await server.close();
   });
 

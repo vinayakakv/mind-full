@@ -1,5 +1,8 @@
 import type { HabitLogPayload, HabitPayload } from './documents.js';
 
+export const habitIdForSuggestion = (suggestionId: string): string =>
+  `habit:from-suggestion:${suggestionId}`;
+
 const shiftLocalDate = (localDate: string, dayOffset: number): string => {
   const [year, month, day] = localDate.split('-').map(Number);
   const shifted = new Date(

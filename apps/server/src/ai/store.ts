@@ -4,6 +4,7 @@ import type {
   DomainDocument,
   JournalDocument,
   ReflectionMemoryDocument,
+  WeeklyReflectionDocument,
 } from '@mindfull/domain';
 import { and, asc, eq, inArray, isNull, lte, or } from 'drizzle-orm';
 import type { MindfullDatabase } from '../database/database.js';
@@ -17,7 +18,8 @@ import {
 
 export const aiConfigurationId = 'primary';
 export const reflectionMemoryId = 'reflection-memory';
-export const analysisVersion = 1;
+export const currentWeekReflectionId = 'current-week-reflection';
+export const analysisVersion = 2;
 
 export type AiProviderStatus =
   | 'not-configured'
@@ -308,6 +310,63 @@ export const findReflectionMemory = (
   return document?.type === 'reflection-memory' && !document.deletedAt
     ? document
     : null;
+};
+
+export const findCurrentWeekReflection = (
+  database: MindfullDatabase,
+): WeeklyReflectionDocument | null => {
+  const document = findDomainDocument(database, currentWeekReflectionId);
+  return document?.type === 'weekly-reflection' && !document.deletedAt
+    ? document
+    : null;
+};
+
+export type ReflectionOrganization = {
+  activeTasks: string[];
+  activeHabits: Array<{ name: string; weekdays: number[] }>;
+  pendingTaskSuggestions: string[];
+  pendingHabitSuggestions: string[];
+};
+
+export const reflectionOrganization = (
+  database: MindfullDatabase,
+): ReflectionOrganization => {
+  const domainDocuments = database
+    .select()
+    .from(documents)
+    .all()
+    .map(documentFromRow)
+    .filter((document) => !document.deletedAt);
+
+  return {
+    activeTasks: domainDocuments.flatMap((document) =>
+      document.type === 'task' && document.payload.completedAt === null
+        ? [document.payload.text]
+        : [],
+    ),
+    activeHabits: domainDocuments.flatMap((document) =>
+      document.type === 'habit' && document.payload.archivedAt === null
+        ? [
+            {
+              name: document.payload.name,
+              weekdays: document.payload.weekdays,
+            },
+          ]
+        : [],
+    ),
+    pendingTaskSuggestions: domainDocuments.flatMap((document) =>
+      document.type === 'task-suggestion' &&
+      document.payload.state === 'pending'
+        ? [document.payload.proposedText]
+        : [],
+    ),
+    pendingHabitSuggestions: domainDocuments.flatMap((document) =>
+      document.type === 'habit-suggestion' &&
+      document.payload.state === 'pending'
+        ? [document.payload.proposedName]
+        : [],
+    ),
+  };
 };
 
 export const nextWaitingJob = (database: MindfullDatabase, now: string) =>

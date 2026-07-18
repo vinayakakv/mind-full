@@ -25,6 +25,8 @@ import {
   type HabitLogDocument,
   type HabitLogPayload,
   type HabitPayload,
+  type HabitSuggestionDocument,
+  habitIdForSuggestion,
   habitLogIdFor,
   isCheckInScheduleValid,
   type JournalDocument,
@@ -454,6 +456,97 @@ export const createHabit = async (
   return habit;
 };
 
+const getHabitSuggestion = async (
+  suggestionId: string,
+): Promise<HabitSuggestionDocument> => {
+  const document = await database.documents.get(suggestionId);
+  if (document?.type !== 'habit-suggestion' || document.deletedAt) {
+    throw new Error(`Habit suggestion ${suggestionId} was not found.`);
+  }
+  return document;
+};
+
+export const loadHabitSuggestion = async (
+  suggestionId: string,
+): Promise<HabitSuggestionDocument | undefined> => {
+  const document = await database.documents.get(suggestionId);
+  return document?.type === 'habit-suggestion' &&
+    !document.deletedAt &&
+    document.payload.state === 'pending'
+    ? document
+    : undefined;
+};
+
+export const acceptHabitSuggestion = async (
+  suggestionId: string,
+  input: Pick<HabitPayload, 'name' | 'weekdays' | 'reminderTime'>,
+): Promise<HabitDocument> => {
+  const suggestion = await getHabitSuggestion(suggestionId);
+
+  if (suggestion.payload.state === 'accepted') {
+    const acceptedHabit = suggestion.payload.acceptedHabitId
+      ? await database.documents.get(suggestion.payload.acceptedHabitId)
+      : undefined;
+    if (acceptedHabit?.type === 'habit') return acceptedHabit;
+  }
+
+  if (suggestion.payload.state !== 'pending') {
+    throw new Error('This suggestion has already been resolved.');
+  }
+
+  const now = new Date().toISOString();
+  const id = habitIdForSuggestion(suggestion.id);
+  const habit = createHabitDocument({
+    id,
+    now,
+    deviceId: getDeviceId(),
+    sortKey: `habit:${now}:${id}`,
+    payload: { ...input, archivedAt: null },
+  });
+
+  const documents: DomainDocument[] = [habit];
+  if (input.reminderTime) {
+    documents.push(
+      await reminderDocument({
+        targetType: 'habit',
+        targetId: habit.id,
+        scheduledAt: null,
+        localTime: input.reminderTime,
+        weekdays: input.weekdays,
+        enabled: true,
+      }),
+    );
+  }
+
+  documents.push({
+    ...suggestion,
+    payload: {
+      ...suggestion.payload,
+      state: 'accepted',
+      acceptedHabitId: habit.id,
+    },
+    updatedAt: nextDocumentTimestamp(suggestion.updatedAt, now),
+    updatedByDeviceId: getDeviceId(),
+  });
+
+  await saveDocuments(documents);
+  return habit;
+};
+
+export const rejectHabitSuggestion = async (
+  suggestionId: string,
+): Promise<void> => {
+  const suggestion = await getHabitSuggestion(suggestionId);
+  if (suggestion.payload.state !== 'pending') return;
+
+  await saveDocument({
+    ...suggestion,
+    payload: { ...suggestion.payload, state: 'rejected' },
+    updatedAt: updatedNow(suggestion),
+    updatedByDeviceId: getDeviceId(),
+  });
+};
+
 const getHabit = async (habitId: string): Promise<HabitDocument> => {
   const document = await database.documents.get(habitId);
 
@@ -754,7 +847,7 @@ export const acceptTaskSuggestion = async (
     payload: {
       text: suggestion.payload.proposedText,
       completedAt: null,
-      availableFrom: null,
+      availableFrom: suggestion.payload.availableFrom,
       reminderAt: null,
       source: { kind: source.type, documentId: source.id },
     },

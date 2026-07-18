@@ -186,22 +186,42 @@ type TaskSuggestionPayload = {
 };
 ```
 
-### Analysis result
+### Habit suggestion
 
-A derived document linked to a journal or check-in. It records the source
-content hash, state, summaries, themes, unfinished commitments, timestamps, and
-provider/model metadata. Keeping it separate prevents an AI status update from
-overwriting an offline journal edit.
+```ts
+type HabitSuggestionPayload = {
+  proposedName: string;
+  reason: string | null;
+  sourceDocumentId: string;
+  sourceContentHash: string;
+  state: "pending" | "accepted" | "rejected" | "superseded";
+  acceptedHabitId: string | null;
+};
+```
+
+Accepting is a setup flow: the name is prefilled while weekdays and an optional
+reminder remain explicit user choices.
+
+### Analysis result (legacy)
+
+A derived document linked to a journal or check-in. New analysis-result
+documents are no longer created because an unbounded per-entry summary list
+does not fit Reflect's finite model. Existing documents remain valid for sync
+compatibility.
 
 ### Reflection memory
 
-One server-authored synchronized document contains the current bounded
-Markdown memory, a monotonically increasing revision, the documents involved
-in its latest transition, generation time, model/provider metadata, and the
-analysis version. It is user-visible and resettable but initially read-only.
+One server-authored synchronized document contains bounded structured memory, a
+derived Markdown representation, a monotonically increasing revision, latest
+source provenance, and generation metadata. It remains user-visible,
+resettable, and read-only.
 
-Memory and task-specific analysis are one atomic transition. The backend writes
-neither when either half fails validation or the input memory revision is stale.
+### Current-week reflection
+
+A server-authored synchronized singleton contains bounded summary, bright
+spots, difficult parts, supportive actions, and questions to carry for one
+Monday-through-Sunday week. Memory, current week, and suggestions are one
+atomic transition.
 
 ### Insight
 

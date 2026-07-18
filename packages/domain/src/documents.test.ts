@@ -4,12 +4,14 @@ import {
   createBodyMetricDocument,
   createHabitDocument,
   createHabitLogDocument,
+  createHabitSuggestionDocument,
   createJournalDocument,
   createReflectionMemoryDocument,
   createReminderDocument,
   createSettingsDocument,
   createTaskDocument,
   createTaskSuggestionDocument,
+  createWeeklyReflectionDocument,
   migrateDomainDocument,
   nextDocumentTimestamp,
   selectWinningDocument,
@@ -123,6 +125,24 @@ describe('domain documents', () => {
     ).toThrow();
   });
 
+  it('keeps habit suggestions pending until setup is completed', () => {
+    const suggestion = createHabitSuggestionDocument({
+      id: '01-habit-suggestion',
+      now,
+      deviceId: 'mindfull-server',
+      payload: {
+        proposedName: 'Take a quiet walk',
+        reason: 'Walking has felt supportive more than once.',
+        sourceDocumentId: '01-journal',
+        sourceContentHash: 'content-hash',
+        state: 'pending',
+        acceptedHabitId: null,
+      },
+    });
+
+    expect(migrateDomainDocument(suggestion)).toEqual(suggestion);
+  });
+
   it('preserves journal markdown through the document boundary', () => {
     const journal = createJournalDocument({
       id: '01-journal',
@@ -158,6 +178,33 @@ describe('domain documents', () => {
     });
 
     expect(migrateDomainDocument(memory)).toEqual(memory);
+  });
+
+  it('bounds the current week as one structured reflection', () => {
+    const reflection = createWeeklyReflectionDocument({
+      id: 'current-week-reflection',
+      now,
+      deviceId: 'mindfull-server',
+      payload: {
+        revision: 1,
+        weekStart: '2026-07-13',
+        weekEnd: '2026-07-19',
+        sections: {
+          summary: 'A quieter week with room for rest.',
+          brightSpots: ['A walk after rain'],
+          difficultParts: [],
+          supportiveActions: ['Leaving the phone at home'],
+          questionsToCarry: ['What makes an evening feel spacious?'],
+        },
+        updatedFromDocumentIds: ['01-journal'],
+        generatedAt: now,
+        provider: 'openai-compatible',
+        model: 'quiet-model',
+        analysisVersion: 2,
+      },
+    });
+
+    expect(migrateDomainDocument(reflection)).toEqual(reflection);
   });
 
   it('treats journals from before completion state as completed logs', () => {

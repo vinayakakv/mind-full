@@ -64,9 +64,17 @@ Mindfull prepares every input. The model receives no application tools and
 cannot pull additional history.
 
 ```text
-(current memory, task-specific input)
-    -> (proposed updated memory, task-specific output)
+(current memory, current-week reflection, current tasks and habits,
+ pending suggestions, task-specific input)
+    -> (proposed updated memory, proposed updated week,
+        task suggestions, habit suggestions)
 ```
+
+Only incomplete tasks, active habits, and unresolved suggestions are included.
+Completed tasks, habit logs, reminders, ordering metadata, and internal IDs are
+not sent. This gives the model enough current state to avoid redundant
+suggestions while keeping the prepared context small. Mindfull also performs a
+normalized-text duplicate check before persisting a suggestion.
 
 The entire structured response is validated and committed atomically. If the
 memory or output is invalid, neither is stored. The commit also compares the
@@ -102,17 +110,29 @@ automatically. Authentication, missing-model, and structured-output capability
 errors pause processing until configuration changes. Invalid structured output
 receives one corrective retry, then remains failed for manual retry.
 
-## Reflection memory
+## Finite reflection space
 
-Mindfull maintains one compact, user-visible Markdown memory. Journals and
-check-ins remain canonical; memory is a derived interpretation that can be
-reset.
+Reflect contains a small set of bounded artifacts rather than an accumulating
+list of per-entry summaries: one long-term memory, one current-week reflection,
+and unresolved task and habit suggestions. Journals and check-ins remain
+canonical.
+
+The current week is a synchronized singleton covering Monday through Sunday.
+It is reset when the first reflection from a new week is processed. Weekly
+snapshots will archive it when weekly-review scheduling is implemented; until
+then rollover replaces it instead of creating an unbounded history.
 
 Memory is limited to roughly 1,500–2,000 words and uses stable sections for
 context worth remembering, supportive patterns, recurring themes, ongoing
 commitments, open questions, and uncertain impressions. It is initially
 read-only. Reflect shows when it last changed and links only to the documents
 that caused that latest change.
+
+The current week is limited to roughly 600–800 words and contains a summary,
+bright spots, difficult parts, supportive actions, and questions to carry. Both
+artifacts use separately validated fields so layout does not depend on
+model-authored Markdown. A Markdown representation of memory is retained for
+export and compatibility with existing data.
 
 When memory is empty, Reflect offers an explicit one-time action to build it
 from the previous year of completed journals and check-ins. The backend folds
@@ -158,7 +178,7 @@ impersonal.
 Answered and skipped candidates are permanently resolved and never presented
 again.
 
-## Task extraction
+## Task and habit suggestions
 
 Task extraction produces `task-suggestion` documents, never tasks directly.
 
@@ -170,6 +190,16 @@ The user can:
 Evening check-in suggestions may set `availableFrom` to the next local day.
 Journal suggestions may be immediately available unless their wording indicates
 a future start.
+
+Habit extraction produces `habit-suggestion` documents. Choosing Set up opens
+the normal habit form with the proposed name prefilled; the user still chooses
+weekdays and an optional reminder. Dismissing either suggestion kind resolves
+it permanently.
+
+The model classifies commitments once: a concrete one-off action becomes a task
+suggestion, a repeated practice becomes a habit suggestion, and a broader
+intention remains in long-term memory. Reflect does not maintain a second
+passive list of open commitments.
 
 ## Semantic search
 
