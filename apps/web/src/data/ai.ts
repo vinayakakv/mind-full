@@ -17,6 +17,11 @@ export type AiConfigurationView = {
 };
 
 const store = getDefaultStore();
+const emptyJsonPost: RequestInit = {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: '{}',
+};
 
 const readError = async (response: Response): Promise<string> => {
   try {
@@ -85,17 +90,17 @@ export const pauseAi = async (paused: boolean): Promise<void> => {
 };
 
 export const retryFailedAiJobs = async (): Promise<void> => {
-  await request('/api/ai/retry', { method: 'POST' });
+  await request('/api/ai/retry', emptyJsonPost);
   await loadAiConfiguration();
 };
 
 export const initializeReflectionMemory = async (): Promise<void> => {
-  await request('/api/ai/memory/initialize', { method: 'POST' });
+  await request('/api/ai/memory/initialize', emptyJsonPost);
   await loadAiConfiguration();
 };
 
 export const resetReflectionMemory = async (): Promise<void> => {
-  await request('/api/ai/memory/reset', { method: 'POST' });
+  await request('/api/ai/memory/reset', emptyJsonPost);
   await synchronize();
   await loadAiConfiguration();
 };
