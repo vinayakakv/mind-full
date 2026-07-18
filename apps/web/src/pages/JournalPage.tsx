@@ -5,13 +5,7 @@ import {
   journalHeading,
 } from '@mindfull/domain';
 import { useLiveQuery } from 'dexie-react-hooks';
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Button,
   Input,
@@ -70,25 +64,9 @@ function JournalEditor({
   });
   const lastSaved = useRef(latestDraft.current);
   const saveQueue = useRef(Promise.resolve());
-  const writingArea = useRef<HTMLTextAreaElement>(null);
   const isKeyboardVisible = useIsVisualKeyboardOpen();
 
   latestDraft.current = { title: title.trim() || null, markdown };
-
-  const resizeWritingArea = useCallback(() => {
-    const textarea = writingArea.current;
-    if (!textarea) return;
-
-    textarea.style.height = '0';
-    textarea.style.height = `${textarea.scrollHeight}px`;
-  }, []);
-
-  useLayoutEffect(resizeWritingArea);
-
-  useEffect(() => {
-    window.addEventListener('resize', resizeWritingArea);
-    return () => window.removeEventListener('resize', resizeWritingArea);
-  }, [resizeWritingArea]);
 
   const persist = useCallback(
     async (draft = latestDraft.current): Promise<boolean> => {
@@ -173,7 +151,6 @@ function JournalEditor({
       >
         <Label className="visually-hidden">Journal entry</Label>
         <TextArea
-          ref={writingArea}
           placeholder="Write what is here…"
           autoFocus
           onBlur={() => void persist()}
