@@ -16,7 +16,9 @@ import {
   aiInvoker,
   loadProviderModels,
   type ProviderConfiguration,
+  ProviderOutputValidationError,
   ProviderResponseError,
+  providerErrorCode,
   type ReflectionInput,
   type ReflectionOutput,
 } from './provider.js';
@@ -65,16 +67,16 @@ const providerConfiguration = (
       }
     : null;
 
-const errorStatus = (error: unknown): number | null => {
-  if (error instanceof ProviderResponseError) return error.status;
-  if (typeof error !== 'object' || error === null) return null;
-  const value = 'statusCode' in error ? error.statusCode : null;
-  return typeof value === 'number' ? value : null;
-};
-
 const invalidConfigurationError = (error: unknown): boolean => {
-  const status = errorStatus(error);
-  return status === 400 || status === 401 || status === 403 || status === 404;
+  const code = providerErrorCode(error);
+  return [
+    'access-denied',
+    'authentication-failed',
+    'invalid-model-list',
+    'models-endpoint-not-found',
+    'provider-rejected-request',
+    'selected-model-unavailable',
+  ].includes(code);
 };
 
 const invokeReflection = async (
@@ -85,7 +87,12 @@ const invokeReflection = async (
   try {
     return await invoker.reflect(configuration, input);
   } catch (error) {
-    if (!NoObjectGeneratedError.isInstance(error)) throw error;
+    if (
+      !NoObjectGeneratedError.isInstance(error) &&
+      !(error instanceof ProviderOutputValidationError)
+    ) {
+      throw error;
+    }
   }
 
   try {
@@ -95,7 +102,10 @@ const invokeReflection = async (
         'The previous response did not match the required schema. Return only a complete valid result.',
     });
   } catch (error) {
-    if (NoObjectGeneratedError.isInstance(error)) {
+    if (
+      NoObjectGeneratedError.isInstance(error) ||
+      error instanceof ProviderOutputValidationError
+    ) {
       throw new InvalidOutputError(
         'The model returned invalid structured output.',
       );
@@ -441,6 +451,7 @@ export const startAiWorker = (
           throw new ProviderResponseError(
             404,
             'The selected model is unavailable.',
+            'selected-model-unavailable',
           );
         }
         recordProviderState(database, {
@@ -455,9 +466,7 @@ export const startAiWorker = (
           database,
           stored.failureCount + 1,
           now,
-          invalidConfigurationError(error)
-            ? 'invalid-configuration'
-            : 'unreachable',
+          providerErrorCode(error),
           invalidConfigurationError(error),
         );
         return;
@@ -507,7 +516,7 @@ export const startAiWorker = (
             database,
             1,
             now,
-            'invocation-failed',
+            providerErrorCode(error),
             invalidConfigurationError(error),
           );
         }

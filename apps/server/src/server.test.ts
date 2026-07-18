@@ -287,4 +287,53 @@ describe('Mindfull server', () => {
     );
     await server.close();
   });
+
+  it('reports why a configured model provider is unavailable', async () => {
+    const server = await createTestServer({
+      modelLoader: async () => {
+        throw { cause: { code: 'ECONNREFUSED' } };
+      },
+      invoker: {
+        reflect: async () => {
+          throw new Error('The invoker should not run.');
+        },
+      },
+    });
+    const token = await pairDevice(server, 'phone');
+    const authorization = { authorization: `Bearer ${token}` };
+
+    await server.inject({
+      method: 'PUT',
+      url: '/api/ai/configuration',
+      headers: authorization,
+      payload: {
+        baseUrl: 'http://quiet-model.local/v1',
+        apiKey: '',
+        model: 'quiet-model',
+      },
+    });
+
+    let configuration: { status: string; errorCode: string | null } = {
+      status: 'checking',
+      errorCode: null,
+    };
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      const response = await server.inject({
+        method: 'GET',
+        url: '/api/ai/configuration',
+        headers: authorization,
+      });
+      configuration = response.json();
+      if (configuration.status === 'unavailable') break;
+    }
+
+    expect(configuration).toEqual(
+      expect.objectContaining({
+        status: 'unavailable',
+        errorCode: 'connection-refused',
+      }),
+    );
+    await server.close();
+  });
 });

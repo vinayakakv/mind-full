@@ -49,6 +49,32 @@ const aiStatusText: Record<AiConfigurationView['status'], string> = {
   paused: 'Reflection is paused. Waiting work is safe.',
 };
 
+const aiErrorText: Record<string, string> = {
+  'access-denied': 'The model server refused access to its model list.',
+  'authentication-failed': 'The model server rejected the saved API key.',
+  'connection-refused':
+    'The connection was refused. Check that the model server is running and listening on this address.',
+  'dns-not-found': 'The model server hostname could not be resolved.',
+  'invalid-model-list':
+    'The /models response was not in the expected OpenAI-compatible format.',
+  'invocation-failed':
+    'The model server was reached, but the reflection request failed.',
+  'models-endpoint-not-found':
+    'No /models endpoint was found. The API URL usually ends in /v1.',
+  'provider-rate-limited': 'The model server is rate-limiting requests.',
+  'provider-rejected-request':
+    'The server rejected the request. Its structured-output support may be incompatible.',
+  'provider-server-error': 'The model server returned an internal error.',
+  'selected-model-unavailable':
+    'The selected model is no longer offered by the server.',
+  'structured-output':
+    'The model did not return the required structured response after a retry.',
+  'tls-error': 'The model server certificate could not be verified.',
+  'timed-out': 'The model server did not respond before the timeout.',
+  unreachable:
+    'The model server could not be reached from the Mindfull backend.',
+};
+
 function AiSettings({ isPaired }: { isPaired: boolean }) {
   const [configuration, setConfiguration] =
     useState<AiConfigurationView | null>(null);
@@ -59,19 +85,30 @@ function AiSettings({ isPaired }: { isPaired: boolean }) {
   const [state, setState] = useState<'idle' | 'loading' | 'saving'>('idle');
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
-    if (!isPaired) return;
-    try {
-      const next = await loadAiConfiguration();
-      setConfiguration(next);
-      setBaseUrl(next.baseUrl);
-      setModel(next.model ?? '');
-    } catch {
-      setError('Mindfull could not read the model configuration.');
-    }
-  }, [isPaired]);
+  const refresh = useCallback(
+    async (updateFields = false) => {
+      if (!isPaired) return;
+      try {
+        const next = await loadAiConfiguration();
+        setConfiguration(next);
+        if (updateFields) {
+          setBaseUrl(next.baseUrl);
+          setModel(next.model ?? '');
+        }
+      } catch {
+        if (updateFields) {
+          setError('Mindfull could not read the model configuration.');
+        }
+      }
+    },
+    [isPaired],
+  );
 
-  useEffect(() => void refresh(), [refresh]);
+  useEffect(() => {
+    void refresh(true);
+    const interval = window.setInterval(() => void refresh(), 5_000);
+    return () => window.clearInterval(interval);
+  }, [refresh]);
 
   const findModels = async () => {
     setState('loading');
@@ -179,7 +216,7 @@ function AiSettings({ isPaired }: { isPaired: boolean }) {
       </TextField>
       <div className={styles.modelRow}>
         <Button
-          className={styles.quietButton}
+          className={`${styles.quietButton} ${styles.modelButton}`}
           onPress={findModels}
           isDisabled={!baseUrl || state !== 'idle'}
         >
@@ -202,15 +239,26 @@ function AiSettings({ isPaired }: { isPaired: boolean }) {
           </label>
         ) : null}
       </div>
-      {configuration ? (
-        <p className={styles.aiStatus} data-status={configuration.status}>
-          {aiStatusText[configuration.status]}
-          {configuration.pendingJobs
-            ? ` ${configuration.pendingJobs} reflection${configuration.pendingJobs === 1 ? '' : 's'} waiting.`
-            : ''}
+      {!error && configuration ? (
+        <div className={styles.aiStatusBlock}>
+          <p className={styles.aiStatus} data-status={configuration.status}>
+            {aiStatusText[configuration.status]}
+            {configuration.pendingJobs
+              ? ` ${configuration.pendingJobs} reflection${configuration.pendingJobs === 1 ? '' : 's'} waiting.`
+              : ''}
+          </p>
+          {configuration.errorCode && aiErrorText[configuration.errorCode] ? (
+            <p className={styles.aiStatusDetail}>
+              {aiErrorText[configuration.errorCode]}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+      {error ? (
+        <p className={styles.error} role="alert">
+          {error}
         </p>
       ) : null}
-      {error ? <p className={styles.error}>{error}</p> : null}
       <div className={styles.syncActions}>
         {configuration?.failedJobs ? (
           <Button

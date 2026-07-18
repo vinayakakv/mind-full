@@ -127,8 +127,10 @@ AI output must be validated before becoming a domain document. Expected
 structures should use Zod schemas and conservative limits for text lengths,
 array sizes, and allowed categories.
 
-Invalid output is retried within a small limit and then marked failed. The UI
-shows an understated Unavailable status rather than raw provider errors.
+Invalid output is retried within a small limit and then marked failed. Settings
+shows a specific, safe explanation for connection, authentication, endpoint,
+TLS, response-shape, and structured-output failures. Raw provider bodies,
+prompts, journal content, and credentials are never returned or logged.
 
 ## Prompt candidates
 

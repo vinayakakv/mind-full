@@ -7,7 +7,11 @@ import Fastify from 'fastify';
 import { z } from 'zod';
 
 import type { AiInvoker } from './ai/provider.js';
-import { loadProviderModels, normalizeProviderBaseUrl } from './ai/provider.js';
+import {
+  loadProviderModels,
+  normalizeProviderBaseUrl,
+  providerErrorMessage,
+} from './ai/provider.js';
 import {
   failedJobCount,
   historicalSources,
@@ -209,10 +213,8 @@ export const buildServer = async ({
           parsed.data.apiKey ?? storedKey,
         ),
       });
-    } catch {
-      return reply
-        .code(503)
-        .send({ error: 'Mindfull could not load models from that server.' });
+    } catch (error) {
+      return reply.code(503).send({ error: providerErrorMessage(error) });
     }
   });
 
