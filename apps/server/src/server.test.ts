@@ -379,6 +379,47 @@ describe('Mindfull server', () => {
         errorCode: 'connection-refused',
       }),
     );
+
+    const completedAt = new Date(Date.now() - 60_000).toISOString();
+    const journal = createJournalDocument({
+      id: 'memory-progress-journal',
+      now: completedAt,
+      deviceId: 'phone',
+      payload: {
+        title: null,
+        markdown: 'A quiet morning felt restorative.',
+        localDate: completedAt.slice(0, 10),
+        timezone: 'UTC',
+        status: 'completed',
+        completedAt,
+      },
+    });
+    await server.inject({
+      method: 'POST',
+      url: '/api/sync',
+      headers: authorization,
+      payload: { cursor: 0, documents: [journal] },
+    });
+    const initialize = await server.inject({
+      method: 'POST',
+      url: '/api/ai/memory/initialize',
+      headers: authorization,
+      payload: {},
+    });
+    expect(initialize.statusCode).toBe(202);
+
+    const progressResponse = await server.inject({
+      method: 'GET',
+      url: '/api/ai/configuration',
+      headers: authorization,
+    });
+    expect(progressResponse.json()).toMatchObject({
+      memoryInitialization: {
+        state: 'waiting',
+        processedSources: 0,
+        totalSources: 1,
+      },
+    });
     await server.close();
   });
 });

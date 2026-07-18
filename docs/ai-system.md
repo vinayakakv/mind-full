@@ -141,6 +141,11 @@ only the completed result. Historical entries do not receive individual
 summaries or task suggestions. Rebuilding after deleting an influencing source
 is future scope.
 
+The staging row also exposes initialization progress: completed source count,
+current eligible source count, and whether a batch is waiting, running, or
+failed. Reflect polls this through the ordinary AI configuration endpoint, so
+the phone may close without interrupting the backend-owned build.
+
 ## Structured output
 
 AI output must be validated before becoming a domain document. Expected

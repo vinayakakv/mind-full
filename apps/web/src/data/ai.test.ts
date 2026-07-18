@@ -13,6 +13,7 @@ const configuration = {
   errorCode: null,
   pendingJobs: 1,
   failedJobs: 0,
+  memoryInitialization: null,
 };
 
 describe('AI commands', () => {

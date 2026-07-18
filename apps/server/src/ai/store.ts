@@ -291,6 +291,41 @@ export const historicalSources = (
   });
 };
 
+export type MemoryInitializationProgress = {
+  state: 'waiting' | 'running' | 'failed';
+  processedSources: number;
+  totalSources: number;
+};
+
+export const memoryInitializationProgress = (
+  database: MindfullDatabase,
+  now: string,
+): MemoryInitializationProgress | null => {
+  const build = database.select().from(aiMemoryBuilds).get();
+  if (!build) return null;
+
+  const job = database
+    .select()
+    .from(aiJobs)
+    .where(eq(aiJobs.id, build.jobId))
+    .get();
+  if (job?.kind !== 'initialize-memory') return null;
+
+  const state = ['running', 'failed'].includes(job.state)
+    ? (job.state as 'running' | 'failed')
+    : 'waiting';
+  const totalSources = Math.max(
+    build.nextSourceIndex,
+    historicalSources(database, now).length,
+  );
+
+  return {
+    state,
+    processedSources: Math.min(build.nextSourceIndex, totalSources),
+    totalSources,
+  };
+};
+
 export const findDomainDocument = (
   database: MindfullDatabase,
   id: string,

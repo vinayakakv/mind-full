@@ -14,6 +14,11 @@ export type AiConfigurationView = {
   errorCode: string | null;
   pendingJobs: number;
   failedJobs: number;
+  memoryInitialization: {
+    state: 'waiting' | 'running' | 'failed';
+    processedSources: number;
+    totalSources: number;
+  } | null;
 };
 
 const store = getDefaultStore();

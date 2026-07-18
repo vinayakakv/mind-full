@@ -15,6 +15,7 @@ import {
 import {
   failedJobCount,
   historicalSources,
+  memoryInitializationProgress,
   pendingJobCount,
   queueInitialMemory,
   readAiConfiguration,
@@ -179,6 +180,7 @@ export const buildServer = async ({
     if (!requireDevice(request)) {
       return reply.code(401).send({ error: 'Pair this device first.' });
     }
+    const now = new Date().toISOString();
     const configuration = readAiConfiguration(database);
     return reply.send({
       baseUrl: configuration?.baseUrl ?? '',
@@ -191,6 +193,7 @@ export const buildServer = async ({
       errorCode: configuration?.errorCode ?? null,
       pendingJobs: pendingJobCount(database),
       failedJobs: failedJobCount(database),
+      memoryInitialization: memoryInitializationProgress(database, now),
     });
   });
 

@@ -4,13 +4,19 @@ import { useEffect, useState } from 'react';
 import { Button } from 'react-aria-components';
 import { Link } from 'react-router';
 
-import { initializeReflectionMemory, loadAiConfiguration } from '../data/ai';
+import {
+  type AiConfigurationView,
+  initializeReflectionMemory,
+  loadAiConfiguration,
+} from '../data/ai';
 import { rejectHabitSuggestion } from '../data/habits';
 import { loadReflectionData } from '../data/reflection';
 import { hasPairingToken, synchronize } from '../data/sync';
 import { acceptTaskSuggestion, rejectTaskSuggestion } from '../data/tasks';
 import type { AiStatus } from '../state/ai';
 import styles from './ReflectPage.module.css';
+
+type MemoryInitialization = AiConfigurationView['memoryInitialization'];
 
 const statusText: Record<AiStatus, string> = {
   'not-configured':
@@ -20,6 +26,26 @@ const statusText: Record<AiStatus, string> = {
   unavailable: 'The reflection model is resting. Waiting work is safe.',
   'invalid-configuration': 'The reflection model needs attention in Settings.',
   paused: 'Reflection is paused.',
+};
+
+const memoryProgressText = (
+  progress: NonNullable<MemoryInitialization>,
+  status: AiStatus,
+): string => {
+  const amount = `${progress.processedSources} of ${progress.totalSources} past ${progress.totalSources === 1 ? 'reflection' : 'reflections'} processed`;
+  if (progress.state === 'running') {
+    return `Building memory · processing a batch · ${amount}.`;
+  }
+  if (progress.state === 'failed') {
+    return `The memory build needs attention · ${amount}.`;
+  }
+  if (status === 'unavailable') {
+    return `Memory build waiting for the model · ${amount}.`;
+  }
+  if (status === 'paused') {
+    return `Memory build paused · ${amount}.`;
+  }
+  return `Building memory · ${amount}.`;
 };
 
 type ReflectionSource = JournalDocument | CheckInDocument;
@@ -84,6 +110,8 @@ export function ReflectPage() {
   const [status, setStatus] = useState<AiStatus>('not-configured');
   const [pendingJobs, setPendingJobs] = useState(0);
   const [failedJobs, setFailedJobs] = useState(0);
+  const [memoryInitialization, setMemoryInitialization] =
+    useState<MemoryInitialization>(null);
   const [isStarting, setIsStarting] = useState(false);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -96,6 +124,7 @@ export function ReflectPage() {
         setStatus(configuration.status);
         setPendingJobs(configuration.pendingJobs);
         setFailedJobs(configuration.failedJobs);
+        setMemoryInitialization(configuration.memoryInitialization);
         if (configuration.pendingJobs === 0) await synchronize();
       } catch {
         // Reflect remains readable while the backend is unavailable.
@@ -157,9 +186,11 @@ export function ReflectPage() {
       <p className={styles.status} data-status={status}>
         {failedJobs
           ? 'Some reflection work could not be completed. You can retry it in Settings.'
-          : pendingJobs
-            ? `Reflecting on ${pendingJobs} waiting ${pendingJobs === 1 ? 'entry' : 'entries'}.`
-            : statusText[status]}
+          : memoryInitialization
+            ? memoryProgressText(memoryInitialization, status)
+            : pendingJobs
+              ? `Reflecting on ${pendingJobs} waiting ${pendingJobs === 1 ? 'entry' : 'entries'}.`
+              : statusText[status]}
       </p>
 
       <div className={styles.space}>
