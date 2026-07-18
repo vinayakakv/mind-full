@@ -1,21 +1,15 @@
 import { journalBody, journalHeading } from '@mindfull/domain';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useAtom } from 'jotai';
 import {
   type MouseEvent,
   type ReactNode,
+  useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
-  useState,
 } from 'react';
 import { Button } from 'react-aria-components';
-import {
-  Link,
-  useLocation,
-  useNavigate,
-  useNavigationType,
-} from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 
 import { TaskSuggestions } from '../components/TaskSuggestions';
 import {
@@ -28,9 +22,9 @@ import styles from './HistoryPage.module.css';
 import {
   type HistoryView,
   historyPageSize,
-  historyViewAtom,
+  historyPathFor,
+  historySearchParamsFor,
   historyViewFrom,
-  initialHistoryView,
 } from './history-view';
 
 const filters: Array<{ value: HistoryFilter; label: string }> = [
@@ -65,14 +59,12 @@ const markdownExcerpt = (markdown: string): string =>
 function HistoryEntryLink({
   children,
   destination,
-  rememberView,
+  returnPath,
 }: {
   children: ReactNode;
   destination: string;
-  rememberView: () => HistoryView;
+  returnPath: string;
 }) {
-  const navigate = useNavigate();
-
   const openEntry = (event: MouseEvent<HTMLAnchorElement>) => {
     if (
       event.button !== 0 ||
@@ -84,14 +76,16 @@ function HistoryEntryLink({
       return;
     }
 
-    event.preventDefault();
-    navigate(destination, {
-      state: { returnTo: 'history', historyView: rememberView() },
-    });
+    window.history.replaceState(window.history.state, '', returnPath);
   };
 
   return (
-    <Link className={styles.entryLink} to={destination} onClick={openEntry}>
+    <Link
+      className={styles.entryLink}
+      to={destination}
+      state={{ returnTo: 'history', historyPath: returnPath }}
+      onClick={openEntry}
+    >
       {children}
     </Link>
   );
@@ -99,17 +93,17 @@ function HistoryEntryLink({
 
 function JournalHistoryEntry({
   entry,
-  rememberView,
+  returnPath,
 }: {
   entry: Extract<HistoryEntry, { kind: 'journal' }>;
-  rememberView: () => HistoryView;
+  returnPath: string;
 }) {
   const excerpt = markdownExcerpt(journalBody(entry.journal.payload));
 
   return (
     <HistoryEntryLink
       destination={`/journal?entry=${encodeURIComponent(entry.journal.id)}`}
-      rememberView={rememberView}
+      returnPath={returnPath}
     >
       <span className={styles.entryKind}>Journal</span>
       <strong>{journalTitle(entry)}</strong>
@@ -120,10 +114,10 @@ function JournalHistoryEntry({
 
 function CheckInHistoryEntry({
   entry,
-  rememberView,
+  returnPath,
 }: {
   entry: Extract<HistoryEntry, { kind: 'check-in' }>;
-  rememberView: () => HistoryView;
+  returnPath: string;
 }) {
   const details = [
     entry.checkIn.payload.mood,
@@ -134,7 +128,7 @@ function CheckInHistoryEntry({
   return (
     <HistoryEntryLink
       destination={`/check-ins/${encodeURIComponent(entry.checkIn.id)}`}
-      rememberView={rememberView}
+      returnPath={returnPath}
     >
       <span className={styles.entryKind}>Check-in</span>
       <strong>{kind} check-in</strong>
@@ -167,34 +161,49 @@ function HabitHistoryEntry({
 }
 
 export function HistoryPage() {
-  const location = useLocation();
-  const navigationType = useNavigationType();
-  const [rememberedView, setRememberedView] = useAtom(historyViewAtom);
-  const returningView = historyViewFrom(location.state);
-  const startingView =
-    returningView ??
-    (navigationType === 'POP' ? rememberedView : initialHistoryView);
-  const [filter, setFilter] = useState<HistoryFilter>(startingView.filter);
-  const [visibleCount, setVisibleCount] = useState(startingView.visibleCount);
-  const scrollToRestore = useRef<number | null>(startingView.scrollY);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const view = historyViewFrom(searchParams);
+  const visibleCount = view.pageCount * historyPageSize;
+  const restoredAnchor = useRef<string | null>(null);
   const continuation = useRef<HTMLDivElement>(null);
   const page = useLiveQuery(
-    () => loadHistoryPage(filter, visibleCount),
-    [filter, visibleCount],
+    async () => ({
+      ...(await loadHistoryPage(view.filter, visibleCount)),
+      requestedCount: visibleCount,
+    }),
+    [view.filter, visibleCount],
   );
-  const visibleEntries = filterHistoryEntries(page?.entries ?? [], filter);
-  const hasMore = page?.hasMore ?? false;
+  const visibleEntries = filterHistoryEntries(page?.entries ?? [], view.filter);
+  const hasMore =
+    page?.requestedCount === visibleCount && (page?.hasMore ?? false);
 
   useLayoutEffect(() => {
-    if (page === undefined || scrollToRestore.current === null) return;
+    if (
+      page === undefined ||
+      !view.anchorId ||
+      restoredAnchor.current === view.anchorId
+    ) {
+      return;
+    }
 
-    const scrollY = scrollToRestore.current;
+    const anchor = document.getElementById(view.anchorId);
+    if (!anchor) return;
     const frame = window.requestAnimationFrame(() => {
-      window.scrollTo(0, scrollY);
-      scrollToRestore.current = null;
+      anchor.scrollIntoView({ block: 'center' });
+      restoredAnchor.current = view.anchorId;
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [page]);
+  }, [page, view.anchorId]);
+
+  const updateView = useCallback(
+    (nextView: HistoryView) => {
+      setSearchParams(historySearchParamsFor(nextView), {
+        replace: true,
+        preventScrollReset: true,
+      });
+    },
+    [setSearchParams],
+  );
 
   useEffect(() => {
     const target = continuation.current;
@@ -202,22 +211,15 @@ export function HistoryPage() {
 
     const observer = new IntersectionObserver(([observed]) => {
       if (observed?.isIntersecting) {
-        setVisibleCount((count) => count + historyPageSize);
+        updateView({ ...view, pageCount: view.pageCount + 1 });
       }
     });
     observer.observe(target);
     return () => observer.disconnect();
-  }, [hasMore]);
+  }, [hasMore, updateView, view]);
 
   const selectFilter = (nextFilter: HistoryFilter) => {
-    setFilter(nextFilter);
-    setVisibleCount(historyPageSize);
-  };
-
-  const rememberView = (): HistoryView => {
-    const view = { filter, visibleCount, scrollY: window.scrollY };
-    setRememberedView(view);
-    return view;
+    updateView({ filter: nextFilter, pageCount: 1, anchorId: null });
   };
 
   return (
@@ -234,7 +236,7 @@ export function HistoryPage() {
           <Button
             key={value}
             className={styles.filter}
-            aria-pressed={filter === value}
+            aria-pressed={view.filter === value}
             onPress={() => selectFilter(value)}
           >
             {label}
@@ -246,9 +248,9 @@ export function HistoryPage() {
 
       {page && visibleEntries.length === 0 ? (
         <p className={styles.empty}>
-          {filter === 'all'
+          {view.filter === 'all'
             ? 'Your reflections and rhythms will gather here.'
-            : `No ${filters.find(({ value }) => value === filter)?.label.toLowerCase()} have gathered yet.`}
+            : `No ${filters.find(({ value }) => value === view.filter)?.label.toLowerCase()} have gathered yet.`}
         </p>
       ) : null}
 
@@ -256,23 +258,19 @@ export function HistoryPage() {
         {visibleEntries.map((entry, index) => {
           const beginsDateGroup =
             visibleEntries[index - 1]?.localDate !== entry.localDate;
+          const anchorId = `history-${entry.kind}-${entry.id}`;
+          const returnPath = historyPathFor({ ...view, anchorId });
 
           return (
-            <li key={`${entry.kind}:${entry.id}`}>
+            <li id={anchorId} key={`${entry.kind}:${entry.id}`}>
               {beginsDateGroup ? (
                 <h2>{formatLocalDate(entry.localDate)}</h2>
               ) : null}
               {entry.kind === 'journal' ? (
-                <JournalHistoryEntry
-                  entry={entry}
-                  rememberView={rememberView}
-                />
+                <JournalHistoryEntry entry={entry} returnPath={returnPath} />
               ) : null}
               {entry.kind === 'check-in' ? (
-                <CheckInHistoryEntry
-                  entry={entry}
-                  rememberView={rememberView}
-                />
+                <CheckInHistoryEntry entry={entry} returnPath={returnPath} />
               ) : null}
               {entry.kind === 'habit' ? (
                 <HabitHistoryEntry entry={entry} />
@@ -286,7 +284,9 @@ export function HistoryPage() {
         <div className={styles.continuation} ref={continuation}>
           <Button
             className={styles.loadMore}
-            onPress={() => setVisibleCount((count) => count + historyPageSize)}
+            onPress={() =>
+              updateView({ ...view, pageCount: view.pageCount + 1 })
+            }
           >
             Load more
           </Button>

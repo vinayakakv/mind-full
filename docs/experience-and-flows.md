@@ -59,8 +59,9 @@ section lets the user review them early.
   a calculated absence is not presented as a logged event.
 - Results are revealed in small pages with automatic continuation near the end
   and an explicit Load more control as an accessible fallback.
-- Returning from an entry restores the active filter, revealed pages, and
-  reading position.
+- History keeps its active filter and revealed page count in the URL. Returning
+  from an entry restores its stable entry anchor rather than a fragile pixel
+  position.
 - Settings, reminders, drafts, and synchronization metadata do not appear.
 
 ## Check-in rules

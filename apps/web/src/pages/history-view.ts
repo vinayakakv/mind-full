@@ -1,58 +1,67 @@
-import { atom } from 'jotai';
-
 import type { HistoryFilter } from '../data/history';
 
 export type HistoryView = {
   filter: HistoryFilter;
-  visibleCount: number;
-  scrollY: number;
+  pageCount: number;
+  anchorId: string | null;
 };
 
 export const historyPageSize = 18;
 
 export const initialHistoryView: HistoryView = {
   filter: 'all',
-  visibleCount: historyPageSize,
-  scrollY: 0,
+  pageCount: 1,
+  anchorId: null,
 };
 
-export const historyViewAtom = atom(initialHistoryView);
-
-const isHistoryFilter = (value: unknown): value is HistoryFilter =>
+const isHistoryFilter = (value: string | null): value is HistoryFilter =>
   value === 'all' ||
   value === 'journal' ||
   value === 'check-in' ||
   value === 'habit';
 
-export const historyViewFrom = (state: unknown): HistoryView | null => {
-  if (!state || typeof state !== 'object' || !('historyView' in state)) {
-    return null;
-  }
+const pageCountFrom = (value: string | null): number => {
+  if (!value || !/^\d+$/.test(value)) return 1;
+  const pageCount = Number(value);
+  return Number.isSafeInteger(pageCount) && pageCount > 0 ? pageCount : 1;
+};
 
-  const view = state.historyView;
-  if (
-    !view ||
-    typeof view !== 'object' ||
-    !('filter' in view) ||
-    !isHistoryFilter(view.filter) ||
-    !('visibleCount' in view) ||
-    typeof view.visibleCount !== 'number' ||
-    !Number.isInteger(view.visibleCount) ||
-    !('scrollY' in view) ||
-    typeof view.scrollY !== 'number' ||
-    !Number.isFinite(view.scrollY)
-  ) {
-    return null;
-  }
+export const historyViewFrom = (searchParams: URLSearchParams): HistoryView => {
+  const filter = searchParams.get('filter');
+  const anchorId = searchParams.get('at')?.trim() || null;
 
   return {
-    filter: view.filter,
-    visibleCount: Math.max(historyPageSize, view.visibleCount),
-    scrollY: Math.max(0, view.scrollY),
+    filter: isHistoryFilter(filter) ? filter : initialHistoryView.filter,
+    pageCount: pageCountFrom(searchParams.get('pages')),
+    anchorId,
   };
 };
 
-export const returnToHistoryState = (state: unknown) => {
-  const historyView = historyViewFrom(state);
-  return historyView ? { historyView } : undefined;
+export const historySearchParamsFor = (view: HistoryView): URLSearchParams => {
+  const searchParams = new URLSearchParams();
+  if (view.filter !== initialHistoryView.filter) {
+    searchParams.set('filter', view.filter);
+  }
+  if (view.pageCount > initialHistoryView.pageCount) {
+    searchParams.set('pages', String(view.pageCount));
+  }
+  if (view.anchorId) searchParams.set('at', view.anchorId);
+  return searchParams;
+};
+
+export const historyPathFor = (view: HistoryView): string => {
+  const search = historySearchParamsFor(view).toString();
+  return search ? `/history?${search}` : '/history';
+};
+
+export const returnToHistoryPath = (state: unknown): string => {
+  if (!state || typeof state !== 'object' || !('historyPath' in state)) {
+    return '/history';
+  }
+
+  const { historyPath } = state;
+  return typeof historyPath === 'string' &&
+    (historyPath === '/history' || historyPath.startsWith('/history?'))
+    ? historyPath
+    : '/history';
 };

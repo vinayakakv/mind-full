@@ -8,7 +8,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import { deleteCheckIn, loadCheckIn } from '../data/check-ins';
 import { localDateFor } from '../data/time';
 import styles from './CheckInPage.module.css';
-import { returnToHistoryState } from './history-view';
+import { returnToHistoryPath } from './history-view';
 
 const formatLocalDate = (localDate: string): string =>
   new Intl.DateTimeFormat(undefined, {
@@ -60,11 +60,8 @@ export function CheckInPage() {
     return (await loadCheckIn(checkInId)) ?? null;
   }, [checkInId]);
   const returnsToToday = location.state?.returnTo === 'today';
-  const returnPath = returnsToToday ? '/' : '/history';
+  const returnPath = returnsToToday ? '/' : returnToHistoryPath(location.state);
   const returnLabel = returnsToToday ? 'Back to today' : 'Back to history';
-  const returnState = returnsToToday
-    ? undefined
-    : returnToHistoryState(location.state);
 
   if (checkIn === undefined) {
     return <p className={styles.loading}>Gathering this check-in…</p>;
@@ -74,9 +71,7 @@ export function CheckInPage() {
     return (
       <section className={styles.unavailable}>
         <p>This check-in is not part of your history yet.</p>
-        <Link to={returnPath} state={returnState}>
-          {returnLabel}
-        </Link>
+        <Link to={returnPath}>{returnLabel}</Link>
       </section>
     );
   }
@@ -98,7 +93,7 @@ export function CheckInPage() {
 
   const deleteEntry = async () => {
     await deleteCheckIn(checkIn.id);
-    navigate(returnPath, { replace: true, state: returnState });
+    navigate(returnPath, { replace: true });
   };
 
   return (
@@ -106,9 +101,7 @@ export function CheckInPage() {
       <header className={styles.header}>
         <div className={styles.meta}>
           <p>{formatLocalDate(checkIn.payload.localDate)}</p>
-          <Link to={returnPath} state={returnState}>
-            {returnLabel}
-          </Link>
+          <Link to={returnPath}>{returnLabel}</Link>
         </div>
         <p className={styles.eyebrow}>What you noticed</p>
         <h1>{heading}</h1>
