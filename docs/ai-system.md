@@ -148,17 +148,23 @@ artifacts use separately validated fields so layout does not depend on
 model-authored Markdown. A Markdown representation of memory is retained for
 export and compatibility with existing data.
 
-When memory is empty, Reflect offers an explicit one-time action to build it
-from the previous year of completed journals and check-ins. The backend folds
-bounded chronological batches through private staging memory and publishes
-only the completed result. Historical entries do not receive individual
-summaries or task suggestions. Rebuilding after deleting an influencing source
-is future scope.
+Reflect offers one explicit reset-and-rebuild action. It removes the generated
+long-term memory, current-week reflection, and unresolved suggestions while
+preserving journals, check-ins, tasks, habits, and resolved suggestion
+decisions. There is no separate memory-only reset.
 
-The staging row also exposes initialization progress: completed source count,
-current eligible source count, and whether a batch is waiting, running, or
-failed. Reflect polls this through the ordinary AI configuration endpoint, so
-the phone may close without interrupting the backend-owned build.
+The durable rebuild has two chronological stages. First, the backend folds the
+previous year of completed journals and check-ins through private staging
+memory. It then folds this week's entries through a smaller weekly-only model
+contract that cannot rewrite memory or create suggestions. Memory and the week
+are published together only after both stages complete. Historical entries do
+not receive individual summaries or task suggestions. Rebuilding after
+deleting an influencing source is future scope.
+
+The staging row exposes the active stage, completed source count, current
+eligible source count, and whether a batch is waiting, running, or failed.
+Reflect polls this through the ordinary AI configuration endpoint, so the phone
+may close and the backend may restart without losing progress.
 
 ## Structured output
 

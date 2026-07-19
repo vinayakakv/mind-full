@@ -2,6 +2,7 @@ import { getDefaultStore } from 'jotai';
 
 import { type AiStatus, aiStatusAtom } from '../state/ai';
 import { authenticatedServerRequest, synchronize } from './sync';
+import { localDateFor } from './time';
 
 export type AiConfigurationView = {
   baseUrl: string;
@@ -15,8 +16,9 @@ export type AiConfigurationView = {
   errorCode: string | null;
   pendingJobs: number;
   failedJobs: number;
-  memoryInitialization: {
+  reflectionRebuild: {
     state: 'waiting' | 'running' | 'failed';
+    phase: 'memory' | 'week';
     processedSources: number;
     totalSources: number;
   } | null;
@@ -101,13 +103,12 @@ export const retryFailedAiJobs = async (): Promise<void> => {
   await loadAiConfiguration();
 };
 
-export const initializeReflectionMemory = async (): Promise<void> => {
-  await request('/api/ai/memory/initialize', emptyJsonPost);
-  await loadAiConfiguration();
-};
-
-export const resetReflectionMemory = async (): Promise<void> => {
-  await request('/api/ai/memory/reset', emptyJsonPost);
+export const rebuildReflections = async (): Promise<void> => {
+  await request('/api/ai/reflections/rebuild', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ localDate: localDateFor(new Date()) }),
+  });
   await synchronize();
   await loadAiConfiguration();
 };

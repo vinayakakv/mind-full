@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { initializeReflectionMemory } from './ai';
+import { rebuildReflections } from './ai';
 
 const configuration = {
   baseUrl: 'http://model.local/v1',
@@ -14,7 +14,7 @@ const configuration = {
   errorCode: null,
   pendingJobs: 1,
   failedJobs: 0,
-  memoryInitialization: null,
+  reflectionRebuild: null,
 };
 
 describe('AI commands', () => {
@@ -27,7 +27,7 @@ describe('AI commands', () => {
     vi.unstubAllGlobals();
   });
 
-  it('sends an explicit JSON body for an initialization command', async () => {
+  it('sends the local date for a reflection rebuild', async () => {
     const fetchMock = vi.fn((input: RequestInfo | URL, _init?: RequestInit) =>
       Promise.resolve(
         new Response(
@@ -42,14 +42,16 @@ describe('AI commands', () => {
     );
     vi.stubGlobal('fetch', fetchMock);
 
-    await initializeReflectionMemory();
+    await rebuildReflections();
 
     const request = fetchMock.mock.calls[0];
     const init = request?.[1] as RequestInit | undefined;
-    expect(String(request?.[0])).toBe('/api/ai/memory/initialize');
+    expect(String(request?.[0])).toBe('/api/ai/reflections/rebuild');
     expect(new Headers(init?.headers).get('content-type')).toBe(
       'application/json',
     );
-    expect(init?.body).toBe('{}');
+    expect(JSON.parse(String(init?.body))).toEqual({
+      localDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+    });
   });
 });

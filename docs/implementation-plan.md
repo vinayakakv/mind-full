@@ -242,8 +242,8 @@ Milestone 3.
 - [x] Provider status, model discovery, invalid-configuration warning, and pause
 - [x] Persisted chronological AI work queue with leases and idempotency
 - [x] Provider-level exponential backoff and restart reconciliation
-- [x] User-visible bounded reflection memory with reset
-- [x] Optional one-year initial memory built in chronological batches
+- [x] User-visible bounded reflection memory
+- [x] Durable reset and chronological rebuild of one-year memory and this week
 - [x] Atomic journal/check-in analysis, memory update, and task extraction
 - [x] Journal/check-in summaries, themes, and unfinished commitments
 - [ ] Ahead-of-time one-time prompt candidates

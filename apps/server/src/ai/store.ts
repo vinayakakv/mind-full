@@ -8,7 +8,7 @@ import type {
 } from '@mindfull/domain';
 import { and, asc, eq, inArray, isNull, lte, or } from 'drizzle-orm';
 import type { MindfullDatabase } from '../database/database.js';
-import { documentFromRow } from '../database/documents.js';
+import { documentFromRow, storeDocument } from '../database/documents.js';
 import {
   aiConfiguration,
   aiJobs,
@@ -244,46 +244,109 @@ export const reconcileReflectionJobs = (
   return created;
 };
 
-export const queueInitialMemory = (
+export const resetAndQueueReflectionRebuild = (
   database: MindfullDatabase,
   now: string,
+  week: { weekStart: string; weekEnd: string },
 ): boolean => {
-  const existingMemory = findReflectionMemory(database);
-  if (existingMemory) return false;
+  if (database.select().from(aiMemoryBuilds).get()) return false;
 
-  const id = 'initialize-memory:v1';
-  const result = database
-    .insert(aiJobs)
-    .values({
-      id,
-      kind: 'initialize-memory',
-      sourceDocumentId: null,
-      sourceContentHash: null,
-      recordedAt: '0000-01-01T00:00:00.000Z',
-      state: 'waiting',
-      attemptCount: 0,
-      leaseOwner: null,
-      leaseExpiresAt: null,
-      lastErrorCode: null,
-      createdAt: now,
-      completedAt: null,
-    })
-    .onConflictDoNothing()
-    .run();
+  const id = 'rebuild-reflections:v1';
+  database.transaction((transaction) => {
+    const generatedDocuments = transaction
+      .select()
+      .from(documents)
+      .where(
+        inArray(documents.type, [
+          'reflection-memory',
+          'weekly-reflection',
+          'task-suggestion',
+          'habit-suggestion',
+        ]),
+      )
+      .all()
+      .map(documentFromRow)
+      .filter((document) => {
+        if (document.deletedAt) return false;
+        if (
+          document.type === 'reflection-memory' ||
+          document.type === 'weekly-reflection'
+        ) {
+          return true;
+        }
+        return (
+          (document.type === 'task-suggestion' ||
+            document.type === 'habit-suggestion') &&
+          document.payload.state === 'pending'
+        );
+      });
 
-  if (result.changes) {
-    database
+    for (const document of generatedDocuments) {
+      storeDocument(transaction, {
+        ...document,
+        deletedAt: now,
+        updatedAt: now,
+        updatedByDeviceId: 'mindfull-server',
+      });
+    }
+
+    transaction.delete(aiMemoryBuilds).run();
+    transaction
+      .delete(aiJobs)
+      .where(inArray(aiJobs.kind, ['initialize-memory', 'rebuild-reflections']))
+      .run();
+    transaction
+      .update(aiJobs)
+      .set({
+        state: 'completed',
+        completedAt: now,
+        leaseOwner: null,
+        leaseExpiresAt: null,
+      })
+      .where(
+        and(
+          eq(aiJobs.kind, 'analyze-reflection'),
+          inArray(aiJobs.state, ['waiting', 'running', 'failed']),
+        ),
+      )
+      .run();
+
+    transaction
+      .insert(aiJobs)
+      .values({
+        id,
+        kind: 'rebuild-reflections',
+        sourceDocumentId: null,
+        sourceContentHash: null,
+        recordedAt: '0000-01-01T00:00:00.000Z',
+        state: 'waiting',
+        attemptCount: 0,
+        leaseOwner: null,
+        leaseExpiresAt: null,
+        lastErrorCode: null,
+        createdAt: now,
+        completedAt: null,
+      })
+      .run();
+    transaction
       .insert(aiMemoryBuilds)
       .values({
         jobId: id,
         markdown: '',
+        memorySections: null,
         nextSourceIndex: 0,
         sourceDocumentIds: '[]',
+        phase: 'memory',
+        weekStart: week.weekStart,
+        weekEnd: week.weekEnd,
+        weekSections: null,
+        weekSourceIndex: 0,
+        weekSourceDocumentIds: '[]',
         updatedAt: now,
       })
       .run();
-  }
-  return result.changes > 0;
+  });
+  return true;
 };
 
 export const historicalSources = (
@@ -302,16 +365,30 @@ export const historicalSources = (
   });
 };
 
-export type MemoryInitializationProgress = {
+export const currentWeekSources = (
+  database: MindfullDatabase,
+  weekStart: string | null,
+  weekEnd: string | null,
+): Array<JournalDocument | CheckInDocument> => {
+  if (!weekStart || !weekEnd) return [];
+  return completedSources(database).filter(
+    (source) =>
+      source.payload.localDate >= weekStart &&
+      source.payload.localDate <= weekEnd,
+  );
+};
+
+export type ReflectionRebuildProgress = {
   state: 'waiting' | 'running' | 'failed';
+  phase: 'memory' | 'week';
   processedSources: number;
   totalSources: number;
 };
 
-export const memoryInitializationProgress = (
+export const reflectionRebuildProgress = (
   database: MindfullDatabase,
   now: string,
-): MemoryInitializationProgress | null => {
+): ReflectionRebuildProgress | null => {
   const build = database.select().from(aiMemoryBuilds).get();
   if (!build) return null;
 
@@ -320,19 +397,26 @@ export const memoryInitializationProgress = (
     .from(aiJobs)
     .where(eq(aiJobs.id, build.jobId))
     .get();
-  if (job?.kind !== 'initialize-memory') return null;
+  if (job?.kind !== 'rebuild-reflections') return null;
 
   const state = ['running', 'failed'].includes(job.state)
     ? (job.state as 'running' | 'failed')
     : 'waiting';
+  const isWeek = build.phase === 'week';
   const totalSources = Math.max(
-    build.nextSourceIndex,
-    historicalSources(database, now).length,
+    isWeek ? build.weekSourceIndex : build.nextSourceIndex,
+    isWeek
+      ? currentWeekSources(database, build.weekStart, build.weekEnd).length
+      : historicalSources(database, now).length,
   );
 
   return {
     state,
-    processedSources: Math.min(build.nextSourceIndex, totalSources),
+    phase: isWeek ? 'week' : 'memory',
+    processedSources: Math.min(
+      isWeek ? build.weekSourceIndex : build.nextSourceIndex,
+      totalSources,
+    ),
     totalSources,
   };
 };

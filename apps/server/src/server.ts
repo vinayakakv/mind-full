@@ -2,7 +2,6 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import fastifyStatic from '@fastify/static';
 import { parseDomainDocument } from '@mindfull/domain';
-import { eq } from 'drizzle-orm';
 import Fastify from 'fastify';
 import { z } from 'zod';
 
@@ -16,28 +15,22 @@ import {
   defaultResponseTimeoutMinutes,
   failedJobCount,
   historicalSources,
-  memoryInitializationProgress,
   pendingJobCount,
-  queueInitialMemory,
   readAiConfiguration,
   reconcileReflectionJobs,
-  reflectionMemoryId,
+  reflectionRebuildProgress,
+  resetAndQueueReflectionRebuild,
   responseTimeoutMinutes,
   retryFailedJobs,
   saveAiConfiguration,
   setAiPaused,
 } from './ai/store.js';
-import { startAiWorker } from './ai/worker.js';
+import { startAiWorker, weekBounds } from './ai/worker.js';
 import { authenticatedDeviceId, matchesSecret, pairDevice } from './auth.js';
 import { startBackupScheduler } from './backups.js';
 import type { ServerConfig } from './config.js';
 import { openDatabase } from './database/database.js';
-import {
-  findDocument,
-  storeDocument,
-  synchronizeDocuments,
-} from './database/documents.js';
-import { aiJobs, aiMemoryBuilds } from './database/schema.js';
+import { synchronizeDocuments } from './database/documents.js';
 
 const pairRequestSchema = z.object({
   pairingCode: z.string().min(1),
@@ -69,6 +62,10 @@ const aiConfigurationSchema = z.object({
       'Choose a supported response timeout.',
     )
     .optional(),
+});
+
+const reflectionRebuildSchema = z.object({
+  localDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
 export type BuildServerOptions = Pick<
@@ -213,7 +210,7 @@ export const buildServer = async ({
       errorCode: configuration?.errorCode ?? null,
       pendingJobs: pendingJobCount(database),
       failedJobs: failedJobCount(database),
-      memoryInitialization: memoryInitializationProgress(database, now),
+      reflectionRebuild: reflectionRebuildProgress(database, now),
     });
   });
 
@@ -294,9 +291,13 @@ export const buildServer = async ({
     return reply.send({ retriedJobs: count });
   });
 
-  server.post('/api/ai/memory/initialize', async (request, reply) => {
+  server.post('/api/ai/reflections/rebuild', async (request, reply) => {
     if (!requireDevice(request)) {
       return reply.code(401).send({ error: 'Pair this device first.' });
+    }
+    const parsed = reflectionRebuildSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.code(400).send({ error: 'Enter a valid local date.' });
     }
     const now = new Date().toISOString();
     if (!readAiConfiguration(database)?.model) {
@@ -307,37 +308,19 @@ export const buildServer = async ({
         .code(409)
         .send({ error: 'There are no reflections from the past year.' });
     }
-    if (!queueInitialMemory(database, now)) {
+    if (
+      !resetAndQueueReflectionRebuild(
+        database,
+        now,
+        weekBounds(parsed.data.localDate),
+      )
+    ) {
       return reply
         .code(409)
-        .send({ error: 'Initial memory is already present or queued.' });
+        .send({ error: 'A reflection rebuild is already in progress.' });
     }
     aiWorker.wake();
     return reply.code(202).send({ status: 'waiting' });
-  });
-
-  server.post('/api/ai/memory/reset', async (request, reply) => {
-    if (!requireDevice(request)) {
-      return reply.code(401).send({ error: 'Pair this device first.' });
-    }
-    const now = new Date().toISOString();
-    database.transaction((transaction) => {
-      const memory = findDocument(transaction, reflectionMemoryId);
-      if (memory?.type === 'reflection-memory' && !memory.deletedAt) {
-        storeDocument(transaction, {
-          ...memory,
-          deletedAt: now,
-          updatedAt: now,
-          updatedByDeviceId: 'mindfull-server',
-        });
-      }
-      transaction.delete(aiMemoryBuilds).run();
-      transaction
-        .delete(aiJobs)
-        .where(eq(aiJobs.kind, 'initialize-memory'))
-        .run();
-    });
-    return reply.send({ reset: true });
   });
 
   if (webRoot && existsSync(resolve(webRoot, 'index.html'))) {

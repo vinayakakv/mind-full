@@ -208,6 +208,27 @@ describe('Mindfull server', () => {
       invoker: {
         reflect: async (configuration, input) => {
           expect(configuration.responseTimeoutMinutes).toBe(10);
+          if (input.sourceKind === 'memory-batch') {
+            return {
+              updatedMemory: {
+                context: ['The past year includes restorative rainy mornings.'],
+                supportivePatterns: ['Quiet observation.'],
+                recurringThemes: ['Weather and rest.'],
+                ongoingCommitments: [],
+                openQuestions: [],
+                uncertainImpressions: [],
+              },
+              updatedWeek: {
+                summary: '',
+                brightSpots: [],
+                difficultParts: [],
+                supportiveActions: [],
+                questionsToCarry: [],
+              },
+              taskSuggestions: [],
+              habitSuggestions: [],
+            };
+          }
           expect(input.activeTasks).toContain('Water the plants');
           expect(input.activeHabits).toContainEqual({
             name: 'Open the curtains',
@@ -242,6 +263,15 @@ describe('Mindfull server', () => {
             ],
           };
         },
+        rebuildWeek: async (_configuration, input) => ({
+          updatedWeek: {
+            summary: `Rebuilt from this week: ${input.sourceText}`,
+            brightSpots: ['Listening to rain'],
+            difficultParts: [],
+            supportiveActions: ['Sitting quietly by the window'],
+            questionsToCarry: [],
+          },
+        }),
       },
     });
     const token = await pairDevice(server, 'phone');
@@ -260,7 +290,7 @@ describe('Mindfull server', () => {
     });
     expect(configuration.statusCode).toBe(200);
 
-    const completedAt = new Date(Date.now() + 60_000).toISOString();
+    const completedAt = new Date().toISOString();
     const task = createTaskDocument({
       id: 'active-task',
       now: completedAt,
@@ -332,6 +362,62 @@ describe('Mindfull server', () => {
     expect(
       generated.filter(({ type }) => type === 'habit-suggestion'),
     ).toHaveLength(1);
+
+    const rebuild = await server.inject({
+      method: 'POST',
+      url: '/api/ai/reflections/rebuild',
+      headers: authorization,
+      payload: { localDate: journal.payload.localDate },
+    });
+    expect(rebuild.statusCode).toBe(202);
+
+    let rebuilt: Array<{
+      type: string;
+      deletedAt: string | null;
+      payload: { sections?: { summary?: string } };
+    }> = [];
+    for (let attempt = 0; attempt < 30; attempt += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      const pull = await server.inject({
+        method: 'POST',
+        url: '/api/sync',
+        headers: authorization,
+        payload: { cursor: 0, documents: [] },
+      });
+      rebuilt = pull.json<{ documents: typeof rebuilt }>().documents;
+      if (
+        rebuilt.some(
+          (document) =>
+            document.type === 'weekly-reflection' &&
+            document.payload.sections?.summary?.startsWith('Rebuilt'),
+        )
+      ) {
+        break;
+      }
+    }
+
+    expect(rebuilt).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: 'reflection-memory', deletedAt: null }),
+        expect.objectContaining({
+          type: 'weekly-reflection',
+          deletedAt: null,
+          payload: expect.objectContaining({
+            sections: expect.objectContaining({
+              summary: expect.stringContaining('Rebuilt from this week'),
+            }),
+          }),
+        }),
+        expect.objectContaining({
+          type: 'task-suggestion',
+          deletedAt: expect.any(String),
+        }),
+        expect.objectContaining({
+          type: 'habit-suggestion',
+          deletedAt: expect.any(String),
+        }),
+      ]),
+    );
     await server.close();
   });
 
@@ -342,6 +428,9 @@ describe('Mindfull server', () => {
       },
       invoker: {
         reflect: async () => {
+          throw new Error('The invoker should not run.');
+        },
+        rebuildWeek: async () => {
           throw new Error('The invoker should not run.');
         },
       },
@@ -403,13 +492,13 @@ describe('Mindfull server', () => {
       headers: authorization,
       payload: { cursor: 0, documents: [journal] },
     });
-    const initialize = await server.inject({
+    const rebuild = await server.inject({
       method: 'POST',
-      url: '/api/ai/memory/initialize',
+      url: '/api/ai/reflections/rebuild',
       headers: authorization,
-      payload: {},
+      payload: { localDate: completedAt.slice(0, 10) },
     });
-    expect(initialize.statusCode).toBe(202);
+    expect(rebuild.statusCode).toBe(202);
 
     const progressResponse = await server.inject({
       method: 'GET',
@@ -417,8 +506,9 @@ describe('Mindfull server', () => {
       headers: authorization,
     });
     expect(progressResponse.json()).toMatchObject({
-      memoryInitialization: {
+      reflectionRebuild: {
         state: 'waiting',
+        phase: 'memory',
         processedSources: 0,
         totalSources: 1,
       },

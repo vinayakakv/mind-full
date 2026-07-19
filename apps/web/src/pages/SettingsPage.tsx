@@ -265,8 +265,8 @@ function AiSettings({ isPaired }: { isPaired: boolean }) {
         <div className={styles.aiStatusBlock}>
           <p className={styles.aiStatus} data-status={configuration.status}>
             {aiStatusText[configuration.status]}
-            {configuration.memoryInitialization
-              ? ` Building memory: ${configuration.memoryInitialization.processedSources} of ${configuration.memoryInitialization.totalSources} past reflections processed${configuration.memoryInitialization.state === 'running' ? '; processing a batch now' : ''}.`
+            {configuration.reflectionRebuild
+              ? ` Rebuilding ${configuration.reflectionRebuild.phase === 'memory' ? 'memory' : 'this week'}: ${configuration.reflectionRebuild.processedSources} of ${configuration.reflectionRebuild.totalSources} reflections processed${configuration.reflectionRebuild.state === 'running' ? '; processing a batch now' : ''}.`
               : configuration.pendingJobs
                 ? ` ${configuration.pendingJobs} reflection${configuration.pendingJobs === 1 ? '' : 's'} waiting.`
                 : ''}

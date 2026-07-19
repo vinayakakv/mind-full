@@ -4,10 +4,11 @@ import { useEffect, useState } from 'react';
 import { Button } from 'react-aria-components';
 import { Link } from 'react-router';
 
+import { ActionDialog } from '../components/ui/ActionDialog';
 import {
   type AiConfigurationView,
-  initializeReflectionMemory,
   loadAiConfiguration,
+  rebuildReflections,
 } from '../data/ai';
 import { rejectHabitSuggestion } from '../data/habits';
 import { loadReflectionData } from '../data/reflection';
@@ -16,7 +17,7 @@ import { acceptTaskSuggestion, rejectTaskSuggestion } from '../data/tasks';
 import type { AiStatus } from '../state/ai';
 import styles from './ReflectPage.module.css';
 
-type MemoryInitialization = AiConfigurationView['memoryInitialization'];
+type ReflectionRebuild = AiConfigurationView['reflectionRebuild'];
 
 const statusText: Record<AiStatus, string> = {
   'not-configured':
@@ -28,24 +29,26 @@ const statusText: Record<AiStatus, string> = {
   paused: 'Reflection is paused.',
 };
 
-const memoryProgressText = (
-  progress: NonNullable<MemoryInitialization>,
+const rebuildProgressText = (
+  progress: NonNullable<ReflectionRebuild>,
   status: AiStatus,
 ): string => {
-  const amount = `${progress.processedSources} of ${progress.totalSources} past ${progress.totalSources === 1 ? 'reflection' : 'reflections'} processed`;
+  const subject = progress.phase === 'memory' ? 'past' : 'this week’s';
+  const amount = `${progress.processedSources} of ${progress.totalSources} ${subject} ${progress.totalSources === 1 ? 'reflection' : 'reflections'} processed`;
+  const name = progress.phase === 'memory' ? 'Memory' : 'This week';
   if (progress.state === 'running') {
-    return `Building memory · processing a batch · ${amount}.`;
+    return `Rebuilding ${name.toLocaleLowerCase()} · processing a batch · ${amount}.`;
   }
   if (progress.state === 'failed') {
-    return `The memory build needs attention · ${amount}.`;
+    return `The reflection rebuild needs attention · ${amount}.`;
   }
   if (status === 'unavailable') {
-    return `Memory build waiting for the model · ${amount}.`;
+    return `Reflection rebuild waiting for the model · ${amount}.`;
   }
   if (status === 'paused') {
-    return `Memory build paused · ${amount}.`;
+    return `Reflection rebuild paused · ${amount}.`;
   }
-  return `Building memory · ${amount}.`;
+  return `Rebuilding ${name.toLocaleLowerCase()} · ${amount}.`;
 };
 
 type ReflectionSource = JournalDocument | CheckInDocument;
@@ -110,9 +113,10 @@ export function ReflectPage() {
   const [status, setStatus] = useState<AiStatus>('not-configured');
   const [pendingJobs, setPendingJobs] = useState(0);
   const [failedJobs, setFailedJobs] = useState(0);
-  const [memoryInitialization, setMemoryInitialization] =
-    useState<MemoryInitialization>(null);
+  const [reflectionRebuild, setReflectionRebuild] =
+    useState<ReflectionRebuild>(null);
   const [isStarting, setIsStarting] = useState(false);
+  const [isRebuildOpen, setIsRebuildOpen] = useState(false);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -124,7 +128,7 @@ export function ReflectPage() {
         setStatus(configuration.status);
         setPendingJobs(configuration.pendingJobs);
         setFailedJobs(configuration.failedJobs);
-        setMemoryInitialization(configuration.memoryInitialization);
+        setReflectionRebuild(configuration.reflectionRebuild);
         if (configuration.pendingJobs === 0) await synchronize();
       } catch {
         // Reflect remains readable while the backend is unavailable.
@@ -135,15 +139,18 @@ export function ReflectPage() {
     return () => window.clearInterval(interval);
   }, []);
 
-  const initialize = async () => {
+  const rebuild = async () => {
     setIsStarting(true);
     setError(null);
     try {
-      await initializeReflectionMemory();
+      await rebuildReflections();
       setPendingJobs((count) => count + 1);
+      setIsRebuildOpen(false);
     } catch (caught) {
       setError(
-        caught instanceof Error ? caught.message : 'Memory could not begin.',
+        caught instanceof Error
+          ? caught.message
+          : 'Reflections could not be rebuilt.',
       );
     } finally {
       setIsStarting(false);
@@ -178,6 +185,12 @@ export function ReflectPage() {
   const week = reflection?.currentWeek;
   const weekSections = week?.payload.sections;
   const questions = weekSections?.questionsToCarry ?? [];
+  const hasGeneratedReflections = Boolean(
+    memory ||
+      week ||
+      reflection?.taskSuggestions.length ||
+      reflection?.habitSuggestions.length,
+  );
 
   return (
     <section className={styles.page}>
@@ -186,8 +199,8 @@ export function ReflectPage() {
       <p className={styles.status} data-status={status}>
         {failedJobs
           ? 'Some reflection work could not be completed. You can retry it in Settings.'
-          : memoryInitialization
-            ? memoryProgressText(memoryInitialization, status)
+          : reflectionRebuild
+            ? rebuildProgressText(reflectionRebuild, status)
             : pendingJobs
               ? `Reflecting on ${pendingJobs} waiting ${pendingJobs === 1 ? 'entry' : 'entries'}.`
               : statusText[status]}
@@ -357,18 +370,66 @@ export function ReflectPage() {
             </p>
             <Button
               className={styles.primaryButton}
-              onPress={initialize}
+              onPress={() => void rebuild()}
               isDisabled={
-                isStarting || pendingJobs > 0 || status === 'not-configured'
+                isStarting ||
+                Boolean(reflectionRebuild) ||
+                pendingJobs > 0 ||
+                status === 'not-configured'
               }
             >
               {isStarting ? 'Beginning…' : 'Build from the past year'}
             </Button>
           </article>
         )}
+
+        {hasGeneratedReflections ? (
+          <div className={styles.rebuildArea}>
+            <Button
+              className={styles.rebuildButton}
+              onPress={() => setIsRebuildOpen(true)}
+              isDisabled={Boolean(reflectionRebuild) || isStarting}
+            >
+              Reset and rebuild reflections
+            </Button>
+            <p>
+              Begin again from the past year and rebuild this week with the
+              selected model.
+            </p>
+          </div>
+        ) : null}
       </div>
 
       {error ? <p className={styles.error}>{error}</p> : null}
+
+      {isRebuildOpen ? (
+        <ActionDialog
+          eyebrow="Reflection"
+          title="Begin again?"
+          onClose={() => setIsRebuildOpen(false)}
+        >
+          <p className={styles.dialogCopy}>
+            Mindfull will clear its long-term memory, this week’s reflection,
+            and pending suggestions. Your journals, check-ins, tasks, habits,
+            and earlier decisions remain unchanged.
+          </p>
+          <div className={styles.dialogActions}>
+            <Button
+              className={styles.textButton}
+              onPress={() => setIsRebuildOpen(false)}
+            >
+              Keep reflections
+            </Button>
+            <Button
+              className={styles.primaryButton}
+              onPress={() => void rebuild()}
+              isDisabled={isStarting}
+            >
+              {isStarting ? 'Beginning…' : 'Reset and rebuild'}
+            </Button>
+          </div>
+        </ActionDialog>
+      ) : null}
     </section>
   );
 }

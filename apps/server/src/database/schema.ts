@@ -96,7 +96,16 @@ export const aiMemoryBuilds = sqliteTable('ai_memory_builds', {
     .primaryKey()
     .references(() => aiJobs.id),
   markdown: text('markdown').notNull(),
+  memorySections: text('memory_sections'),
   nextSourceIndex: integer('next_source_index').notNull(),
   sourceDocumentIds: text('source_document_ids').notNull(),
+  phase: text('phase').notNull().default('memory'),
+  weekStart: text('week_start'),
+  weekEnd: text('week_end'),
+  weekSections: text('week_sections'),
+  weekSourceIndex: integer('week_source_index').notNull().default(0),
+  weekSourceDocumentIds: text('week_source_document_ids')
+    .notNull()
+    .default('[]'),
   updatedAt: text('updated_at').notNull(),
 });

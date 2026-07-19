@@ -44,16 +44,6 @@
   padding-bottom: 1.5rem;
 }
 
-.resetButton,
-.textButton {
-  background: transparent;
-  border: 0;
-  color: var(--text-muted);
-  cursor: pointer;
-  font: inherit;
-  padding: 0.45rem;
-}
-
 .sections > section,
 .markdown {
   border-bottom: 1px solid var(--border-subtle);
@@ -109,46 +99,8 @@
   margin-top: 4rem;
 }
 
-.error {
-  color: var(--text-danger);
-  font-size: 0.8rem;
-}
-
-.dialogCopy {
-  color: var(--text-muted);
-  font-family: var(--font-reflection);
-  line-height: 1.6;
-}
-
-.dialogActions {
-  display: flex;
-  gap: 0.75rem;
-  justify-content: flex-end;
-  margin-top: 2rem;
-}
-
-.dangerButton {
-  background: var(--text-danger);
-  border: 0;
-  border-radius: 2rem;
-  color: var(--surface-canvas);
-  cursor: pointer;
-  font: inherit;
-  padding: 0.65rem 1rem;
-}
-
-.dangerButton[data-disabled] {
-  cursor: default;
-  opacity: 0.5;
-}
-
 @media (max-width: 36rem) {
   .header {
     gap: 1rem;
-  }
-
-  .meta {
-    align-items: flex-start;
-    flex-direction: column;
   }
 }

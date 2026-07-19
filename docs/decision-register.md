@@ -136,8 +136,9 @@ topic documents contain the detailed rationale and behavior.
   not deploy or lifecycle-manage it.
 - The backend uses a stateful push contract: Mindfull supplies bounded memory
   and task input; the model receives no tools.
-- Global Markdown reflection memory is visible, resettable, bounded, and
-  updated atomically with task-specific output.
+- Generated memory, the current-week reflection, and pending suggestions share
+  one Reflect-level reset-and-rebuild action. Memory and the rebuilt week are
+  published together after durable chronological processing.
 - AI jobs are asynchronous and do not block product flows.
 - Scheduler jobs run inside the backend container, never host crontab.
 - Default weekly review schedule is Sunday at 7:00 PM.

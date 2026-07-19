@@ -214,7 +214,7 @@ compatibility.
 One server-authored synchronized document contains bounded structured memory, a
 derived Markdown representation, a monotonically increasing revision, latest
 source provenance, and generation metadata. It remains user-visible,
-resettable, and read-only.
+read-only, and rebuildable together with the current-week reflection.
 
 ### Current-week reflection
 

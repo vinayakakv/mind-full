@@ -6,7 +6,10 @@ import {
   createWeeklyReflectionDocument,
   type ReflectionMemoryDocument,
   type ReflectionMemorySections,
+  reflectionMemorySectionsSchema,
   type WeeklyReflectionDocument,
+  type WeeklyReflectionSections,
+  weeklyReflectionSectionsSchema,
 } from '@mindfull/domain';
 import { NoObjectGeneratedError } from 'ai';
 import { eq } from 'drizzle-orm';
@@ -23,10 +26,13 @@ import {
   providerErrorCode,
   type ReflectionInput,
   type ReflectionOutput,
+  type WeeklyRebuildInput,
+  type WeeklyRebuildOutput,
 } from './provider.js';
 import {
   analysisVersion,
   currentWeekReflectionId,
+  currentWeekSources,
   findCurrentWeekReflection,
   findDomainDocument,
   findReflectionMemory,
@@ -160,6 +166,36 @@ const invokeReflection = async (
 
   try {
     return await invoker.reflect(configuration, {
+      ...input,
+      correction:
+        'The previous response did not match the required schema. Return only a complete valid result.',
+    });
+  } catch (error) {
+    if (NoObjectGeneratedError.isInstance(error)) {
+      throw new InvalidOutputError([
+        firstFailure,
+        outputAttemptDiagnostic(error, 2),
+      ]);
+    }
+    throw error;
+  }
+};
+
+const invokeWeeklyRebuild = async (
+  invoker: AiInvoker,
+  configuration: ProviderConfiguration,
+  input: WeeklyRebuildInput,
+): Promise<WeeklyRebuildOutput> => {
+  let firstFailure: AiOutputAttemptDiagnostic;
+  try {
+    return await invoker.rebuildWeek(configuration, input);
+  } catch (error) {
+    if (!NoObjectGeneratedError.isInstance(error)) throw error;
+    firstFailure = outputAttemptDiagnostic(error, 1);
+  }
+
+  try {
+    return await invoker.rebuildWeek(configuration, {
       ...input,
       correction:
         'The previous response did not match the required schema. Return only a complete valid result.',
@@ -526,20 +562,114 @@ const initialBatch = (
   return selected;
 };
 
-const processInitialMemory = async (
+const chronologicalSourceText = (
+  sources: ReturnType<typeof historicalSources>,
+): string =>
+  sources
+    .map((source) =>
+      [
+        `[${source.payload.localDate} · ${source.type}]`,
+        sourceText(source),
+      ].join('\n'),
+    )
+    .join('\n\n---\n\n');
+
+const rebuiltWeekDocument = (
+  sections: WeeklyReflectionSections,
+  sourceDocumentIds: string[],
+  weekStart: string,
+  weekEnd: string,
+  configuration: ProviderConfiguration,
+  now: string,
+): WeeklyReflectionDocument =>
+  createWeeklyReflectionDocument({
+    id: currentWeekReflectionId,
+    payload: {
+      revision: 1,
+      weekStart,
+      weekEnd,
+      sections,
+      updatedFromDocumentIds: sourceDocumentIds.slice(-100),
+      generatedAt: now,
+      provider: 'openai-compatible',
+      model: configuration.model,
+      analysisVersion,
+    },
+    now,
+    deviceId: serverDeviceId,
+  });
+
+const publishReflectionRebuild = (
   database: MindfullDatabase,
   job: typeof aiJobs.$inferSelect,
+  memorySections: ReflectionMemorySections,
+  memorySourceDocumentIds: string[],
+  week: {
+    sections: WeeklyReflectionSections;
+    sourceDocumentIds: string[];
+    weekStart: string;
+    weekEnd: string;
+  } | null,
+  configuration: ProviderConfiguration,
+  now: string,
+): void => {
+  const memory = memoryDocument(
+    null,
+    memorySections,
+    memorySourceDocumentIds.slice(-100),
+    configuration,
+    now,
+  );
+  const weekDocument = week
+    ? rebuiltWeekDocument(
+        week.sections,
+        week.sourceDocumentIds,
+        week.weekStart,
+        week.weekEnd,
+        configuration,
+        now,
+      )
+    : null;
+
+  database.transaction((transaction) => {
+    const currentMemory = findDocument(transaction, reflectionMemoryId);
+    const currentWeek = findDocument(transaction, currentWeekReflectionId);
+    if (
+      (currentMemory && !currentMemory.deletedAt) ||
+      (currentWeek && !currentWeek.deletedAt)
+    ) {
+      throw new StaleMemoryError(
+        'Reflections changed while the rebuild was running.',
+      );
+    }
+    storeDocument(transaction, memory);
+    if (weekDocument) storeDocument(transaction, weekDocument);
+    transaction
+      .delete(aiMemoryBuilds)
+      .where(eq(aiMemoryBuilds.jobId, job.id))
+      .run();
+    transaction
+      .update(aiJobs)
+      .set({
+        state: 'completed',
+        completedAt: now,
+        leaseOwner: null,
+        leaseExpiresAt: null,
+        lastErrorCode: null,
+      })
+      .where(eq(aiJobs.id, job.id))
+      .run();
+  });
+};
+
+const processMemoryRebuild = async (
+  database: MindfullDatabase,
+  job: typeof aiJobs.$inferSelect,
+  build: typeof aiMemoryBuilds.$inferSelect,
   configuration: ProviderConfiguration,
   invoker: AiInvoker,
   now: string,
 ): Promise<void> => {
-  const build = database
-    .select()
-    .from(aiMemoryBuilds)
-    .where(eq(aiMemoryBuilds.jobId, job.id))
-    .get();
-  if (!build) throw new Error('The initial memory build is unavailable.');
-
   const sources = historicalSources(database, now);
   const batch = initialBatch(sources, build.nextSourceIndex);
   if (!batch.length) throw new Error('There are no reflections to remember.');
@@ -553,13 +683,7 @@ const processInitialMemory = async (
     pendingHabitSuggestions: [],
     sourceKind: 'memory-batch',
     sourceLocalDate: null,
-    sourceText: batch
-      .map((source) =>
-        [`[${source.occurredAt ?? source.createdAt}]`, sourceText(source)].join(
-          '\n',
-        ),
-      )
-      .join('\n\n---\n\n'),
+    sourceText: chronologicalSourceText(batch),
   });
   const nextIndex = build.nextSourceIndex + batch.length;
   const sourceDocumentIds = [
@@ -573,6 +697,7 @@ const processInitialMemory = async (
         .update(aiMemoryBuilds)
         .set({
           markdown: reflectionMemoryMarkdownFor(output.updatedMemory),
+          memorySections: JSON.stringify(output.updatedMemory),
           nextSourceIndex: nextIndex,
           sourceDocumentIds: JSON.stringify(sourceDocumentIds),
           updatedAt: now,
@@ -588,36 +713,152 @@ const processInitialMemory = async (
     return;
   }
 
-  const memory = memoryDocument(
-    null,
-    output.updatedMemory,
-    sourceDocumentIds.slice(-100),
-    configuration,
-    now,
+  const weekSources = currentWeekSources(
+    database,
+    build.weekStart,
+    build.weekEnd,
   );
+  if (!weekSources.length || !build.weekStart || !build.weekEnd) {
+    publishReflectionRebuild(
+      database,
+      job,
+      output.updatedMemory,
+      sourceDocumentIds,
+      null,
+      configuration,
+      now,
+    );
+    return;
+  }
+
   database.transaction((transaction) => {
-    const currentMemory = findDocument(transaction, reflectionMemoryId);
-    if (currentMemory && !currentMemory.deletedAt) {
-      throw new StaleMemoryError(
-        'Reflection memory was created during initialization.',
-      );
-    }
-    storeDocument(transaction, memory);
     transaction
-      .delete(aiMemoryBuilds)
+      .update(aiMemoryBuilds)
+      .set({
+        phase: 'week',
+        markdown: reflectionMemoryMarkdownFor(output.updatedMemory),
+        memorySections: JSON.stringify(output.updatedMemory),
+        nextSourceIndex: nextIndex,
+        sourceDocumentIds: JSON.stringify(sourceDocumentIds),
+        updatedAt: now,
+      })
       .where(eq(aiMemoryBuilds.jobId, job.id))
       .run();
     transaction
       .update(aiJobs)
       .set({
-        state: 'completed',
-        completedAt: now,
+        state: 'waiting',
         leaseOwner: null,
         leaseExpiresAt: null,
       })
       .where(eq(aiJobs.id, job.id))
       .run();
   });
+};
+
+const processWeekRebuild = async (
+  database: MindfullDatabase,
+  job: typeof aiJobs.$inferSelect,
+  build: typeof aiMemoryBuilds.$inferSelect,
+  configuration: ProviderConfiguration,
+  invoker: AiInvoker,
+  now: string,
+): Promise<void> => {
+  if (!build.weekStart || !build.weekEnd || !build.memorySections) {
+    throw new Error('The weekly reflection rebuild is incomplete.');
+  }
+  const memorySections = reflectionMemorySectionsSchema.parse(
+    JSON.parse(build.memorySections),
+  );
+  const sources = currentWeekSources(database, build.weekStart, build.weekEnd);
+  const batch = initialBatch(sources, build.weekSourceIndex);
+  if (!batch.length) {
+    publishReflectionRebuild(
+      database,
+      job,
+      memorySections,
+      JSON.parse(build.sourceDocumentIds) as string[],
+      null,
+      configuration,
+      now,
+    );
+    return;
+  }
+  const currentSections = build.weekSections
+    ? weeklyReflectionSectionsSchema.parse(JSON.parse(build.weekSections))
+    : null;
+  const output = await invokeWeeklyRebuild(invoker, configuration, {
+    memoryMarkdown: build.markdown,
+    currentWeek: currentSections
+      ? {
+          weekStart: build.weekStart,
+          weekEnd: build.weekEnd,
+          sections: currentSections,
+        }
+      : null,
+    sourceText: chronologicalSourceText(batch),
+  });
+  const nextIndex = build.weekSourceIndex + batch.length;
+  const sourceDocumentIds = [
+    ...(JSON.parse(build.weekSourceDocumentIds) as string[]),
+    ...batch.map(({ id }) => id),
+  ];
+
+  if (nextIndex < sources.length) {
+    database.transaction((transaction) => {
+      transaction
+        .update(aiMemoryBuilds)
+        .set({
+          weekSections: JSON.stringify(output.updatedWeek),
+          weekSourceIndex: nextIndex,
+          weekSourceDocumentIds: JSON.stringify(sourceDocumentIds),
+          updatedAt: now,
+        })
+        .where(eq(aiMemoryBuilds.jobId, job.id))
+        .run();
+      transaction
+        .update(aiJobs)
+        .set({ state: 'waiting', leaseOwner: null, leaseExpiresAt: null })
+        .where(eq(aiJobs.id, job.id))
+        .run();
+    });
+    return;
+  }
+
+  publishReflectionRebuild(
+    database,
+    job,
+    memorySections,
+    JSON.parse(build.sourceDocumentIds) as string[],
+    {
+      sections: output.updatedWeek,
+      sourceDocumentIds,
+      weekStart: build.weekStart,
+      weekEnd: build.weekEnd,
+    },
+    configuration,
+    now,
+  );
+};
+
+const processReflectionRebuild = async (
+  database: MindfullDatabase,
+  job: typeof aiJobs.$inferSelect,
+  configuration: ProviderConfiguration,
+  invoker: AiInvoker,
+  now: string,
+): Promise<void> => {
+  const build = database
+    .select()
+    .from(aiMemoryBuilds)
+    .where(eq(aiMemoryBuilds.jobId, job.id))
+    .get();
+  if (!build) throw new Error('The reflection rebuild is unavailable.');
+  if (build.phase === 'week') {
+    await processWeekRebuild(database, job, build, configuration, invoker, now);
+    return;
+  }
+  await processMemoryRebuild(database, job, build, configuration, invoker, now);
 };
 
 const providerFailure = (
@@ -737,8 +978,11 @@ export const startAiWorker = (
         .run();
 
       try {
-        if (job.kind === 'initialize-memory') {
-          await processInitialMemory(
+        if (
+          job.kind === 'rebuild-reflections' ||
+          job.kind === 'initialize-memory'
+        ) {
+          await processReflectionRebuild(
             database,
             job,
             configuration,
