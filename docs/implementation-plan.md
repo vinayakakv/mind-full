@@ -101,8 +101,12 @@ Morning and evening check-ins are separate editable documents. Both use a
 resumable, fully skippable flow with named states, emotion words, stable prompt
 snapshots, and an optional final reflection. Curated wording rotates
 deterministically by local date, so creating or resuming a check-in never
-depends on connectivity or randomness. The Today screen offers the relevant
-flow from synchronized time boundaries while keeping the other flow available.
+depends on connectivity or randomness. Its language is concrete and easy to
+answer: morning energy ranges from Drained to Energized, evening stress from
+Low to High, and abstract prompt wording has been replaced with direct
+questions while retaining stable prompt IDs. The Today screen offers the
+relevant flow from synchronized time boundaries while keeping the other flow
+available.
 
 Journal entries now use the same typed document and synchronization path as the
 rest of the local-first domain. Writing autosaves to IndexedDB, survives an

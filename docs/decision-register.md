@@ -22,6 +22,11 @@ topic documents contain the detailed rationale and behavior.
   editable only while it is a draft and becomes immutable on completion.
 - Morning/evening boundaries are configurable.
 - Prompt selection rotates.
+- Curated prompts favor simple, concrete questions over poetic or abstract
+  wording. Choice labels describe the state directly and form an intelligible
+  scale.
+- Prompt IDs remain stable across wording improvements; each check-in stores
+  the exact prompt snapshot it presented.
 - AI may introduce new questions based on history.
 - AI questions are generated ahead of time, visibly labeled, and linked to
   their exact source.

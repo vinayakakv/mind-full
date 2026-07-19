@@ -79,13 +79,18 @@ section lets the user review them early.
   them.
 - Answering or skipping an AI question permanently resolves that prompt
   instance.
+- Curated questions use direct, concrete language. Warmth comes from tone and
+  pacing rather than metaphors or abstract terms that require interpretation.
+- Refining curated wording does not change its prompt ID. Completed check-ins
+  preserve the exact prompt text that was shown when they were created.
 
 ## Morning check-in
 
 The exact prompts rotate, but the flow follows this shape:
 
 1. A short arrival or breathing pause
-2. Named energy and mood choices
+2. Named energy and mood choices. Energy uses Drained, Low, Steady, and
+   Energized; mood uses Tender, Even, Hopeful, and Light.
 3. A small selection of emotion words
 4. Something good, meaningful, or appreciated
 5. Acknowledgement of an expected difficulty
@@ -102,7 +107,8 @@ must respect the two-minute target.
 The exact prompts rotate, but the flow follows this shape:
 
 1. A short decompression transition
-2. Named mood and stress choices
+2. Named mood and stress choices. Mood uses Heavy, Tender, Content, and At
+   ease; stress uses Low, Noticeable, and High.
 3. A small selection of emotion words
 4. What felt good or went well
 5. What was difficult
