@@ -14,11 +14,7 @@ COPY patches ./patches
 RUN pnpm install --frozen-lockfile
 
 COPY . .
-RUN pnpm --filter @mindfull/domain build \
-  && pnpm --filter @mindfull/domain test \
-  && pnpm --filter @mindfull/web test \
-  && pnpm --filter @mindfull/server test \
-  && pnpm build
+RUN pnpm build
 
 FROM node:24.18-alpine AS runtime
 

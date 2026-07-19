@@ -27,9 +27,10 @@ provider is unavailable.
 
 ## Container publishing
 
-GitHub Actions builds the container for `linux/amd64` and `linux/arm64`. Pull
-requests build without publishing. Pushes to `main`, version tags, and manual
-runs publish to `ghcr.io/vinayakakv/mind-full` with these tags:
+GitHub Actions tests the workspace outside Docker, then builds the production
+container for `linux/arm64` for Raspberry Pi deployment. Pull requests build
+without publishing. Pushes to `main`, version tags, and manual runs publish to
+`ghcr.io/vinayakakv/mind-full` with these tags:
 
 - `sha-<commit>` for an immutable deployment reference
 - the Git version tag for tags beginning with `v`
@@ -232,7 +233,8 @@ key. A release APK cannot update a debug-signed installation, so sync before
 the one-time transition.
 
 The Android GitHub workflow builds signed APK artifacts for `v*` tags and
-manual runs. It expects repository secrets named `ANDROID_KEYSTORE_BASE64`,
+manual runs. For `v*` tags it also attaches the APK to the GitHub Release. It
+expects repository secrets named `ANDROID_KEYSTORE_BASE64`,
 `ANDROID_STORE_PASSWORD`, `ANDROID_KEY_ALIAS`, and `ANDROID_KEY_PASSWORD`.
 Create the first secret with
 `base64 < mindfull-release.jks | pbcopy` on macOS.
