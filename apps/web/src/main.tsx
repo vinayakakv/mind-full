@@ -2,7 +2,10 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { App, router } from './App';
-import { startNotificationCoordinator } from './data/notifications';
+import {
+  requestInitialNotificationAccess,
+  startNotificationCoordinator,
+} from './data/notifications';
 import { migrateLegacyHabitReminders } from './data/reminders';
 import { ensureSettings } from './data/settings';
 import './styles/global.css';
@@ -24,6 +27,9 @@ const start = async () => {
   );
   startNotificationCoordinator({
     openPath: (path) => void router.navigate(path),
+  });
+  void requestInitialNotificationAccess().catch(() => {
+    // Settings remains available if Android interrupts the first request.
   });
 };
 

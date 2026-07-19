@@ -21,6 +21,8 @@ import { setTaskCompleted, snoozeTaskReminder } from './tasks';
 import { localDateFor } from './time';
 
 const maximumTimeoutMs = 2_147_000_000;
+const initialNotificationAccessKey =
+  'mindfull.initial-notification-access-requested';
 
 export type BrowserNotificationPermission =
   | NotificationPermission
@@ -314,6 +316,27 @@ export const requestExactNotificationPermission =
     await reconcileNotifications();
     return permission;
   };
+
+export const requestInitialNotificationAccess = async (): Promise<void> => {
+  if (
+    !hasNativeNotifications() ||
+    window.localStorage.getItem(initialNotificationAccessKey)
+  ) {
+    return;
+  }
+
+  let display = (await nativeNotificationPermission()).display;
+  if (display !== 'granted') {
+    display = (await requestNativeNotificationPermission()).display;
+  }
+
+  window.localStorage.setItem(initialNotificationAccessKey, 'requested');
+  if (display !== 'granted' || !hasNativeExactAlarms()) return;
+
+  const exact = (await nativeExactAlarmPermission()).exact_alarm;
+  if (exact !== 'granted') await requestNativeExactAlarmPermission();
+  await reconcileNotifications();
+};
 
 export const dismissActiveReminder = async (
   reminderId: string,
