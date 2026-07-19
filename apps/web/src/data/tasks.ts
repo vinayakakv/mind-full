@@ -29,6 +29,20 @@ export {
   snoozeTaskReminder,
 };
 
+export const orderTasksForList = (
+  tasks: readonly TaskDocument[],
+): TaskDocument[] =>
+  [...tasks].sort((left, right) => {
+    const completionOrder =
+      Number(Boolean(left.payload.completedAt)) -
+      Number(Boolean(right.payload.completedAt));
+    if (completionOrder) return completionOrder;
+
+    const leftAt = left.payload.completedAt ?? left.createdAt;
+    const rightAt = right.payload.completedAt ?? right.createdAt;
+    return rightAt.localeCompare(leftAt) || right.id.localeCompare(left.id);
+  });
+
 export const loadTasks = async (): Promise<TaskDocument[]> => {
   const documents = await documentTable()
     .where('type')

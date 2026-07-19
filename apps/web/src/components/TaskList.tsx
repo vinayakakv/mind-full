@@ -14,6 +14,7 @@ import {
   addTask,
   deleteTask,
   loadTasks,
+  orderTasksForList,
   setTaskCompleted,
 } from '../data/tasks';
 import { useCurrentTime } from '../hooks/use-current-time';
@@ -24,18 +25,13 @@ const visibleTasks = (
   documents: Awaited<ReturnType<typeof loadTasks>>,
   now: string,
 ) => {
-  return documents
-    .filter(
+  return orderTasksForList(
+    documents.filter(
       (task) =>
         !task.deletedAt &&
         (!task.payload.availableFrom || task.payload.availableFrom <= now),
-    )
-    .sort((left, right) => {
-      const completionOrder =
-        Number(Boolean(left.payload.completedAt)) -
-        Number(Boolean(right.payload.completedAt));
-      return completionOrder || left.createdAt.localeCompare(right.createdAt);
-    });
+    ),
+  );
 };
 
 export function TaskList() {
