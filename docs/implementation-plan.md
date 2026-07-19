@@ -256,13 +256,18 @@ Milestone 3.
 - [x] Journal/check-in summaries, themes, and unfinished commitments
 - [ ] Ahead-of-time one-time prompt candidates
 - [ ] Local embeddings and semantic passage search
-- [ ] In-container weekly-review scheduling and catch-up behavior
-- [ ] Weekly review snapshots
+- [x] Rolling current-week reflection without a separate scheduled snapshot
 - [x] Daily SQLite backups (completed July 17, 2026)
 
 The model is user-configured rather than part of Mindfull's Compose deployment.
 llama.cpp's `llama-server` is the reference local provider; the Vercel AI SDK
 preserves the generic OpenAI-compatible boundary.
+
+The current-week reflection is updated after each completed journal or check-in
+is processed. The first processed reflection from a new week replaces it. A
+second end-of-week model pass, scheduled weekly-review job, and archived weekly
+snapshot are intentionally omitted because they would duplicate the same
+generated material.
 
 ## Commit strategy
 

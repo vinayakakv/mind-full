@@ -229,30 +229,13 @@ read-only, and rebuildable together with the current-week reflection.
 A server-authored synchronized singleton contains bounded summary, bright
 spots, difficult parts, supportive actions, and questions to carry for one
 Monday-through-Sunday week. Memory, current week, and suggestions are one
-atomic transition.
+atomic transition. The first processed source from the following week replaces
+the singleton; a separate weekly-review snapshot is not stored.
 
 ### Insight
 
 A concise derived observation with a type, text, supporting date range, source
 document IDs, creation time, and dismissal state.
-
-### Weekly review
-
-```ts
-type WeeklyReviewPayload = {
-  weekStart: string;
-  weekEnd: string;
-  generatedMarkdown: string;
-  sourceDocumentIds: string[];
-  generatedAt: string;
-  provider: string;
-  model: string;
-};
-```
-
-Generated content is a snapshot and is not silently regenerated. Personal
-reflection prompted by a review is written as a separate journal entry so the
-review itself remains a read-only summary.
 
 ### Reminder
 

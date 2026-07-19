@@ -71,8 +71,9 @@ topic documents contain the detailed rationale and behavior.
   `/health/metrics`.
 - Titles are optional; there are no tags initially.
 - Analysis status may be shown subtly.
-- Weekly reviews are read-only generated snapshots.
-- Missed scheduled reviews run after backend restart.
+- The current-week reflection rolls forward after each processed journal or
+  check-in and is replaced by the first processed reflection of the next week.
+- There is no separate scheduled weekly review or archived weekly snapshot.
 - Semantic search initially returns passages and source links, not chat answers.
 
 ## Health
@@ -152,7 +153,7 @@ topic documents contain the detailed rationale and behavior.
   published together after durable chronological processing.
 - AI jobs are asynchronous and do not block product flows.
 - Scheduler jobs run inside the backend container, never host crontab.
-- Default weekly review schedule is Sunday at 7:00 PM.
+- Reflection work is source-driven; there is no end-of-week review schedule.
 - Daily SQLite backups retain seven daily and four weekly snapshots.
 - Import/export UI is deferred.
 - The one-time Stoic migration is a dry-run-first operational command. It adds

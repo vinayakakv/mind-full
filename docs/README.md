@@ -25,7 +25,7 @@ defaults.
 - [Architecture and sync](./architecture-and-sync.md) — frontend, backend,
   local-first storage, conflict resolution, and native shells.
 - [AI system](./ai-system.md) — provider boundary, asynchronous analysis,
-  prompt candidates, semantic search, and weekly reviews.
+  prompt candidates, semantic search, and the rolling current-week reflection.
 - [Visual and interaction system](./visual-and-interaction-system.md) — tone,
   typography, themes, layout, and motion.
 - [Deployment and operations](./deployment-and-operations.md) — Raspberry Pi,

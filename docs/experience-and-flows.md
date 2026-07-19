@@ -8,8 +8,8 @@ Mindfull has three primary destinations:
   most one recent insight.
 - **History** — a chronological record of journals, completed check-ins, habit
   completions, and explicitly recorded misses.
-- **Reflect** — weekly reviews, insights, themes, streaks, correlations, and
-  semantic search.
+- **Reflect** — the current-week reflection, insights, themes, streaks,
+  correlations, and semantic search.
 
 Health is a dedicated secondary destination reached from a restrained card on
 Today and a utility icon beside Settings. It does not occupy a permanent

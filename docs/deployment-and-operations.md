@@ -69,13 +69,12 @@ tailscale serve status
 
 All application schedules run inside the `mindfull` backend container.
 
-Daily backups already use a persisted run row and a small in-container polling
-loop. The broader leased job queue arrives with AI work and weekly reviews.
-Neither scheduler relies on host timers.
+Daily backups use a persisted run row and a small in-container polling loop.
+AI work uses the broader leased job queue. Neither mechanism relies on host
+timers.
 
 Scheduled work includes:
 
-- Weekly review generation
 - Daily SQLite backups
 - Completed-task retention cleanup
 - AI retry processing
@@ -85,8 +84,6 @@ If the container is down at the daily backup time, the latest elapsed backup
 slot runs after startup. Its slot is claimed idempotently, and a stale or failed
 run can be retried. Future AI jobs use leases to prevent duplicate work after a
 crash.
-
-The default weekly review time is Sunday at 7:00 PM in the configured timezone.
 
 ## Backups
 

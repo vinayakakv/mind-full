@@ -13,7 +13,7 @@ Initial AI capabilities:
 - Unfinished-commitment detection
 - Habit correlations
 - Personalized one-time prompt candidates
-- Weekly reviews and grounded encouragement
+- A rolling current-week reflection and grounded encouragement
 - Local embeddings for semantic passage search
 
 ## Three layers
@@ -132,9 +132,9 @@ and unresolved task and habit suggestions. Journals and check-ins remain
 canonical.
 
 The current week is a synchronized singleton covering Monday through Sunday.
-It is reset when the first reflection from a new week is processed. Weekly
-snapshots will archive it when weekly-review scheduling is implemented; until
-then rollover replaces it instead of creating an unbounded history.
+It is replaced when the first reflection from a new week is processed. Mindfull
+does not run a second end-of-week model pass or archive weekly snapshots; the
+rolling reflection already contains that generated material.
 
 Memory is limited to roughly 1,500–2,000 words and uses stable sections for
 context worth remembering, supportive patterns, recurring themes, ongoing
@@ -250,24 +250,13 @@ Embeddings are derived and rebuildable. They are not synchronized to clients.
 If the Pi is offline, semantic search is unavailable while all source writing
 remains readable locally.
 
-## Weekly review
+## Current-week lifecycle
 
-The default schedule is Sunday at 7:00 PM in the configured timezone. The
-backend container owns this schedule and catches up after downtime.
-
-The review covers:
-
-- The week in a few lines
-- What brought ease, happiness, or meaning
-- What felt difficult
-- Habit relationships
-- Recurring themes
-- Unfinished commitments
-- A question for the coming week
-- Encouragement grounded in actual records
-
-Generated content is stored as a snapshot. The user may add a separate personal
-reflection. A failed scheduled generation can be retried or run on demand.
+Each completed journal or check-in updates the current-week reflection after it
+reaches the backend and the model is available. Work remains chronological and
+retries after provider downtime. The first processed source from a new week
+starts a fresh reflection in the existing singleton. There is no scheduled
+weekly finalization, separate review generation, or historical review archive.
 
 ## Privacy and degradation
 

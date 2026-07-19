@@ -67,7 +67,7 @@ intentional, and free from unnecessary layers.
 - AI task suggestions that always require approval
 - Personalized, one-time AI prompt candidates generated ahead of time
 - Habit correlations, recurring themes, check-in and journal summaries,
-  unfinished commitments, and weekly reviews
+  unfinished commitments, and a rolling current-week reflection
 - Streaks and gentle encouragement
 - Semantic search returning matching passages
 - Offline-first PWA
