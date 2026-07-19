@@ -1,6 +1,6 @@
 import { relevantCheckInKind } from '@mindfull/domain';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { NavLink, Outlet } from 'react-router';
+import { NavLink, Outlet, ScrollRestoration } from 'react-router';
 
 import { loadSettings } from '../data/settings';
 import { localTimeFor } from '../data/time';
@@ -113,6 +113,7 @@ export function AppShell() {
       <PrimaryNavigation
         className={`${styles.navigation} ${styles.mobileNavigation} ${isKeyboardOpen ? styles.mobileNavigationHidden : ''}`}
       />
+      <ScrollRestoration />
     </div>
   );
 }

@@ -16,8 +16,7 @@
 }
 
 .overviewHeading a,
-.detailActions a,
-.empty a {
+.detailActions a {
   color: var(--accent-strong);
   flex: none;
   font-size: 0.82rem;
@@ -144,6 +143,12 @@
   font-family: var(--font-reflection);
   line-height: 1.6;
   margin-top: 2rem;
+}
+
+.empty a {
+  color: var(--accent-strong);
+  font: inherit;
+  text-decoration: none;
 }
 
 .detailTitle {

@@ -22,6 +22,10 @@ primary named tab. Mobile uses restrained bottom navigation for Today, History,
 and Reflect. Desktop uses the same centered reading layout with a small top
 navigation. It should not grow a permanent sidebar.
 
+Opening a different routed page starts at its top. History is the deliberate
+exception when returning from an entry: it restores the stable entry anchor
+recorded in the URL.
+
 History records what happened; Reflect considers what it might mean. History
 is a human-readable projection of activity documents rather than a raw view of
 settings, reminders, or operational records.
