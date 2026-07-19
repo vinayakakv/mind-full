@@ -168,7 +168,7 @@ const invokeReflection = async (
     return await invoker.reflect(configuration, {
       ...input,
       correction:
-        'The previous response did not match the required schema. Return only a complete valid result.',
+        'The previous response did not match the required schema. Return only a complete valid result. Include at least one grounded weekly detail across brightSpots, difficultParts, supportiveActions, or questionsToCarry; leave a particular section empty only when the records do not support it.',
     });
   } catch (error) {
     if (NoObjectGeneratedError.isInstance(error)) {
@@ -198,7 +198,7 @@ const invokeWeeklyRebuild = async (
     return await invoker.rebuildWeek(configuration, {
       ...input,
       correction:
-        'The previous response did not match the required schema. Return only a complete valid result.',
+        'The previous response did not match the required schema. Return only a complete valid result. Include at least one grounded weekly detail across brightSpots, difficultParts, supportiveActions, or questionsToCarry; leave a particular section empty only when the records do not support it.',
     });
   } catch (error) {
     if (NoObjectGeneratedError.isInstance(error)) {

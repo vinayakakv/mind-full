@@ -220,10 +220,18 @@ export const weeklyReflectionSectionsSchema = z.object({
     .describe(
       'A concise weekly summary in 2 to 4 complete sentences. Synthesize the week without repeating the section items.',
     ),
-  brightSpots: boundedReflectionItems(3),
-  difficultParts: boundedReflectionItems(3),
-  supportiveActions: boundedReflectionItems(3),
-  questionsToCarry: boundedReflectionItems(3),
+  brightSpots: boundedReflectionItems(3).describe(
+    'Specific positive, meaningful, or appreciated moments grounded in this week. Empty only when the records contain no such moment.',
+  ),
+  difficultParts: boundedReflectionItems(3).describe(
+    'Specific difficulties or tender parts grounded in this week. Empty only when the records contain no such difficulty.',
+  ),
+  supportiveActions: boundedReflectionItems(3).describe(
+    'Small actions that the records show helped or could reasonably support the user. Do not invent commitments.',
+  ),
+  questionsToCarry: boundedReflectionItems(3).describe(
+    'Concise, grounded questions that remain useful after reading the week. Empty when no question is warranted.',
+  ),
 });
 
 export const reflectionMemoryPayloadSchema = z.object({

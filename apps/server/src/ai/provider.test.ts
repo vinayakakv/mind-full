@@ -24,6 +24,39 @@ describe('reflection output schema', () => {
       1_200,
     );
   });
+
+  it('requires a grounded weekly detail outside the summary', () => {
+    const output = {
+      updatedMemory: {
+        context: [],
+        supportivePatterns: [],
+        recurringThemes: [],
+        ongoingCommitments: [],
+        openQuestions: [],
+        uncertainImpressions: [],
+      },
+      updatedWeek: {
+        summary: 'The week held a mix of effort and rest.',
+        brightSpots: [],
+        difficultParts: [],
+        supportiveActions: [],
+        questionsToCarry: [],
+      },
+      taskSuggestions: [],
+      habitSuggestions: [],
+    };
+
+    expect(reflectionOutputSchema.safeParse(output).success).toBe(false);
+    expect(
+      reflectionOutputSchema.safeParse({
+        ...output,
+        updatedWeek: {
+          ...output.updatedWeek,
+          supportiveActions: ['Taking a short walk offered some space.'],
+        },
+      }).success,
+    ).toBe(true);
+  });
 });
 
 describe('model provider errors', () => {

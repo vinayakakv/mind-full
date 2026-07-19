@@ -153,7 +153,10 @@ export and compatibility with existing data.
 App-supplied source dates and type labels are provenance rather than memory
 content. Rebuild input preserves chronological ordering without exposing those
 dates to the model. The weekly summary uses two to four complete sentences to
-synthesize the week and does not repeat the structured section items.
+synthesize the week and does not repeat the structured section items. Generated
+output must include at least one grounded detail outside the summary. Each
+individual detail section may remain empty when the source records do not
+support it, avoiding invented bright spots or difficulties.
 
 Reflect offers one explicit reset-and-rebuild action. It removes the generated
 long-term memory, current-week reflection, and unresolved suggestions while

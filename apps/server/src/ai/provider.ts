@@ -35,10 +35,23 @@ export type ReflectionInput = {
 const wordsIn = (value: unknown): number =>
   JSON.stringify(value).trim().split(/\s+/u).filter(Boolean).length;
 
+const generatedWeeklyReflectionSchema = weeklyReflectionSectionsSchema.refine(
+  ({ brightSpots, difficultParts, supportiveActions, questionsToCarry }) =>
+    brightSpots.length +
+      difficultParts.length +
+      supportiveActions.length +
+      questionsToCarry.length >
+    0,
+  {
+    message:
+      'A generated weekly reflection must include at least one grounded detail outside its summary.',
+  },
+);
+
 export const reflectionOutputSchema = z
   .object({
     updatedMemory: reflectionMemorySectionsSchema,
-    updatedWeek: weeklyReflectionSectionsSchema,
+    updatedWeek: generatedWeeklyReflectionSchema,
     taskSuggestions: z
       .array(
         z.object({
@@ -77,7 +90,7 @@ export type WeeklyRebuildInput = {
 };
 
 const weeklyRebuildOutputSchema = z.object({
-  updatedWeek: weeklyReflectionSectionsSchema,
+  updatedWeek: generatedWeeklyReflectionSchema,
 });
 
 export type WeeklyRebuildOutput = z.infer<typeof weeklyRebuildOutputSchema>;
@@ -108,7 +121,13 @@ The user reviews every suggestion. Source labels and chronological ordering are
 provenance, not facts to remember. Do not turn them into memory. Write the
 weekly summary as 2 to 4 complete sentences that synthesize the overall shape
 of the week. Do not repeat bright spots, difficult parts, supportive actions,
-or questions to carry in the summary.`;
+or questions to carry in the summary. Populate those four detail sections
+independently whenever the records provide grounded material; do not use empty
+arrays as a default. Bright spots are concrete positive or meaningful moments,
+difficult parts are concrete difficulties, supportive actions are small actions
+that helped or may help, and questions to carry are useful unresolved questions.
+Leave an individual section empty only when the records do not support it. At
+least one detail section must contain an item.`;
 
 const promptFor = (input: ReflectionInput): string => `CURRENT MEMORY
 <memory>
@@ -144,7 +163,10 @@ impersonal, non-diagnostic, and grounded. Preserve uncertainty. Never invent
 events or people. Source labels and chronological ordering are provenance, not
 facts to repeat. Write the summary as 2 to 4 complete sentences that synthesize
 the overall shape of the week without repeating bright spots, difficult parts,
-supportive actions, or questions to carry.`;
+supportive actions, or questions to carry. Populate those four detail sections
+independently whenever the records provide grounded material; do not use empty
+arrays as a default. Leave an individual section empty only when the records do
+not support it. At least one detail section must contain an item.`;
 
 const weeklyPromptFor = (input: WeeklyRebuildInput): string => `LONG-TERM MEMORY
 <memory>
