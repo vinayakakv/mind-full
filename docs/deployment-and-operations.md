@@ -97,6 +97,9 @@ The default weekly review time is Sunday at 7:00 PM in the configured timezone.
 - Success, path, size, and failure details are recorded in `backup_runs`.
 - Each completed snapshot is checked with `PRAGMA quick_check` before it
   replaces the dated destination file.
+- Temporary WAL and shared-memory sidecars are removed after verification;
+  orphaned sidecars from an interrupted older run are cleaned before each
+  scheduler check.
 - Backups do not require Ollama, a browser, or an external scheduler.
 
 The container always writes snapshots to `/backups`. `MINDFULL_BACKUP_PATH`

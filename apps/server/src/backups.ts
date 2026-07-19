@@ -1,4 +1,4 @@
-import { mkdirSync, renameSync, rmSync, statSync } from 'node:fs';
+import { mkdirSync, readdirSync, renameSync, rmSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { backup, DatabaseSync } from 'node:sqlite';
 
@@ -21,6 +21,23 @@ type LocalDateTime = {
 type BackupRun = {
   scheduled_for: string;
   path: string;
+};
+
+const removeSqliteSidecars = (path: string): void => {
+  rmSync(`${path}-wal`, { force: true });
+  rmSync(`${path}-shm`, { force: true });
+};
+
+const removeOrphanedPartialSidecars = (directory: string): void => {
+  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    if (
+      entry.isFile() &&
+      (entry.name.endsWith('.sqlite.partial-wal') ||
+        entry.name.endsWith('.sqlite.partial-shm'))
+    ) {
+      rmSync(join(directory, entry.name), { force: true });
+    }
+  }
 };
 
 const partsFor = (date: Date, timezone: string): LocalDateTime => {
@@ -216,18 +233,21 @@ export const runBackupIfDue = async (
   config: BackupConfig,
   now = new Date(),
 ): Promise<boolean> => {
+  mkdirSync(config.directory, { recursive: true });
+  removeOrphanedPartialSidecars(config.directory);
   const slot = mostRecentBackupSlot(now, config.localTime, config.timezone);
   const startedAt = now.toISOString();
   if (!claimBackup(client, slot.scheduledFor, startedAt)) return false;
 
-  mkdirSync(config.directory, { recursive: true });
   const path = join(config.directory, `mindfull-${slot.localDate}.sqlite`);
   const partialPath = `${path}.partial`;
 
   try {
     rmSync(partialPath, { force: true });
+    removeSqliteSidecars(partialPath);
     await backup(client, partialPath);
     verifyBackup(partialPath);
+    removeSqliteSidecars(partialPath);
     renameSync(partialPath, path);
     const completedAt = new Date().toISOString();
     const sizeBytes = statSync(path).size;
@@ -243,6 +263,7 @@ export const runBackupIfDue = async (
     return true;
   } catch (error) {
     rmSync(partialPath, { force: true });
+    removeSqliteSidecars(partialPath);
     rmSync(path, { force: true });
     const message = error instanceof Error ? error.message : 'Backup failed.';
     client

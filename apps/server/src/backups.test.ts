@@ -2,6 +2,7 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
+  readdirSync,
   rmSync,
   writeFileSync,
 } from 'node:fs';
@@ -67,6 +68,16 @@ describe('SQLite backups', () => {
 
   it('creates and verifies one restart-safe snapshot for a due slot', async () => {
     const directory = temporaryDirectory();
+    const backupDirectory = join(directory, 'backups');
+    mkdirSync(backupDirectory, { recursive: true });
+    writeFileSync(
+      join(backupDirectory, 'mindfull-2026-07-16.sqlite.partial-wal'),
+      '',
+    );
+    writeFileSync(
+      join(backupDirectory, 'mindfull-2026-07-16.sqlite.partial-shm'),
+      '',
+    );
     const { client } = openDatabase(
       join(directory, 'mindfull.sqlite'),
       resolve('drizzle'),
@@ -93,6 +104,9 @@ describe('SQLite backups', () => {
     expect(secondRun).toBe(false);
     const path = join(directory, 'backups', 'mindfull-2026-07-17.sqlite');
     expect(existsSync(path)).toBe(true);
+    expect(readdirSync(backupDirectory)).toEqual([
+      'mindfull-2026-07-17.sqlite',
+    ]);
 
     const snapshot = new DatabaseSync(path, { readOnly: true });
     expect(snapshot.prepare('SELECT name FROM devices').get()).toEqual({
