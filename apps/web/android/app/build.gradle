@@ -1,8 +1,64 @@
 apply plugin: 'com.android.application'
 
+def releaseSigningValue = { propertyName, environmentName ->
+    providers.gradleProperty(propertyName)
+        .orElse(providers.environmentVariable(propertyName))
+        .orElse(providers.environmentVariable(environmentName))
+        .orNull
+}
+
+def releaseStoreFile = releaseSigningValue(
+    'mindfullReleaseStoreFile',
+    'MINDFULL_ANDROID_KEYSTORE'
+)
+def releaseStorePassword = releaseSigningValue(
+    'mindfullReleaseStorePassword',
+    'MINDFULL_ANDROID_STORE_PASSWORD'
+)
+def releaseKeyAlias = releaseSigningValue(
+    'mindfullReleaseKeyAlias',
+    'MINDFULL_ANDROID_KEY_ALIAS'
+)
+def releaseKeyPassword = releaseSigningValue(
+    'mindfullReleaseKeyPassword',
+    'MINDFULL_ANDROID_KEY_PASSWORD'
+)
+def releaseSigningValues = [
+    releaseStoreFile,
+    releaseStorePassword,
+    releaseKeyAlias,
+    releaseKeyPassword
+]
+def hasReleaseSigning = releaseSigningValues.every { it }
+def isReleaseBuild = gradle.startParameter.taskNames.any {
+    it.toLowerCase().contains('release')
+}
+
+if (isReleaseBuild && !hasReleaseSigning) {
+    throw new GradleException(
+        'Release signing is incomplete. Set all four signing properties or MINDFULL_ANDROID variables.'
+    )
+}
+
+if (isReleaseBuild && !file(releaseStoreFile).isFile()) {
+    throw new GradleException(
+        "Release keystore was not found at ${releaseStoreFile}."
+    )
+}
+
 android {
     namespace = "app.mindfull"
     compileSdk = rootProject.ext.compileSdkVersion
+    signingConfigs {
+        if (hasReleaseSigning) {
+            release {
+                storeFile file(releaseStoreFile)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
+        }
+    }
     defaultConfig {
         applicationId "app.mindfull"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -20,6 +76,9 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            if (hasReleaseSigning) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }

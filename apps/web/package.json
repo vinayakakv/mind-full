@@ -6,6 +6,7 @@
   "scripts": {
     "android:apk": "pnpm android:sync && ./android/gradlew -p android assembleDebug",
     "android:open": "cap open android",
+    "android:release": "pnpm android:sync && ./android/gradlew -p android assembleRelease",
     "android:run": "pnpm android:sync && cap run android",
     "android:sync": "pnpm build:native && cap sync android",
     "build": "tsc -p tsconfig.json --noEmit && vite build",

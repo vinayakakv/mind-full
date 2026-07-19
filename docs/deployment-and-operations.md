@@ -202,6 +202,7 @@ Mac, use Homebrew's JDK without changing the system Java installation:
 export JAVA_HOME="$(brew --prefix openjdk@21)/libexec/openjdk.jdk/Contents/Home"
 pnpm android:sync
 pnpm android:apk
+pnpm android:release
 pnpm android:open
 ```
 
@@ -211,6 +212,31 @@ the PWA service worker because the application shell is already packaged in the
 APK. Android cloud backup is disabled so journals and check-ins are not copied
 to an unrelated backup provider.
 
+Release builds require one permanent signing key. Keep the keystore and its
+passwords outside the repository, and expose them to the build as either the
+corresponding `mindfullRelease...` Gradle properties or these environment
+variables:
+
+```sh
+export MINDFULL_ANDROID_KEYSTORE="$HOME/.config/mindfull/mindfull-release.jks"
+export MINDFULL_ANDROID_STORE_PASSWORD="..."
+export MINDFULL_ANDROID_KEY_ALIAS="mindfull"
+export MINDFULL_ANDROID_KEY_PASSWORD="..."
+pnpm android:release
+```
+
+The signed APK is written to
+`apps/web/android/app/build/outputs/apk/release/app-release.apk`. Back up the
+keystore separately: every future update of `app.mindfull` must use the same
+key. A release APK cannot update a debug-signed installation, so sync before
+the one-time transition.
+
+The Android GitHub workflow builds signed APK artifacts for `v*` tags and
+manual runs. It expects repository secrets named `ANDROID_KEYSTORE_BASE64`,
+`ANDROID_STORE_PASSWORD`, `ANDROID_KEY_ALIAS`, and `ANDROID_KEY_PASSWORD`.
+Create the first secret with
+`base64 < mindfull-release.jks | pbcopy` on macOS.
+
 After installing, open Settings and enter the backend origin before pairing,
 for example `https://mindfull.example` on Tailscale. The Android emulator reaches
 the host machine at `http://10.0.2.2:3001`. Private plain-HTTP addresses are
@@ -218,12 +244,12 @@ allowed for LAN and emulator development; prefer HTTPS when the server is
 reachable beyond a trusted private network. Browser installations served by
 Mindfull leave the field empty to keep same-origin sync.
 
-Open Settings and choose **Allow alerts** before relying on reminders. Android
-13 and newer asks for notification permission. Android 12 and newer may also
-require **Allow exact times**, which opens the operating-system setting for
-Mindfull. If either permission is unavailable, reminders still appear inside
-Today when the app next reconciles. Native schedules and permission state stay
-on the device and do not synchronize.
+On first launch, Android 13 and newer asks for notification permission. When
+needed, Mindfull then opens the Android 12-or-newer exact-alarm setting. Settings
+keeps **Allow alerts** and **Allow exact times** available for repair. If either
+permission is unavailable, reminders still appear inside Today when the app
+next reconciles. Native schedules and permission state stay on the device and
+do not synchronize.
 
 Native CSS targets Chrome/WebView 101 so the minimum supported Android WebView
 receives conventional media-query syntax. Capacitor 8.4.2 is pinned with a
