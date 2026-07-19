@@ -533,7 +533,6 @@ const processAnalysis = async (
         : null,
     ...organization,
     sourceKind: source.type,
-    sourceLocalDate: source.payload.localDate,
     sourceText: text,
   });
   completeAnalysis(
@@ -562,13 +561,15 @@ const initialBatch = (
   return selected;
 };
 
-const chronologicalSourceText = (
+export const chronologicalSourceText = (
   sources: ReturnType<typeof historicalSources>,
 ): string =>
   sources
     .map((source) =>
       [
-        `[${source.payload.localDate} · ${source.type}]`,
+        source.type === 'journal'
+          ? '[journal]'
+          : `[${source.payload.kind} check-in]`,
         sourceText(source),
       ].join('\n'),
     )
@@ -682,7 +683,6 @@ const processMemoryRebuild = async (
     pendingTaskSuggestions: [],
     pendingHabitSuggestions: [],
     sourceKind: 'memory-batch',
-    sourceLocalDate: null,
     sourceText: chronologicalSourceText(batch),
   });
   const nextIndex = build.nextSourceIndex + batch.length;

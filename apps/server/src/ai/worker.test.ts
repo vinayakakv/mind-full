@@ -1,7 +1,9 @@
+import { createJournalDocument } from '@mindfull/domain';
 import { NoObjectGeneratedError } from 'ai';
 import { describe, expect, it } from 'vitest';
 
 import {
+  chronologicalSourceText,
   jobLeaseDurationMs,
   outputAttemptDiagnostic,
   providerBackoffMs,
@@ -104,6 +106,27 @@ describe('AI output diagnostics', () => {
 });
 
 describe('reflection memory formatting', () => {
+  it('keeps app-supplied dates out of chronological model input', () => {
+    const now = '2026-07-19T08:00:00.000Z';
+    const journal = createJournalDocument({
+      id: 'journal-one',
+      now,
+      deviceId: 'phone',
+      payload: {
+        title: null,
+        markdown: 'Tea by the window felt restorative.',
+        localDate: '2026-07-14',
+        timezone: 'Asia/Kolkata',
+        status: 'completed',
+        completedAt: now,
+      },
+    });
+
+    expect(chronologicalSourceText([journal])).toBe(
+      '[journal]\nTea by the window felt restorative.',
+    );
+  });
+
   it('removes a model-added title without changing the memory sections', () => {
     expect(
       reflectionMemoryMarkdown(

@@ -30,6 +30,8 @@ const sourceName = (source: JournalDocument | CheckInDocument) =>
 export function ReflectionMemoryPage() {
   const reflection = useLiveQuery(loadReflectionData);
   const memory = reflection?.memory;
+  const wasBuiltFromManySources =
+    (memory?.payload.updatedFromDocumentIds.length ?? 0) > 1;
 
   return (
     <section className={styles.page}>
@@ -72,14 +74,22 @@ export function ReflectionMemoryPage() {
             </div>
           )}
 
-          {reflection.latestSources.length ? (
+          {wasBuiltFromManySources || reflection.latestSources.length ? (
             <div className={styles.sources}>
-              <span>Last changed after</span>
-              {reflection.latestSources.map((source) => (
-                <Link key={source.id} to={sourceLink(source)}>
-                  {sourceName(source)}, {source.payload.localDate}
-                </Link>
-              ))}
+              {wasBuiltFromManySources ? (
+                <span>
+                  Built from journals and check-ins across the past year.
+                </span>
+              ) : (
+                <>
+                  <span>Last changed after</span>
+                  {reflection.latestSources.map((source) => (
+                    <Link key={source.id} to={sourceLink(source)}>
+                      {sourceName(source)}, {source.payload.localDate}
+                    </Link>
+                  ))}
+                </>
+              )}
             </div>
           ) : null}
         </>

@@ -216,8 +216,10 @@ export const weeklyReflectionSectionsSchema = z.object({
     .string()
     .trim()
     .min(1)
-    .max(500)
-    .describe('A concise weekly summary in a short paragraph.'),
+    .max(1_200)
+    .describe(
+      'A concise weekly summary in 2 to 4 complete sentences. Synthesize the week without repeating the section items.',
+    ),
   brightSpots: boundedReflectionItems(3),
   difficultParts: boundedReflectionItems(3),
   supportiveActions: boundedReflectionItems(3),

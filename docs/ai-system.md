@@ -140,13 +140,20 @@ Memory is limited to roughly 1,500–2,000 words and uses stable sections for
 context worth remembering, supportive patterns, recurring themes, ongoing
 commitments, open questions, and uncertain impressions. It is initially
 read-only. Reflect shows when it last changed and links only to the documents
-that caused that latest change.
+that caused that latest incremental change. An initial rebuild is described as
+an aggregate of the past year's journals and check-ins rather than rendering a
+long source list.
 
 The current week is limited to roughly 600–800 words and contains a summary,
 bright spots, difficult parts, supportive actions, and questions to carry. Both
 artifacts use separately validated fields so layout does not depend on
 model-authored Markdown. A Markdown representation of memory is retained for
 export and compatibility with existing data.
+
+App-supplied source dates and type labels are provenance rather than memory
+content. Rebuild input preserves chronological ordering without exposing those
+dates to the model. The weekly summary uses two to four complete sentences to
+synthesize the week and does not repeat the structured section items.
 
 Reflect offers one explicit reset-and-rebuild action. It removes the generated
 long-term memory, current-week reflection, and unresolved suggestions while

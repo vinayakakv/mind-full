@@ -21,7 +21,7 @@ describe('reflection output schema', () => {
 
     expect(schema.properties.habitSuggestions.maxItems).toBe(2);
     expect(schema.properties.updatedWeek.properties.summary.maxLength).toBe(
-      500,
+      1_200,
     );
   });
 });
