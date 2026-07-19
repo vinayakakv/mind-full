@@ -310,6 +310,7 @@ describe('Mindfull server', () => {
       payload: {
         name: 'Open the curtains',
         weekdays: [1, 2, 3, 4, 5],
+        schedules: [],
         reminderTime: null,
         archivedAt: null,
       },

@@ -20,6 +20,7 @@ describe('history entries', () => {
       payload: {
         name: 'Take a walk',
         weekdays: [1, 3, 5],
+        schedules: [],
         reminderTime: null,
         archivedAt: null,
       },

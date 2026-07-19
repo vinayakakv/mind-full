@@ -119,8 +119,12 @@ not reopened for editing.
 Habits now have weekday schedules, an optional future reminder time, archive
 and restore behavior, and deterministic per-day log documents. Today shows only
 the habits scheduled for the current local day and completion works entirely
-offline. Habit details calculate streaks across scheduled occurrences and let a
-past miss carry an optional, editable reason without requiring one.
+offline. A rolling seven-day page supports local corrections with undo, while
+individual habit pages show a twelve-week completion chart, current streak,
+recent completion count, and exact read-only history. Dated schedule versions
+keep old statistics stable when weekdays change. A recent past miss may carry
+an optional, editable reason without requiring one; management and reordering
+remain separate at `/habits/manage`.
 
 Reminder intent now lives in typed, synchronized documents with stable IDs per
 habit, task, or check-in target. Habit reminders recur on their selected days,

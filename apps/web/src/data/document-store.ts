@@ -43,6 +43,7 @@ import {
   type TaskSuggestionPayload,
   taskIdForSuggestion,
   toCanonicalBodyValue,
+  withHabitSchedule,
 } from '@mindfull/domain';
 import { database } from './database';
 import { getDeviceId } from './device';
@@ -429,13 +430,18 @@ export const createHabit = async (
   input: Pick<HabitPayload, 'name' | 'weekdays' | 'reminderTime'>,
 ): Promise<HabitDocument> => {
   const now = new Date().toISOString();
+  const localDate = localDateFor(new Date(now));
   const id = createDocumentId();
   const habit = createHabitDocument({
     id,
     now,
     deviceId: getDeviceId(),
     sortKey: `habit:${now}:${id}`,
-    payload: { ...input, archivedAt: null },
+    payload: {
+      ...input,
+      schedules: [{ effectiveFrom: localDate, weekdays: input.weekdays }],
+      archivedAt: null,
+    },
   });
 
   const documents: DomainDocument[] = [habit];
@@ -495,13 +501,18 @@ export const acceptHabitSuggestion = async (
   }
 
   const now = new Date().toISOString();
+  const localDate = localDateFor(new Date(now));
   const id = habitIdForSuggestion(suggestion.id);
   const habit = createHabitDocument({
     id,
     now,
     deviceId: getDeviceId(),
     sortKey: `habit:${now}:${id}`,
-    payload: { ...input, archivedAt: null },
+    payload: {
+      ...input,
+      schedules: [{ effectiveFrom: localDate, weekdays: input.weekdays }],
+      archivedAt: null,
+    },
   });
 
   const documents: DomainDocument[] = [habit];
@@ -562,9 +573,17 @@ export const updateHabit = async (
   update: Pick<HabitPayload, 'name' | 'weekdays' | 'reminderTime'>,
 ): Promise<HabitDocument> => {
   const habit = await getHabit(habitId);
+  const effectiveFrom = localDateFor(new Date());
+  const startedOn = localDateFor(new Date(habit.createdAt));
+  const schedules = withHabitSchedule(
+    habit.payload,
+    update.weekdays,
+    effectiveFrom,
+    startedOn,
+  );
   const updatedDocument = parseDomainDocument({
     ...habit,
-    payload: { ...habit.payload, ...update },
+    payload: { ...habit.payload, ...update, schedules },
     updatedAt: updatedNow(habit),
     updatedByDeviceId: getDeviceId(),
   });
@@ -738,6 +757,23 @@ export const recordHabitMiss = async (
     outcome: 'missed',
     reason,
   });
+};
+
+export const restoreHabitOccurrence = async (
+  habitId: string,
+  localDate: string,
+  previousLog: HabitLogPayload | null,
+): Promise<void> => {
+  if (previousLog?.outcome === 'missed') {
+    await recordHabitMiss(habitId, localDate, previousLog.reason);
+    return;
+  }
+
+  await setHabitCompleted(
+    habitId,
+    localDate,
+    previousLog?.outcome === 'completed',
+  );
 };
 
 const nextTaskSortKey = (): string => {

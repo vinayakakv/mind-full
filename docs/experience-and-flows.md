@@ -135,9 +135,18 @@ without approval.
 - Android notifications offer a Done action.
 - Today keeps a simple completion list in the chosen habit order. Ordering is
   changed only from Manage habits.
-- Manage habits opens the dedicated `/habits` page. Its reorder actions remain
-  open while a habit is moved so repeated keyboard or touch moves do not
-  require reopening the control.
+- `/habits` shows a rolling seven-day rhythm ending today. Each habit is a
+  readable row of scheduled, completed, missed, and unscheduled days; scheduled
+  days in this window may be corrected directly and offer a brief undo action.
+- Dates older than the seven-day correction window are read-only.
+- Selecting a habit opens `/habits/:habitId`, with its current streak, recent
+  completion count, a restrained twelve-week completion chart, and exact
+  recent occurrences.
+- Manage habits opens the dedicated `/habits/manage` page. Its reorder actions
+  remain open while a habit is moved so repeated keyboard or touch moves do
+  not require reopening the control.
+- Habit weekday changes take effect from a dated schedule version so old
+  statistics keep the schedule that was active at the time.
 - Creating, editing, or viewing a habit provides an explicit return to the full
   habit list. Returning to Today is a separate page action.
 

@@ -36,6 +36,12 @@ topic documents contain the detailed rationale and behavior.
 ## Habits and tasks
 
 - Habits are done/not done, with weekdays and one reminder time.
+- The habit overview shows today and the previous six calendar days. Scheduled
+  values in that window can be corrected directly; older history is read-only.
+- Each habit has a dedicated history page with a twelve-week completion chart,
+  current streak, and recent completion count.
+- Weekday changes are dated so historical expectations and statistics do not
+  shift when a schedule is edited.
 - An explanation for a missed habit is optional and only requested when the
   user opens that habit.
 - There is one task list in stable creation order; manual reordering is not
@@ -61,7 +67,7 @@ topic documents contain the detailed rationale and behavior.
   reading page with normal document scrolling.
 - Modals are limited to short, bounded contextual actions. Collection
   management, reordering, long reading, and nested workflows use routed pages;
-  habit management is `/habits` and body-metric management is
+  habit management is `/habits/manage` and body-metric management is
   `/health/metrics`.
 - Titles are optional; there are no tags initially.
 - Analysis status may be shown subtly.

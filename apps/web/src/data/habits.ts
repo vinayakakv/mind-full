@@ -12,6 +12,7 @@ import {
   recordHabitMiss,
   rejectHabitSuggestion,
   reorderHabits,
+  restoreHabitOccurrence,
   setHabitArchived,
   setHabitCompleted,
   updateHabit,
@@ -24,6 +25,7 @@ export {
   recordHabitMiss,
   rejectHabitSuggestion,
   reorderHabits,
+  restoreHabitOccurrence,
   setHabitArchived,
   setHabitCompleted,
   updateHabit,
@@ -33,6 +35,19 @@ export const loadPendingHabitSuggestion = async (
   suggestionId: string,
 ): Promise<HabitSuggestionDocument | undefined> =>
   loadHabitSuggestion(suggestionId);
+
+export const loadHabitById = async (
+  habitId: string,
+): Promise<{ habit: HabitDocument; logs: HabitLogDocument[] } | undefined> => {
+  const data = await loadHabitDocuments();
+  const habit = data.habits.find((candidate) => candidate.id === habitId);
+  if (!habit) return undefined;
+
+  return {
+    habit,
+    logs: data.logs.filter(({ payload }) => payload.habitId === habitId),
+  };
+};
 
 const habitOrder = (habit: HabitDocument): string =>
   habit.sortKey ?? `habit:${habit.createdAt}:${habit.id}`;

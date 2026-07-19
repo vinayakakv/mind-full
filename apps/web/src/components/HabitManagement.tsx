@@ -3,7 +3,7 @@ import {
   type HabitLogDocument,
   type HabitSuggestionDocument,
   habitStreak,
-  recentScheduledDates,
+  recentHabitScheduledDates,
 } from '@mindfull/domain';
 import { type DragEvent, useState } from 'react';
 import {
@@ -199,8 +199,8 @@ function HabitDetails({
     today,
     startedOn(habit),
   );
-  const recentDates = recentScheduledDates(
-    habit.payload.weekdays,
+  const recentDates = recentHabitScheduledDates(
+    habit.payload,
     today,
     startedOn(habit),
     6,
@@ -279,16 +279,24 @@ export function HabitManagement({
   logs,
   today,
   suggestion,
+  initialHabitId,
+  initiallyEditing = false,
   onLeaveSuggestion,
 }: {
   habits: HabitDocument[];
   logs: HabitLogDocument[];
   today: string;
   suggestion?: HabitSuggestionDocument;
+  initialHabitId?: string;
+  initiallyEditing?: boolean;
   onLeaveSuggestion?: () => void;
 }) {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [isEditing, setIsEditing] = useState(Boolean(suggestion));
+  const [selectedId, setSelectedId] = useState<string | null>(
+    initialHabitId ?? null,
+  );
+  const [isEditing, setIsEditing] = useState(
+    Boolean(suggestion) || initiallyEditing,
+  );
   const [showArchived, setShowArchived] = useState(false);
   const [reorderingId, setReorderingId] = useState<string | null>(null);
   const [draggedId, setDraggedId] = useState<string | null>(null);
