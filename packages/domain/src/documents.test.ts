@@ -238,6 +238,7 @@ describe('domain documents', () => {
       payload: {
         name: 'Take a walk',
         weekdays: [1, 3, 5],
+        schedules: [{ effectiveFrom: '2026-07-01', weekdays: [1, 3, 5] }],
         reminderTime: '17:30',
         archivedAt: null,
       },
@@ -257,6 +258,26 @@ describe('domain documents', () => {
 
     expect(migrateDomainDocument(habit).type).toBe('habit');
     expect(migrateDomainDocument(log).type).toBe('habit-log');
+  });
+
+  it('adds empty schedule history to an older habit', () => {
+    const habit = createHabitDocument({
+      id: '01-habit',
+      now,
+      deviceId: 'phone',
+      payload: {
+        name: 'Take a walk',
+        weekdays: [1, 3, 5],
+        schedules: [],
+        reminderTime: null,
+        archivedAt: null,
+      },
+    });
+    const { schedules: _, ...olderPayload } = habit.payload;
+
+    expect(
+      migrateDomainDocument({ ...habit, payload: olderPayload }),
+    ).toMatchObject({ payload: { schedules: [] } });
   });
 
   it('validates a reminder as its own synchronized document', () => {

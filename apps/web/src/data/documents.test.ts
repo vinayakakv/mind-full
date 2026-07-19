@@ -26,6 +26,7 @@ import {
   rejectTaskSuggestion,
   removeExpiredCompletedTasks,
   reorderHabits,
+  restoreHabitOccurrence,
   saveDocument,
   setBodyMetricArchived,
   setCheckInReminder,
@@ -164,6 +165,13 @@ describe('local documents', () => {
     });
     const localDate = '2026-07-15';
 
+    expect(habit.payload.schedules).toEqual([
+      {
+        effectiveFrom: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+        weekdays: [1, 3, 5],
+      },
+    ]);
+
     await setHabitCompleted(habit.id, localDate, true);
     const firstLog = await findHabitLog(habit.id, localDate);
     expect(firstLog?.payload.outcome).toBe('completed');
@@ -178,6 +186,31 @@ describe('local documents', () => {
     await recordHabitMiss(habit.id, localDate, 'The day became too full.');
     expect(await findHabitLog(habit.id, localDate)).toMatchObject({
       id: firstLog?.id,
+      payload: {
+        outcome: 'missed',
+        reason: 'The day became too full.',
+      },
+    });
+  });
+
+  it('restores the exact previous habit occurrence after a correction', async () => {
+    const habit = await createHabit({
+      name: 'Step outside',
+      weekdays: [1, 3, 5],
+      reminderTime: null,
+    });
+    const localDate = '2026-07-15';
+    await recordHabitMiss(habit.id, localDate, 'The day became too full.');
+    const previous = await findHabitLog(habit.id, localDate);
+
+    await setHabitCompleted(habit.id, localDate, true);
+    await restoreHabitOccurrence(
+      habit.id,
+      localDate,
+      previous?.payload ?? null,
+    );
+
+    expect(await findHabitLog(habit.id, localDate)).toMatchObject({
       payload: {
         outcome: 'missed',
         reason: 'The day became too full.',

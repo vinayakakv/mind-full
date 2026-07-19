@@ -22,6 +22,10 @@ primary named tab. Mobile uses restrained bottom navigation for Today, History,
 and Reflect. Desktop uses the same centered reading layout with a small top
 navigation. It should not grow a permanent sidebar.
 
+Opening a different routed page starts at its top. History is the deliberate
+exception when returning from an entry: it restores the stable entry anchor
+recorded in the URL.
+
 History records what happened; Reflect considers what it might mean. History
 is a human-readable projection of activity documents rather than a raw view of
 settings, reminders, or operational records.
@@ -79,13 +83,18 @@ section lets the user review them early.
   them.
 - Answering or skipping an AI question permanently resolves that prompt
   instance.
+- Curated questions use direct, concrete language. Warmth comes from tone and
+  pacing rather than metaphors or abstract terms that require interpretation.
+- Refining curated wording does not change its prompt ID. Completed check-ins
+  preserve the exact prompt text that was shown when they were created.
 
 ## Morning check-in
 
 The exact prompts rotate, but the flow follows this shape:
 
 1. A short arrival or breathing pause
-2. Named energy and mood choices
+2. Named energy and mood choices. Energy uses Drained, Low, Steady, and
+   Energized; mood uses Tender, Even, Hopeful, and Light.
 3. A small selection of emotion words
 4. Something good, meaningful, or appreciated
 5. Acknowledgement of an expected difficulty
@@ -102,7 +111,8 @@ must respect the two-minute target.
 The exact prompts rotate, but the flow follows this shape:
 
 1. A short decompression transition
-2. Named mood and stress choices
+2. Named mood and stress choices. Mood uses Heavy, Tender, Content, and At
+   ease; stress uses Low, Noticeable, and High.
 3. A small selection of emotion words
 4. What felt good or went well
 5. What was difficult
@@ -129,9 +139,18 @@ without approval.
 - Android notifications offer a Done action.
 - Today keeps a simple completion list in the chosen habit order. Ordering is
   changed only from Manage habits.
-- Manage habits opens the dedicated `/habits` page. Its reorder actions remain
-  open while a habit is moved so repeated keyboard or touch moves do not
-  require reopening the control.
+- `/habits` shows a rolling seven-day rhythm ending today. Each habit is a
+  readable row of scheduled, completed, missed, and unscheduled days; scheduled
+  days in this window may be corrected directly and offer a brief undo action.
+- Dates older than the seven-day correction window are read-only.
+- Selecting a habit opens `/habits/:habitId`, with its current streak, recent
+  completion count, a restrained twelve-week completion chart, and exact
+  recent occurrences.
+- Manage habits opens the dedicated `/habits/manage` page. Its reorder actions
+  remain open while a habit is moved so repeated keyboard or touch moves do
+  not require reopening the control.
+- Habit weekday changes take effect from a dated schedule version so old
+  statistics keep the schedule that was active at the time.
 - Creating, editing, or viewing a habit provides an explicit return to the full
   habit list. Returning to Today is a separate page action.
 

@@ -101,8 +101,12 @@ Morning and evening check-ins are separate editable documents. Both use a
 resumable, fully skippable flow with named states, emotion words, stable prompt
 snapshots, and an optional final reflection. Curated wording rotates
 deterministically by local date, so creating or resuming a check-in never
-depends on connectivity or randomness. The Today screen offers the relevant
-flow from synchronized time boundaries while keeping the other flow available.
+depends on connectivity or randomness. Its language is concrete and easy to
+answer: morning energy ranges from Drained to Energized, evening stress from
+Low to High, and abstract prompt wording has been replaced with direct
+questions while retaining stable prompt IDs. The Today screen offers the
+relevant flow from synchronized time boundaries while keeping the other flow
+available.
 
 Journal entries now use the same typed document and synchronization path as the
 rest of the local-first domain. Writing autosaves to IndexedDB, survives an
@@ -115,8 +119,12 @@ not reopened for editing.
 Habits now have weekday schedules, an optional future reminder time, archive
 and restore behavior, and deterministic per-day log documents. Today shows only
 the habits scheduled for the current local day and completion works entirely
-offline. Habit details calculate streaks across scheduled occurrences and let a
-past miss carry an optional, editable reason without requiring one.
+offline. A rolling seven-day page supports local corrections with undo, while
+individual habit pages show a twelve-week completion chart, current streak,
+recent completion count, and exact read-only history. Dated schedule versions
+keep old statistics stable when weekdays change. A recent past miss may carry
+an optional, editable reason without requiring one; management and reordering
+remain separate at `/habits/manage`.
 
 Reminder intent now lives in typed, synchronized documents with stable IDs per
 habit, task, or check-in target. Habit reminders recur on their selected days,

@@ -1,4 +1,4 @@
-import { scheduledOn } from '@mindfull/domain';
+import { habitScheduledOn } from '@mindfull/domain';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Button } from 'react-aria-components';
 import { Link } from 'react-router';
@@ -21,8 +21,12 @@ export function HabitList() {
   const data = useLiveQuery(loadHabitDocuments, []) ?? { habits: [], logs: [] };
   const today = localDateFor(useCurrentTime('day'));
   const activeHabits = data.habits.filter(({ payload }) => !payload.archivedAt);
-  const todaysHabits = activeHabits.filter(({ payload }) =>
-    scheduledOn(payload.weekdays, today),
+  const todaysHabits = activeHabits.filter((habit) =>
+    habitScheduledOn(
+      habit.payload,
+      today,
+      localDateFor(new Date(habit.createdAt)),
+    ),
   );
   const completedHabitIds = new Set(
     data.logs
@@ -41,7 +45,7 @@ export function HabitList() {
           <h2 id="today-habits">Today’s habits</h2>
         </div>
         <Link className={styles.manageButton} to="/habits">
-          Manage
+          Past week
         </Link>
       </div>
       {todaysHabits.length === 0 ? (

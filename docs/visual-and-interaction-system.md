@@ -46,8 +46,9 @@ action. The active check-in is a deliberate focused-flow exception.
 Use a routed page when an experience contains a collection to manage, long
 reading, reordering, nested add/edit/detail states, or enough work that a stable
 URL and normal document scrolling are useful. Habit management lives at
-`/habits`; body-metric management lives at `/health/metrics`. Completed
-check-ins and other summaries remain reading pages.
+`/habits/manage`; the rolling habit record and individual statistics retain
+their own routed pages. Body-metric management lives at `/health/metrics`.
+Completed check-ins and other summaries remain reading pages.
 
 Every true modal uses React Aria behavior for focus containment, Escape,
 restoration, and background inertness. A large panel is not made a modal merely

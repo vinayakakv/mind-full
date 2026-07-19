@@ -265,7 +265,7 @@ export function ReflectPage() {
                   <div className={styles.actions}>
                     <Link
                       className={styles.acceptButton}
-                      to={`/habits?suggestion=${encodeURIComponent(suggestion.id)}`}
+                      to={`/habits/manage?suggestion=${encodeURIComponent(suggestion.id)}`}
                     >
                       Set up habit
                     </Link>

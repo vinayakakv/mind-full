@@ -38,6 +38,22 @@ export const router = createBrowserRouter([
         },
       },
       {
+        path: 'habits/manage',
+        lazy: async () => {
+          const { HabitManagementPage } = await import(
+            './pages/HabitManagementPage'
+          );
+          return { Component: HabitManagementPage };
+        },
+      },
+      {
+        path: 'habits/:habitId',
+        lazy: async () => {
+          const { HabitDetailPage } = await import('./pages/HabitDetailPage');
+          return { Component: HabitDetailPage };
+        },
+      },
+      {
         path: 'health',
         lazy: async () => {
           const { HealthPage } = await import('./pages/HealthPage');

@@ -58,6 +58,10 @@ synchronize.
 type HabitPayload = {
   name: string;
   weekdays: number[];
+  schedules: Array<{
+    effectiveFrom: string;
+    weekdays: number[];
+  }>;
   reminderTime: string | null;
   archivedAt: string | null;
 };
@@ -65,7 +69,11 @@ type HabitPayload = {
 
 The envelope's `sortKey` stores the user's habit order. The same order is used
 after filtering the habits scheduled for Today and synchronizes like any other
-local document change.
+local document change. `weekdays` mirrors the current schedule for reminder and
+older-client compatibility. New weekday changes append or replace a dated
+schedule entry; historical calculations use the last entry effective on each
+date. Existing habits without entries treat their current weekdays as the
+schedule since creation until their first post-migration change.
 
 ### Habit log
 

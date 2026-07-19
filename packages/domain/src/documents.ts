@@ -108,13 +108,29 @@ export const journalPayloadSchema = z.object({
   completedAt: instantSchema.nullable().default(null),
 });
 
+const weekdaysSchema = z
+  .array(z.number().int().min(0).max(6))
+  .min(1)
+  .max(7)
+  .refine((weekdays) => new Set(weekdays).size === weekdays.length);
+
 export const habitPayloadSchema = z.object({
   name: z.string().trim().min(1).max(100),
-  weekdays: z
-    .array(z.number().int().min(0).max(6))
-    .min(1)
-    .max(7)
-    .refine((weekdays) => new Set(weekdays).size === weekdays.length),
+  weekdays: weekdaysSchema,
+  schedules: z
+    .array(
+      z.object({
+        effectiveFrom: localDateSchema,
+        weekdays: weekdaysSchema,
+      }),
+    )
+    .refine(
+      (schedules) =>
+        new Set(schedules.map(({ effectiveFrom }) => effectiveFrom)).size ===
+        schedules.length,
+      'A habit can have only one schedule per effective date.',
+    )
+    .default([]),
   reminderTime: z
     .string()
     .regex(/^\d{2}:\d{2}$/)
