@@ -22,10 +22,10 @@ import {
 import { activeCheckInIdAtom } from '../state/check-in';
 import styles from './CheckInFlow.module.css';
 
-const morningEnergyChoices = ['Low', 'Steady', 'Restless', 'Bright'] as const;
+const morningEnergyChoices = ['Drained', 'Low', 'Steady', 'Energized'] as const;
 const morningMoodChoices = ['Tender', 'Even', 'Hopeful', 'Light'] as const;
 const eveningMoodChoices = ['Heavy', 'Tender', 'Content', 'At ease'] as const;
-const stressChoices = ['Quiet', 'Present', 'High'] as const;
+const stressChoices = ['Low', 'Noticeable', 'High'] as const;
 const emotionChoices = [
   'Calm',
   'Grateful',

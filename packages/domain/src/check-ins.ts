@@ -17,7 +17,7 @@ const morningPromptGroups = [
     },
     {
       id: 'morning-appreciate-nearby',
-      text: 'What feels quietly supportive this morning?',
+      text: 'What is supporting you this morning?',
       intention: 'appreciate',
     },
     {
@@ -39,7 +39,7 @@ const morningPromptGroups = [
     },
     {
       id: 'morning-acknowledge-kindness',
-      text: 'Where might you need a little more kindness today?',
+      text: 'What could you be kinder to yourself about today?',
       intention: 'acknowledge',
     },
   ],
@@ -56,7 +56,7 @@ const morningPromptGroups = [
     },
     {
       id: 'morning-focus-carry',
-      text: 'What quality would you like to carry into today?',
+      text: 'How would you like to move through today?',
       intention: 'focus',
     },
   ],
@@ -71,7 +71,7 @@ const eveningPromptGroups = [
     },
     {
       id: 'evening-appreciate-warmth',
-      text: 'Where did you notice a little warmth today?',
+      text: 'What brought you a little comfort or joy today?',
       intention: 'appreciate',
     },
     {
@@ -100,12 +100,12 @@ const eveningPromptGroups = [
   [
     {
       id: 'evening-release-kind',
-      text: 'What can you meet with kindness instead of judgment?',
+      text: 'What could you be gentler with yourself about?',
       intention: 'release',
     },
     {
       id: 'evening-release-enough',
-      text: 'What can be enough for today?',
+      text: 'What did you do today that was enough?',
       intention: 'release',
     },
     {
@@ -127,7 +127,7 @@ const eveningPromptGroups = [
     },
     {
       id: 'evening-focus-remember',
-      text: 'What would you like to remember tomorrow?',
+      text: 'What from today would you like to carry into tomorrow?',
       intention: 'focus',
     },
   ],
