@@ -3,6 +3,7 @@ import type { PermissionState } from '@capacitor/core';
 import { nextReminderAt, type ReminderDocument } from '@mindfull/domain';
 
 import { database, type LocalNotificationState } from './database';
+import { findHabitLog } from './document-store';
 import { documentsChanged } from './events';
 import { setHabitCompleted } from './habits';
 import {
@@ -67,6 +68,7 @@ export const notificationCopy = async (
 };
 
 export const loadReminderNotices = async (): Promise<ReminderNotice[]> => {
+  const today = localDateFor(new Date());
   const states = await database.notificationState
     .filter(({ activeStatus }) => activeStatus !== null)
     .toArray();
@@ -95,10 +97,12 @@ export const loadReminderNotices = async (): Promise<ReminderNotice[]> => {
       }
 
       if (reminder.payload.targetType === 'habit') {
+        const habitLog = await findHabitLog(reminder.payload.targetId, today);
         if (
           target?.type !== 'habit' ||
           target.deletedAt ||
-          target.payload.archivedAt
+          target.payload.archivedAt ||
+          habitLog?.payload.outcome === 'completed'
         ) {
           return null;
         }
@@ -140,17 +144,58 @@ const showBrowserNotification = async (
   }
 };
 
-const activeReminders = async (): Promise<ReminderDocument[]> => {
+const shouldKeepActiveReminder = async (
+  reminder: ReminderDocument,
+  now: Date,
+): Promise<boolean> => {
+  const target = await database.documents.get(reminder.payload.targetId);
+
+  if (reminder.payload.targetType === 'task') {
+    return (
+      target?.type === 'task' &&
+      !target.deletedAt &&
+      !target.payload.completedAt
+    );
+  }
+
+  if (reminder.payload.targetType === 'habit') {
+    if (
+      target?.type !== 'habit' ||
+      target.deletedAt ||
+      target.payload.archivedAt
+    ) {
+      return false;
+    }
+    const habitLog = await findHabitLog(
+      reminder.payload.targetId,
+      localDateFor(now),
+    );
+    return habitLog?.payload.outcome !== 'completed';
+  }
+
+  return true;
+};
+
+const activeReminders = async (now: Date): Promise<ReminderDocument[]> => {
   const documents = await database.documents
     .where('type')
     .equals('reminder')
     .toArray();
 
-  return documents.filter(
+  const reminders = documents.filter(
     (document): document is ReminderDocument =>
       document.type === 'reminder' &&
       !document.deletedAt &&
       document.payload.enabled,
+  );
+
+  const active = await Promise.all(
+    reminders.map(async (reminder) =>
+      (await shouldKeepActiveReminder(reminder, now)) ? reminder : null,
+    ),
+  );
+  return active.filter(
+    (reminder): reminder is ReminderDocument => reminder !== null,
   );
 };
 
@@ -251,7 +296,7 @@ export const reconcileNotifications = async (): Promise<void> => {
       shouldReconcileAgain = false;
       const now = new Date();
       const [reminders, timezone] = await Promise.all([
-        activeReminders(),
+        activeReminders(now),
         configuredTimezone(),
       ]);
       const reminderIds = new Set(reminders.map(({ id }) => id));

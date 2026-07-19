@@ -38,6 +38,7 @@ import {
   updateJournal,
 } from './documents';
 import { localDocumentsChanged } from './events';
+import { localDateFor } from './time';
 
 describe('local documents', () => {
   beforeEach(async () => {
@@ -240,6 +241,43 @@ describe('local documents', () => {
     expect(
       await database.syncState.get(`reminder:habit:${habit.id}`),
     ).toMatchObject({ dirty: 1 });
+  });
+
+  it('clears active reminder presentation after completing today habit', async () => {
+    const habit = await createHabit({
+      name: 'Step outside',
+      weekdays: [0, 1, 2, 3, 4, 5, 6],
+      reminderTime: '08:15',
+    });
+    const reminderId = `reminder:habit:${habit.id}`;
+    const localDate = localDateFor(new Date());
+    await database.notificationState.put({
+      reminderId,
+      reminderUpdatedAt: '2026-07-15T08:00:00.000Z',
+      nextScheduledAt: null,
+      activeOccurrenceAt: '2026-07-15T08:15:00.000Z',
+      activeStatus: 'due',
+    });
+    await database.nativeNotificationState.put({
+      key: `${reminderId}:weekday:3`,
+      notificationId: 42,
+      reminderId,
+      reminderUpdatedAt: '2026-07-15T08:00:00.000Z',
+      projectionVersion: 2,
+    });
+
+    await setHabitCompleted(habit.id, localDate, true);
+
+    expect(await database.notificationState.get(reminderId)).toMatchObject({
+      activeOccurrenceAt: null,
+      activeStatus: null,
+    });
+    expect(
+      await database.nativeNotificationState
+        .where('reminderId')
+        .equals(reminderId)
+        .toArray(),
+    ).toEqual([]);
   });
 
   it('persists the chosen habit order', async () => {

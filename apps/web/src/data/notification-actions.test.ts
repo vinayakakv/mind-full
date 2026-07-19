@@ -3,7 +3,7 @@ import { habitLogIdFor } from '@mindfull/domain';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { database, type LocalNotificationState } from './database';
-import { createHabit } from './habits';
+import { createHabit, setHabitCompleted } from './habits';
 import {
   type NativeNotificationAction,
   nativeNotificationActions,
@@ -124,6 +124,25 @@ describe('native notification actions', () => {
         outcome: 'completed',
       },
     });
+    expect(await database.notificationState.get(reminderId)).toMatchObject({
+      activeStatus: null,
+    });
+  });
+
+  it('hides a habit notice once today is completed in the app', async () => {
+    const habit = await createHabit({
+      name: 'Take a short walk',
+      weekdays: [0, 1, 2, 3, 4, 5, 6],
+      reminderTime: '08:00',
+    });
+    const reminderId = `reminder:habit:${habit.id}`;
+    const localDate = localDateFor(new Date());
+    await database.notificationState.put(dueStateFor(reminderId));
+
+    expect(await loadReminderNotices()).toHaveLength(1);
+    await setHabitCompleted(habit.id, localDate, true);
+
+    expect(await loadReminderNotices()).toEqual([]);
     expect(await database.notificationState.get(reminderId)).toMatchObject({
       activeStatus: null,
     });

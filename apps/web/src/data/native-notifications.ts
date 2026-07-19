@@ -274,3 +274,40 @@ export const reconcileNativeNotifications = async (
     await database.nativeNotificationState.put(state);
   }
 };
+
+export const clearNativeNotificationsForReminder = async (
+  reminderId: string,
+): Promise<void> => {
+  const states = await database.nativeNotificationState
+    .where('reminderId')
+    .equals(reminderId)
+    .toArray();
+  if (!states.length) return;
+
+  await database.nativeNotificationState.bulkDelete(
+    states.map(({ key }) => key),
+  );
+
+  if (!hasNativeNotifications()) return;
+
+  const notifications = states.map(({ notificationId }) => ({
+    id: notificationId,
+  }));
+  try {
+    await LocalNotifications.cancel({ notifications });
+    const delivered = await LocalNotifications.getDeliveredNotifications();
+    const notificationIds = new Set(
+      states.map(({ notificationId }) => notificationId),
+    );
+    const matchingDelivered = delivered.notifications.filter(({ id }) =>
+      notificationIds.has(id),
+    );
+    if (matchingDelivered.length) {
+      await LocalNotifications.removeDeliveredNotifications({
+        notifications: matchingDelivered,
+      });
+    }
+  } catch {
+    // The local document state remains correct if the platform cleanup fails.
+  }
+};

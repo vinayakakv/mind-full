@@ -49,6 +49,7 @@ import { database } from './database';
 import { getDeviceId } from './device';
 import { claimLocalDocument } from './document-ownership';
 import { documentsChanged, localDocumentsChanged } from './events';
+import { clearNativeNotificationsForReminder } from './native-notifications';
 import { currentTimezone, localDateFor } from './time';
 
 const settingsId = 'settings';
@@ -101,6 +102,18 @@ const reminderDocument = async (
     deviceId: getDeviceId(),
     payload,
   });
+};
+
+const clearReminderPresentation = async (reminderId: string): Promise<void> => {
+  const state = await database.notificationState.get(reminderId);
+  if (state) {
+    await database.notificationState.put({
+      ...state,
+      activeOccurrenceAt: null,
+      activeStatus: null,
+    });
+  }
+  await clearNativeNotificationsForReminder(reminderId);
 };
 
 export const saveDocuments = async (
@@ -743,6 +756,10 @@ export const setHabitCompleted = async (
     outcome: 'completed',
     reason: null,
   });
+
+  if (localDate === localDateFor(new Date())) {
+    await clearReminderPresentation(reminderIdFor('habit', habitId));
+  }
 };
 
 export const recordHabitMiss = async (
@@ -1102,6 +1119,7 @@ export const setTaskCompleted = async (
       Boolean(task.payload.reminderAt && task.payload.reminderAt > now),
   });
   await saveDocuments([updatedTask, reminder]);
+  if (completed) await clearReminderPresentation(existingReminder.id);
 };
 
 export const snoozeTaskReminder = async (
