@@ -73,16 +73,27 @@ cannot pull additional history.
         task suggestions, habit suggestions)
 ```
 
-Only incomplete tasks, active habits, and unresolved suggestions are included.
-Completed tasks, habit logs, reminders, ordering metadata, and internal IDs are
-not sent. This gives the model enough current state to avoid redundant
-suggestions while keeping the prepared context small. Mindfull also performs a
-normalized-text duplicate check before persisting a suggestion.
+Only incomplete tasks, active habits, and unresolved suggestions are included
+in the reflection call. Completed tasks, habit logs, reminders, ordering
+metadata, and internal IDs are not sent. This keeps the prepared context small.
 
-The entire structured response is validated and committed atomically. If the
-memory or output is invalid, neither is stored. The commit also compares the
-memory revision used for inference with the current revision; stale results
-are retried against current memory.
+When the reflection call proposes tasks or habits, Mindfull makes one second,
+focused structured-output call for the whole candidate set. It compares task
+candidates with incomplete tasks and every previous task suggestion, and habit
+candidates with active or archived habits and every previous habit suggestion.
+The response is an ordered boolean decision for each candidate. Comparison is
+by intended action or practice rather than exact wording, so a dismissed
+suggestion remains considered even when later phrased differently. A final
+normalized-text check remains before persistence as a deterministic safeguard.
+The focused call has its own two-minute timeout.
+
+The reflection response is validated before anything is committed. If its
+memory or weekly output is invalid, neither is stored. If only the optional
+duplicate-check call fails, Mindfull stores the memory and current-week
+reflection but publishes none of that invocation's suggestions. The final
+memory, week, and retained suggestions are committed atomically. The commit
+also compares the memory revision used for inference with the current revision;
+stale results are retried against current memory.
 
 Structured output uses one canonical Zod schema for both provider-facing
 generation and Mindfull acceptance. Array counts, string bounds, and required
@@ -229,7 +240,9 @@ a future start.
 Habit extraction produces `habit-suggestion` documents. Choosing Set up opens
 the normal habit form with the proposed name prefilled; the user still chooses
 weekdays and an optional reminder. Dismissing either suggestion kind resolves
-it permanently.
+it permanently. Resolved suggestions remain part of future duplicate checks,
+while archived habits count as existing practices that can be restored rather
+than recreated.
 
 The model classifies commitments once: a concrete one-off action becomes a task
 suggestion, a repeated practice becomes a habit suggestion, and a broader

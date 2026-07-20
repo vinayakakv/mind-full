@@ -26,6 +26,8 @@ import {
   providerErrorCode,
   type ReflectionInput,
   type ReflectionOutput,
+  type SuggestionDuplicateInput,
+  suggestionDuplicateTimeoutMs,
   type WeeklyRebuildInput,
   type WeeklyRebuildOutput,
 } from './provider.js';
@@ -43,6 +45,7 @@ import {
   recordProviderState,
   reflectionMemoryId,
   reflectionOrganization,
+  reflectionSuggestionCatalog,
   sourceText,
 } from './store.js';
 
@@ -65,7 +68,9 @@ export const providerBackoffMs = (failureCount: number): number =>
   6 * 3_600_000;
 
 export const jobLeaseDurationMs = (responseTimeoutMinutes: number): number =>
-  responseTimeoutMinutes * 60_000 + leaseMarginMs;
+  responseTimeoutMinutes * 60_000 +
+  suggestionDuplicateTimeoutMs +
+  leaseMarginMs;
 
 export type AiOutputAttemptDiagnostic = {
   attempt: 1 | 2;
@@ -356,6 +361,38 @@ const normalizedSuggestion = (text: string): string =>
     .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .trim();
 
+export const checkSuggestionNovelty = async (
+  invoker: AiInvoker,
+  configuration: ProviderConfiguration,
+  output: ReflectionOutput,
+  catalog: Omit<SuggestionDuplicateInput, 'taskCandidates' | 'habitCandidates'>,
+  onFailure: () => void = () => {},
+): Promise<ReflectionOutput> => {
+  if (!output.taskSuggestions.length && !output.habitSuggestions.length) {
+    return output;
+  }
+
+  try {
+    const duplicates = await invoker.findSuggestionDuplicates(configuration, {
+      ...catalog,
+      taskCandidates: output.taskSuggestions.map(({ text }) => text),
+      habitCandidates: output.habitSuggestions.map(({ text }) => text),
+    });
+    return {
+      ...output,
+      taskSuggestions: output.taskSuggestions.filter(
+        (_, index) => !duplicates.taskDuplicates[index],
+      ),
+      habitSuggestions: output.habitSuggestions.filter(
+        (_, index) => !duplicates.habitDuplicates[index],
+      ),
+    };
+  } catch {
+    onFailure();
+    return { ...output, taskSuggestions: [], habitSuggestions: [] };
+  }
+};
+
 const completeAnalysis = (
   database: MindfullDatabase,
   job: typeof aiJobs.$inferSelect,
@@ -499,6 +536,10 @@ const processAnalysis = async (
   configuration: ProviderConfiguration,
   invoker: AiInvoker,
   now: string,
+  onSuggestionCheckFailure: (counts: {
+    taskCandidates: number;
+    habitCandidates: number;
+  }) => void,
 ): Promise<void> => {
   const source = job.sourceDocumentId
     ? findDomainDocument(database, job.sourceDocumentId)
@@ -520,7 +561,7 @@ const processAnalysis = async (
   const currentWeek = findCurrentWeekReflection(database);
   const bounds = weekBounds(source.payload.localDate);
   const organization = reflectionOrganization(database);
-  const output = await invokeReflection(invoker, configuration, {
+  const reflectionOutput = await invokeReflection(invoker, configuration, {
     memoryMarkdown: memory?.payload.markdown ?? '',
     memorySections: memory?.payload.sections ?? null,
     currentWeek:
@@ -535,6 +576,17 @@ const processAnalysis = async (
     sourceKind: source.type,
     sourceText: text,
   });
+  const output = await checkSuggestionNovelty(
+    invoker,
+    configuration,
+    reflectionOutput,
+    reflectionSuggestionCatalog(database),
+    () =>
+      onSuggestionCheckFailure({
+        taskCandidates: reflectionOutput.taskSuggestions.length,
+        habitCandidates: reflectionOutput.habitSuggestions.length,
+      }),
+  );
   completeAnalysis(
     database,
     job,
@@ -895,12 +947,20 @@ export type AiWorkerFailure = {
   outputAttempts: AiOutputAttemptDiagnostic[];
 };
 
+export type AiWorkerWarning = {
+  jobId: string;
+  warningCode: 'suggestion-check-failed';
+  taskCandidates: number;
+  habitCandidates: number;
+};
+
 export const startAiWorker = (
   database: MindfullDatabase,
   options: {
     invoker?: AiInvoker;
     modelLoader?: typeof loadProviderModels;
     onError?: (failure: AiWorkerFailure) => void;
+    onWarning?: (warning: AiWorkerWarning) => void;
   } = {},
 ): AiWorker => {
   const invoker = options.invoker ?? aiInvoker;
@@ -990,7 +1050,20 @@ export const startAiWorker = (
             now,
           );
         } else {
-          await processAnalysis(database, job, configuration, invoker, now);
+          await processAnalysis(
+            database,
+            job,
+            configuration,
+            invoker,
+            now,
+            ({ taskCandidates, habitCandidates }) =>
+              options.onWarning?.({
+                jobId: job.id,
+                warningCode: 'suggestion-check-failed',
+                taskCandidates,
+                habitCandidates,
+              }),
+          );
         }
       } catch (error) {
         const terminal = error instanceof InvalidOutputError;

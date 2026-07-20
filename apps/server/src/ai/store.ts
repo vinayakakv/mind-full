@@ -458,6 +458,13 @@ export type ReflectionOrganization = {
   pendingHabitSuggestions: string[];
 };
 
+export type ReflectionSuggestionCatalog = {
+  existingTasks: string[];
+  existingHabits: string[];
+  previousTaskSuggestions: string[];
+  previousHabitSuggestions: string[];
+};
+
 export const reflectionOrganization = (
   database: MindfullDatabase,
 ): ReflectionOrganization => {
@@ -493,6 +500,38 @@ export const reflectionOrganization = (
     pendingHabitSuggestions: domainDocuments.flatMap((document) =>
       document.type === 'habit-suggestion' &&
       document.payload.state === 'pending'
+        ? [document.payload.proposedName]
+        : [],
+    ),
+  };
+};
+
+export const reflectionSuggestionCatalog = (
+  database: MindfullDatabase,
+): ReflectionSuggestionCatalog => {
+  const domainDocuments = database
+    .select()
+    .from(documents)
+    .all()
+    .map(documentFromRow)
+    .filter((document) => !document.deletedAt);
+
+  return {
+    existingTasks: domainDocuments.flatMap((document) =>
+      document.type === 'task' && document.payload.completedAt === null
+        ? [document.payload.text]
+        : [],
+    ),
+    existingHabits: domainDocuments.flatMap((document) =>
+      document.type === 'habit' ? [document.payload.name] : [],
+    ),
+    previousTaskSuggestions: domainDocuments.flatMap((document) =>
+      document.type === 'task-suggestion'
+        ? [document.payload.proposedText]
+        : [],
+    ),
+    previousHabitSuggestions: domainDocuments.flatMap((document) =>
+      document.type === 'habit-suggestion'
         ? [document.payload.proposedName]
         : [],
     ),

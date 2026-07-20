@@ -2,7 +2,13 @@ import { createJournalDocument } from '@mindfull/domain';
 import { NoObjectGeneratedError } from 'ai';
 import { describe, expect, it } from 'vitest';
 
+import type {
+  AiInvoker,
+  ProviderConfiguration,
+  ReflectionOutput,
+} from './provider.js';
 import {
+  checkSuggestionNovelty,
   chronologicalSourceText,
   jobLeaseDurationMs,
   outputAttemptDiagnostic,
@@ -11,6 +17,33 @@ import {
   reflectionMemoryMarkdownFor,
   weekBounds,
 } from './worker.js';
+
+const providerConfiguration: ProviderConfiguration = {
+  baseUrl: 'http://model.local/v1',
+  apiKey: '',
+  model: 'quiet-model',
+  responseTimeoutMinutes: 5,
+};
+
+const reflectionOutput = (): ReflectionOutput => ({
+  updatedMemory: {
+    context: [],
+    supportivePatterns: [],
+    recurringThemes: [],
+    ongoingCommitments: [],
+    openQuestions: [],
+    uncertainImpressions: [],
+  },
+  updatedWeek: {
+    summary: 'A quiet week.',
+    brightSpots: ['A restorative pause.'],
+    difficultParts: [],
+    supportiveActions: [],
+    questionsToCarry: [],
+  },
+  taskSuggestions: [{ text: 'Call the clinic', reason: null }],
+  habitSuggestions: [{ text: 'Stretch each morning', reason: null }],
+});
 
 const usage = {
   inputTokens: 5_419,
@@ -33,8 +66,43 @@ describe('AI provider backoff', () => {
 });
 
 describe('AI job lease', () => {
-  it('stays one minute beyond the selected response timeout', () => {
-    expect(jobLeaseDurationMs(10)).toBe(11 * 60_000);
+  it('covers reflection, duplicate checking, and a final margin', () => {
+    expect(jobLeaseDurationMs(10)).toBe(13 * 60_000);
+  });
+});
+
+describe('suggestion novelty check', () => {
+  it('omits optional suggestions when duplicate checking fails', async () => {
+    let warned = false;
+    const invoker: AiInvoker = {
+      reflect: async () => reflectionOutput(),
+      findSuggestionDuplicates: async () => {
+        throw new Error('The model became unavailable.');
+      },
+      rebuildWeek: async () => ({
+        updatedWeek: reflectionOutput().updatedWeek,
+      }),
+    };
+
+    const checked = await checkSuggestionNovelty(
+      invoker,
+      providerConfiguration,
+      reflectionOutput(),
+      {
+        existingTasks: [],
+        existingHabits: [],
+        previousTaskSuggestions: [],
+        previousHabitSuggestions: [],
+      },
+      () => {
+        warned = true;
+      },
+    );
+
+    expect(checked.taskSuggestions).toEqual([]);
+    expect(checked.habitSuggestions).toEqual([]);
+    expect(checked.updatedMemory).toEqual(reflectionOutput().updatedMemory);
+    expect(warned).toBe(true);
   });
 });
 

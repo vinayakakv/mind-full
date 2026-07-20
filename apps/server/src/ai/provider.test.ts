@@ -6,6 +6,7 @@ import {
   providerErrorCode,
   providerErrorMessage,
   reflectionOutputSchema,
+  suggestionDuplicateOutputSchema,
 } from './provider.js';
 
 describe('reflection output schema', () => {
@@ -56,6 +57,32 @@ describe('reflection output schema', () => {
         },
       }).success,
     ).toBe(true);
+  });
+});
+
+describe('suggestion duplicate output schema', () => {
+  it('requires one decision for every candidate', () => {
+    const schema = suggestionDuplicateOutputSchema({
+      taskCandidates: ['First', 'Second'],
+      habitCandidates: ['Third'],
+      existingTasks: [],
+      existingHabits: [],
+      previousTaskSuggestions: [],
+      previousHabitSuggestions: [],
+    });
+
+    expect(
+      schema.safeParse({
+        taskDuplicates: [true, false],
+        habitDuplicates: [false],
+      }).success,
+    ).toBe(true);
+    expect(
+      schema.safeParse({
+        taskDuplicates: [true],
+        habitDuplicates: [false],
+      }).success,
+    ).toBe(false);
   });
 });
 

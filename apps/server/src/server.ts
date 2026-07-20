@@ -99,6 +99,9 @@ export const buildServer = async ({
       if (failure.terminal) server.log.error(failure, message);
       else server.log.warn(failure, message);
     },
+    onWarning: (warning) => {
+      server.log.warn(warning, 'AI suggestion duplicate check was skipped');
+    },
   });
 
   const stopBackupScheduler = backup

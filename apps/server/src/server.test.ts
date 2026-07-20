@@ -251,16 +251,32 @@ describe('Mindfull server', () => {
               questionsToCarry: [],
             },
             taskSuggestions: [
-              { text: 'Water the plants', reason: null },
+              { text: 'Water my houseplants', reason: null },
               { text: 'Make time to watch the rain', reason: null },
             ],
             habitSuggestions: [
-              { text: 'Open the curtains', reason: null },
+              { text: 'Open the curtains each weekday', reason: null },
               {
                 text: 'Sit quietly by the window',
                 reason: 'Quiet observation felt supportive.',
               },
             ],
+          };
+        },
+        findSuggestionDuplicates: async (_configuration, input) => {
+          expect(input.existingTasks).toContain('Water the plants');
+          expect(input.existingHabits).toContain('Open the curtains');
+          expect(input.taskCandidates).toEqual([
+            'Water my houseplants',
+            'Make time to watch the rain',
+          ]);
+          expect(input.habitCandidates).toEqual([
+            'Open the curtains each weekday',
+            'Sit quietly by the window',
+          ]);
+          return {
+            taskDuplicates: [true, false],
+            habitDuplicates: [true, false],
           };
         },
         rebuildWeek: async (_configuration, input) => ({
@@ -429,6 +445,9 @@ describe('Mindfull server', () => {
       },
       invoker: {
         reflect: async () => {
+          throw new Error('The invoker should not run.');
+        },
+        findSuggestionDuplicates: async () => {
           throw new Error('The invoker should not run.');
         },
         rebuildWeek: async () => {
