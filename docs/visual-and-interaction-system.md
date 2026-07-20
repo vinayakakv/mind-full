@@ -110,13 +110,17 @@ against adjacent colors.
 An optional ambient color field draws from the calm, graphic character of the
 Zune desktop software: broad asymmetric gradient planes, richer coral, plum,
 amber, teal, and indigo, and generous areas of quiet canvas. It avoids visible
-blobs and decorative particles. Fine, oversized contour lines provide a trace
-of abstract background artwork without becoming a foreground illustration.
-The field shifts between warm morning and cooler evening palettes, continues
-behind translucent navigation, and never carries meaning. The synchronized
-setting offers Gentle, Still, and Off; Gentle is the default. Animation pauses
-during focused writing and check-ins, and reduced-motion always receives the
-still treatment.
+blobs and decorative particles. A self-hosted layered-wave SVG gives the
+background artwork an asymmetric, cropped form without turning it into a
+foreground illustration;
+its paths use a palette separate from the underlying color field so intermediate
+bands remain intentional in both themes. The field shifts between warm morning
+and cooler evening palettes, continues behind translucent navigation, and never
+carries meaning. The synchronized setting offers Gentle, Still, and Off; Gentle
+is the default. Gradient planes move independently over long transform-only
+cycles, while alternating wave layers drift by a smaller amount. Animation
+pauses during focused writing and check-ins, and reduced-motion always receives
+the still treatment.
 
 ## Layout
 
