@@ -107,14 +107,14 @@
   --ambient-third: #d1a13c;
   --ambient-fourth: #5e998b;
   --ambient-line: rgb(62 80 69 / 26%);
-  --wave-first: #bd6a5b;
-  --wave-second: #c97864;
-  --wave-third: #d48767;
-  --wave-fourth: #d49a62;
-  --wave-fifth: #c6a66b;
-  --wave-sixth: #9da879;
-  --wave-seventh: #769b84;
-  --wave-eighth: #5d8f88;
+  --wave-first: #c65d56;
+  --wave-second: #b75d78;
+  --wave-third: #8f628f;
+  --wave-fourth: #69719b;
+  --wave-fifth: #4f8c8b;
+  --wave-sixth: #77966e;
+  --wave-seventh: #b08d49;
+  --wave-eighth: #c8784f;
 }
 
 .backdrop[data-period="evening"] {
@@ -123,14 +123,14 @@
   --ambient-third: #3f788c;
   --ambient-fourth: #ae6b49;
   --ambient-line: rgb(230 194 147 / 25%);
-  --wave-first: #574d91;
-  --wave-second: #675398;
-  --wave-third: #7b5591;
-  --wave-fourth: #905583;
-  --wave-fifth: #a15c77;
-  --wave-sixth: #9b6a6d;
-  --wave-seventh: #657f82;
-  --wave-eighth: #467f88;
+  --wave-first: #554a91;
+  --wave-second: #75519a;
+  --wave-third: #95507f;
+  --wave-fourth: #ad5b71;
+  --wave-fifth: #b96f58;
+  --wave-sixth: #af8b52;
+  --wave-seventh: #4f8585;
+  --wave-eighth: #4f718f;
 }
 
 :global(:root[data-theme="dark"]) .backdrop[data-period="morning"] {
@@ -139,14 +139,14 @@
   --ambient-third: #826421;
   --ambient-fourth: #356b61;
   --ambient-line: rgb(206 188 154 / 18%);
-  --wave-first: #a95549;
-  --wave-second: #b66553;
-  --wave-third: #bd7656;
-  --wave-fourth: #b98952;
-  --wave-fifth: #a3945a;
-  --wave-sixth: #788e69;
-  --wave-seventh: #568176;
-  --wave-eighth: #47756f;
+  --wave-first: #d46d60;
+  --wave-second: #c1698b;
+  --wave-third: #a36fa8;
+  --wave-fourth: #7580b7;
+  --wave-fifth: #4f9da0;
+  --wave-sixth: #7da273;
+  --wave-seventh: #c3a054;
+  --wave-eighth: #d18458;
 }
 
 :global(:root[data-theme="dark"]) .backdrop[data-period="evening"] {
@@ -155,14 +155,14 @@
   --ambient-third: #285c70;
   --ambient-fourth: #70412f;
   --ambient-line: rgb(190 169 216 / 19%);
-  --wave-first: #6256a0;
-  --wave-second: #705ba6;
-  --wave-third: #825d9e;
-  --wave-fourth: #965d91;
-  --wave-fifth: #a36283;
-  --wave-sixth: #9b6d75;
-  --wave-seventh: #5f7d83;
-  --wave-eighth: #467985;
+  --wave-first: #7165b4;
+  --wave-second: #8a61ae;
+  --wave-third: #ad6094;
+  --wave-fourth: #c36a83;
+  --wave-fifth: #c87b61;
+  --wave-sixth: #b89a61;
+  --wave-seventh: #5a9997;
+  --wave-eighth: #5e85a4;
 }
 
 .backdrop[data-motion="gentle"]::before {
