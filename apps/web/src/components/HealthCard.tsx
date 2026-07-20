@@ -40,6 +40,8 @@ export function HealthCard() {
     ? changeFromPreviousMeasurement(health.measurements, health.metric.id)
     : null;
 
+  if (!health?.latest || !health.metric) return null;
+
   return (
     <Link className={styles.card} to="/health">
       <span className={styles.icon} aria-hidden="true">
@@ -49,21 +51,17 @@ export function HealthCard() {
       </span>
       <span className={styles.copy}>
         <span className={styles.eyebrow}>Health</span>
-        {health?.latest && health.metric ? (
-          <strong>
-            {health.metric.payload.name} ·{' '}
-            {formatBodyValue(
-              health.latest.payload.value,
-              health.metric.payload.preferredUnit,
-            )}
-          </strong>
-        ) : (
-          <strong>Notice change over time</strong>
-        )}
+        <strong>
+          {health.metric.payload.name} ·{' '}
+          {formatBodyValue(
+            health.latest.payload.value,
+            health.metric.payload.preferredUnit,
+          )}
+        </strong>
         <span className={styles.detail}>
-          {change !== null && health?.metric
+          {change !== null
             ? `${formatChange(change, health.metric)} from the previous reading`
-            : 'A quiet record of body measurements'}
+            : 'Most recent measurement'}
         </span>
       </span>
       <span aria-hidden="true">→</span>

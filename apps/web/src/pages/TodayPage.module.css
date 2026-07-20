@@ -54,6 +54,8 @@
 
 .secondaryCheckIn {
   background: transparent;
+  border-color: transparent;
+  padding-block: 0.65rem;
 }
 
 .checkInButton[data-hovered] {
@@ -133,6 +135,35 @@
 }
 
 @media (max-width: 36rem) {
+  .date {
+    font-size: 0.7rem;
+    margin-bottom: 0.7rem;
+  }
+
+  .intro h1 {
+    font-size: clamp(2.85rem, 13vw, 3.6rem);
+  }
+
+  .lede {
+    font-size: 1rem;
+    line-height: 1.5;
+    margin: 0.9rem 0 1.4rem;
+  }
+
+  .checkInButton {
+    gap: 0.7rem;
+    padding: 0.9rem 1rem;
+  }
+
+  .secondaryCheckIn {
+    border-radius: 0.7rem;
+    padding: 0.55rem 0.25rem;
+  }
+
+  .secondaryCheckIn .checkInState {
+    font-size: 0.68rem;
+  }
+
   .journalAction {
     bottom: calc(4.7rem + env(safe-area-inset-bottom));
     height: 3.25rem;

@@ -363,6 +363,15 @@
 }
 
 @media (max-width: 36rem) {
+  .section {
+    margin-top: 2.75rem;
+    padding-top: 1.6rem;
+  }
+
+  .sectionHeading h2 {
+    font-size: 1.75rem;
+  }
+
   .weekdayChoices {
     gap: 0.3rem;
   }

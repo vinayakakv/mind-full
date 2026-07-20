@@ -160,10 +160,10 @@ export function TodayPage() {
         </div>
       </section>
       <ReminderNotices />
-      <HealthCard />
       <HabitList />
       <TaskSuggestions />
       <TaskList />
+      <HealthCard />
       <CheckInFlow />
       <JournalComposeAction />
     </>

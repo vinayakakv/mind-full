@@ -42,8 +42,14 @@ The opening view contains:
 - At most one useful recent insight
 - A subtle sync state rather than a prominent connection dashboard
 - A quiet floating action for beginning a journal entry
-- A restrained Health card showing the latest body measurement and its change
-  from the preceding reading of the same metric
+- A restrained Health card, shown only when a body measurement exists, with the
+  latest value and its change from the preceding reading of the same metric
+
+On mobile, Today reads as one daily stream rather than a stack of equal panels:
+the relevant check-in is prominent, the other check-in remains a quiet nearby
+action, habits and tasks follow, and recent Health appears only when it has
+something personal to show. Healthy sync is represented by a small status mark;
+syncing and failure states retain explanatory text.
 
 Tomorrow-only tasks are hidden from today's main list. An optional Tomorrow
 section lets the user review them early.
@@ -167,7 +173,7 @@ A task contains:
 - Source: manual, journal, or check-in
 
 Tasks do not have due dates, priorities, overdue states, or urgency colors.
-Incomplete tasks retain their creation order. Completed tasks move into a
+Incomplete tasks show the newest additions first. Completed tasks move into a
 visually subdued group below incomplete tasks. There is no manual reordering
 interface.
 Creating a task opens a short contextual dialog with the task text and an

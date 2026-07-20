@@ -69,3 +69,19 @@
     transition: none;
   }
 }
+
+@media (max-width: 36rem) {
+  .card {
+    margin-top: 3rem;
+    padding: 0.85rem 1rem;
+  }
+
+  .icon {
+    height: 2.15rem;
+    width: 2.15rem;
+  }
+
+  .detail {
+    line-height: 1.35;
+  }
+}

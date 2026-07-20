@@ -223,6 +223,7 @@
 
 @media (max-width: 36rem) {
   .section {
+    margin-top: 3rem;
     padding-bottom: 4.5rem;
   }
 

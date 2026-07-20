@@ -34,3 +34,17 @@
     animation: none;
   }
 }
+
+@media (max-width: 36rem) {
+  .status[data-status="idle"],
+  .status[data-status="unpaired"] {
+    font-size: 0;
+    gap: 0;
+  }
+
+  .status[data-status="idle"] > span,
+  .status[data-status="unpaired"] > span {
+    height: 0.45rem;
+    width: 0.45rem;
+  }
+}

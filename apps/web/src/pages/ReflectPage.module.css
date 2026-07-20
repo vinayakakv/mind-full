@@ -308,3 +308,29 @@
     flex-direction: column;
   }
 }
+
+@media (max-width: 36rem) {
+  .page > h1 {
+    font-size: clamp(2.85rem, 14vw, 3.6rem);
+    margin: 0.55rem 0 0.75rem;
+  }
+
+  .status {
+    line-height: 1.45;
+    margin-bottom: 1.75rem;
+  }
+
+  .card {
+    border-radius: 1.15rem;
+    padding: 1.2rem;
+  }
+
+  .emptyMemory h2 {
+    font-size: 2rem;
+    margin: 0.9rem 0;
+  }
+
+  .emptyMemory > p:not(.sectionLabel) {
+    line-height: 1.5;
+  }
+}

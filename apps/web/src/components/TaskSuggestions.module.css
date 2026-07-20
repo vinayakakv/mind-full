@@ -85,6 +85,10 @@
 }
 
 @media (max-width: 36rem) {
+  .section {
+    margin-top: 3rem;
+  }
+
   .suggestion {
     align-items: stretch;
     flex-direction: column;

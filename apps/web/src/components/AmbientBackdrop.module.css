@@ -16,35 +16,48 @@
 
 .backdrop::before {
   background:
-    linear-gradient(
-      128deg,
-      transparent 8%,
-      var(--ambient-first) 31%,
-      var(--ambient-second) 50%,
-      transparent 75%
+    conic-gradient(
+      from 214deg at 18% 28%,
+      transparent 0 11%,
+      var(--ambient-first) 19% 33%,
+      transparent 42% 100%
+    ),
+    conic-gradient(
+      from 32deg at 84% 72%,
+      transparent 0 13%,
+      var(--ambient-second) 22% 38%,
+      transparent 47% 100%
     ),
     linear-gradient(
-      22deg,
-      transparent 42%,
-      var(--ambient-third) 68%,
-      transparent 88%
+      118deg,
+      transparent 22%,
+      var(--ambient-third) 52%,
+      transparent 79%
     );
+  filter: blur(2.5rem);
 }
 
 .backdrop::after {
   background:
-    linear-gradient(
-      38deg,
-      transparent 18%,
-      var(--ambient-fourth) 43%,
-      transparent 69%
+    repeating-radial-gradient(
+      ellipse at 14% 54%,
+      transparent 0 4.8rem,
+      var(--ambient-line) 4.9rem 5rem,
+      transparent 5.1rem 9.6rem
     ),
     linear-gradient(
       154deg,
-      transparent 34%,
-      var(--ambient-third) 57%,
-      transparent 82%
+      transparent 32%,
+      var(--ambient-fourth) 58%,
+      transparent 79%
     );
+  mask-image: linear-gradient(
+    108deg,
+    transparent 8%,
+    black 30% 72%,
+    transparent 94%
+  );
+  opacity: 0.72;
 }
 
 .backdrop[data-period="morning"] {
@@ -52,6 +65,7 @@
   --ambient-second: #bc6d94;
   --ambient-third: #d1a13c;
   --ambient-fourth: #5e998b;
+  --ambient-line: rgb(62 80 69 / 26%);
 }
 
 .backdrop[data-period="evening"] {
@@ -59,6 +73,7 @@
   --ambient-second: #994b72;
   --ambient-third: #3f788c;
   --ambient-fourth: #ae6b49;
+  --ambient-line: rgb(230 194 147 / 25%);
 }
 
 :global(:root[data-theme="dark"]) .backdrop[data-period="morning"] {
@@ -66,6 +81,7 @@
   --ambient-second: #713f62;
   --ambient-third: #826421;
   --ambient-fourth: #356b61;
+  --ambient-line: rgb(206 188 154 / 18%);
 }
 
 :global(:root[data-theme="dark"]) .backdrop[data-period="evening"] {
@@ -73,6 +89,7 @@
   --ambient-second: #713651;
   --ambient-third: #285c70;
   --ambient-fourth: #70412f;
+  --ambient-line: rgb(190 169 216 / 19%);
 }
 
 .backdrop[data-motion="gentle"]::before {
@@ -92,21 +109,21 @@
 
 @keyframes ambient-drift-first {
   from {
-    transform: translate3d(-5%, -2%, 0) scale(1.02);
+    transform: translate3d(-3%, -2%, 0) rotate(-1deg) scale(1.02);
   }
 
   to {
-    transform: translate3d(7%, 5%, 0) scale(1.08);
+    transform: translate3d(4%, 3%, 0) rotate(1.5deg) scale(1.07);
   }
 }
 
 @keyframes ambient-drift-second {
   from {
-    transform: translate3d(5%, 4%, 0) scale(1.07);
+    transform: translate3d(3%, 3%, 0) rotate(0.5deg) scale(1.05);
   }
 
   to {
-    transform: translate3d(-7%, -5%, 0) scale(0.98);
+    transform: translate3d(-4%, -3%, 0) rotate(-1.25deg) scale(0.99);
   }
 }
 

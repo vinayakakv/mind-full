@@ -110,11 +110,13 @@ against adjacent colors.
 An optional ambient color field draws from the calm, graphic character of the
 Zune desktop software: broad asymmetric gradient planes, richer coral, plum,
 amber, teal, and indigo, and generous areas of quiet canvas. It avoids visible
-blobs and decorative particles. The field shifts between warm morning and cooler
-evening palettes, continues behind translucent navigation, and never carries
-meaning. The synchronized setting offers Gentle, Still, and Off; Gentle is the
-default. Animation pauses during focused writing and check-ins, and
-reduced-motion always receives the still treatment.
+blobs and decorative particles. Fine, oversized contour lines provide a trace
+of abstract background artwork without becoming a foreground illustration.
+The field shifts between warm morning and cooler evening palettes, continues
+behind translucent navigation, and never carries meaning. The synchronized
+setting offers Gentle, Still, and Off; Gentle is the default. Animation pauses
+during focused writing and check-ins, and reduced-motion always receives the
+still treatment.
 
 ## Layout
 
@@ -136,6 +138,12 @@ reduced-motion always receives the still treatment.
 - On mobile, the top bar is reserved for the wordmark, sync state, and settings;
   Today, History, and Reflect remain in a fixed bottom bar. The two bars never
   repeat the same action.
+- Healthy mobile sync states collapse to a legible status mark. Syncing,
+  offline, and error states keep their short text because they may need action.
+- Mobile Today establishes one clear first action and lets secondary check-ins,
+  empty states, and optional Health content recede. History and Reflect use
+  compact introductions so their records and reflection cards appear in the
+  first viewport.
 - On mobile, a journal compose action floats above the bottom navigation. On
   wider screens it may include the short label Write.
 - A floating action should remain visually quiet: one action, no speed dial,
