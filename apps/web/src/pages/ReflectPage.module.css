@@ -28,8 +28,28 @@
   font-size: 0.78rem;
 }
 
-.status {
+.introMeta {
+  align-items: baseline;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
   margin-bottom: clamp(2.5rem, 7vh, 4.5rem);
+}
+
+.status {
+  margin: 0;
+}
+
+.historyLink {
+  color: var(--text-muted);
+  flex: none;
+  font-size: 0.78rem;
+  text-underline-offset: 0.25rem;
+}
+
+.historyLink:hover,
+.historyLink:focus-visible {
+  color: var(--text-primary);
 }
 
 .space {
@@ -317,6 +337,9 @@
 
   .status {
     line-height: 1.45;
+  }
+
+  .introMeta {
     margin-bottom: 1.75rem;
   }
 

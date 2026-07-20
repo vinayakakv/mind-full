@@ -196,15 +196,20 @@ export function ReflectPage() {
     <section className={styles.page}>
       <p className={styles.eyebrow}>Look back gently</p>
       <h1>Reflect</h1>
-      <p className={styles.status} data-status={status}>
-        {failedJobs
-          ? 'Some reflection work could not be completed. You can retry it in Settings.'
-          : reflectionRebuild
-            ? rebuildProgressText(reflectionRebuild, status)
-            : pendingJobs
-              ? `Reflecting on ${pendingJobs} waiting ${pendingJobs === 1 ? 'entry' : 'entries'}.`
-              : statusText[status]}
-      </p>
+      <div className={styles.introMeta}>
+        <p className={styles.status} data-status={status}>
+          {failedJobs
+            ? 'Some reflection work could not be completed. You can retry it in Settings.'
+            : reflectionRebuild
+              ? rebuildProgressText(reflectionRebuild, status)
+              : pendingJobs
+                ? `Reflecting on ${pendingJobs} waiting ${pendingJobs === 1 ? 'entry' : 'entries'}.`
+                : statusText[status]}
+        </p>
+        <Link className={styles.historyLink} to="/history">
+          View history →
+        </Link>
+      </div>
 
       <div className={styles.space}>
         {reflection?.taskSuggestions.length ? (

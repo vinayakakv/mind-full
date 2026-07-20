@@ -16,8 +16,8 @@ import { SyncIndicator } from './SyncIndicator';
 
 const navItems = [
   { to: '/', label: 'Today', end: true },
-  { to: '/history', label: 'History', end: false },
   { to: '/reflect', label: 'Reflect', end: false },
+  { to: '/health', label: 'Health', end: false },
 ] as const;
 
 function PrimaryNavigation({ className }: { className: string }) {
@@ -74,17 +74,6 @@ export function AppShell() {
           />
           <div className={styles.utilities}>
             <SyncIndicator />
-            <NavLink
-              to="/health"
-              className={({ isActive }) =>
-                `${styles.utilityLink} ${isActive ? styles.utilityLinkActive : ''}`
-              }
-              aria-label="Health"
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M7 4v16M17 4v16M4 8h6M14 8h6M4 16h6M14 16h6M10 6v4M14 6v4M10 14v4M14 14v4" />
-              </svg>
-            </NavLink>
             <NavLink
               to="/settings"
               data-warning={

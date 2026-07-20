@@ -72,6 +72,7 @@
 
 @media (max-width: 36rem) {
   .card {
+    margin-bottom: 5rem;
     margin-top: 3rem;
     padding: 0.85rem 1rem;
   }

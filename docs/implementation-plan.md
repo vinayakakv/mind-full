@@ -136,14 +136,15 @@ is deliberately progressive: the app catches up while opening or returning to
 the foreground. The Android shell now maps the same documents to exact native
 alarms.
 
-Navigation now separates Today, History, and Reflect. Journals begin from a
-quiet compose action on Today and completed entries join a chronological
-History alongside completed check-ins and recorded habit outcomes. Settings is
-a utility icon rather than a primary tab. Tasks retain creation order and move
-into a subdued completed group instead of exposing mobile reordering controls.
+Navigation now keeps Today, Reflect, and Health immediately available. Reflect
+links to the chronological History of journals, completed check-ins, and
+recorded habit outcomes. Journals begin from a quiet compose action on Today,
+and Settings remains a utility icon rather than a primary tab. Tasks show newest
+additions first and move into a subdued completed group instead of exposing
+mobile reordering controls.
 
 AI-proposed tasks now have their own synchronized document type and a shared
-Suggestions area on Today and History. A proposal appears only after its
+Suggestions area on Today and Reflect. A proposal appears only after its
 availability time, names its reflection source, and can only become a normal
 task through explicit acceptance. Dismissal is permanent, while acceptance
 keeps journal or check-in provenance on the created task. Accepted task IDs are

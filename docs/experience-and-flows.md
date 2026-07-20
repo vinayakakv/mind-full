@@ -6,20 +6,21 @@ Mindfull has three primary destinations:
 
 - **Today** — the relevant check-in, today's habits, available tasks, and at
   most one recent insight.
-- **History** — a chronological record of journals, completed check-ins, habit
-  completions, and explicitly recorded misses.
 - **Reflect** — the current-week reflection, insights, themes, streaks,
   correlations, and semantic search.
+- **Health** — body measurements, recent values, and long-term trends.
 
-Health is a dedicated secondary destination reached from a restrained card on
-Today and a utility icon beside Settings. It does not occupy a permanent
-bottom-navigation position and individual measurements do not enter the general
-History timeline.
+History is the chronological source record behind reflection: journals,
+completed check-ins, habit completions, and explicitly recorded misses. It is
+reached through a clear link on Reflect instead of occupying permanent primary
+navigation. Individual health measurements do not enter the general History
+timeline. Today may also show a restrained Health card after a measurement
+exists.
 
 Settings remains a separate destination for schedules, reminders, theme, sync,
 devices, and AI configuration, but appears as a quiet gear icon rather than a
-primary named tab. Mobile uses restrained bottom navigation for Today, History,
-and Reflect. Desktop uses the same centered reading layout with a small top
+primary named tab. Mobile uses restrained bottom navigation for Today, Reflect,
+and Health. Desktop uses the same centered reading layout with a small top
 navigation. It should not grow a permanent sidebar.
 
 Opening a different routed page starts at its top. History is the deliberate
