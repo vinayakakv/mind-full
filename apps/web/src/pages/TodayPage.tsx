@@ -54,13 +54,6 @@ function CheckInInvitation({
       className={`${styles.checkInButton} ${isRelevant ? '' : styles.secondaryCheckIn}`}
       onPress={onOpen}
     >
-      <span className={styles.checkInState}>
-        {checkIn?.payload.status === 'completed'
-          ? 'Complete'
-          : isRelevant
-            ? 'Now · 2 min'
-            : '2 min'}
-      </span>
       <span>{checkInLabel(kind, checkIn)}</span>
       <span aria-hidden="true">→</span>
     </Button>
