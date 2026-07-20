@@ -136,7 +136,7 @@ is deliberately progressive: the app catches up while opening or returning to
 the foreground. The Android shell now maps the same documents to exact native
 alarms.
 
-Navigation now keeps Today, Reflect, and Health immediately available. Reflect
+Navigation now keeps Today, Health, and Reflect immediately available. Reflect
 links to the chronological History of journals, completed check-ins, and
 recorded habit outcomes. Journals begin from a quiet compose action on Today,
 and Settings remains a utility icon rather than a primary tab. Tasks show newest

@@ -87,8 +87,7 @@ topic documents contain the detailed rationale and behavior.
 - Multiple entries per metric and day are allowed.
 - Metrics can be renamed, archived, and restored; measurements can be edited
   and deleted.
-- Health has a dedicated page, a restrained Today card, and a permanent primary
-  navigation item.
+- Health has a dedicated page and a permanent primary navigation item.
 - Charts show one metric at a time over 1 month, 3 months, 6 months, 1 year, or
   all history.
 - Health does not include goals, reminders, medical interpretation, BMI,
@@ -130,7 +129,7 @@ topic documents contain the detailed rationale and behavior.
 - Dedicated light/dark themes, system following, and time-aware presentation.
 - Theme preference syncs; system resolution is device-local.
 - Motion is gentle and respects reduced-motion preferences.
-- Primary navigation is Today, Reflect, and Health. Reflect links to History;
+- Primary navigation is Today, Health, and Reflect. Reflect links to History;
   Settings is a utility icon, and journal creation begins from Today.
 - The interface avoids a familiar dashboard appearance.
 - Repository guidance favors a functional core, immutable domain data, explicit

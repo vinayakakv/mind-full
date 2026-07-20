@@ -130,19 +130,19 @@ still treatment.
   heading, and closing the flow restores focus to the invitation that opened it.
 - Settings may be denser than reflection surfaces, but should use the same
   typography and rhythm.
-- Primary navigation contains Today, Reflect, and Health. Reflect links clearly
+- Primary navigation contains Today, Health, and Reflect. Reflect links clearly
   to the chronological History record. Settings uses a consistently placed icon
   button with an accessible name and focus treatment.
 - The compact app header remains sticky on long pages. It uses a translucent
   canvas surface and subtle divider so content can pass beneath it without
   becoming difficult to read.
 - On mobile, the top bar is reserved for the wordmark, sync state, and settings;
-  Today, Reflect, and Health remain in a fixed bottom bar. The two bars never
+  Today, Health, and Reflect remain in a fixed bottom bar. The two bars never
   repeat the same action.
 - Healthy mobile sync states collapse to a legible status mark. Syncing,
   offline, and error states keep their short text because they may need action.
-- Mobile Today establishes one clear first action and lets secondary check-ins,
-  empty states, and optional Health content recede. History and Reflect use
+- Mobile Today establishes one clear first action and lets secondary check-ins
+  and empty states recede. History and Reflect use
   compact introductions so their records and reflection cards appear in the
   first viewport.
 - On mobile, a journal compose action floats above the bottom navigation. On

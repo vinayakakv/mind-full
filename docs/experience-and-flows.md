@@ -14,13 +14,12 @@ History is the chronological source record behind reflection: journals,
 completed check-ins, habit completions, and explicitly recorded misses. It is
 reached through a clear link on Reflect instead of occupying permanent primary
 navigation. Individual health measurements do not enter the general History
-timeline. Today may also show a restrained Health card after a measurement
-exists.
+timeline.
 
 Settings remains a separate destination for schedules, reminders, theme, sync,
 devices, and AI configuration, but appears as a quiet gear icon rather than a
-primary named tab. Mobile uses restrained bottom navigation for Today, Reflect,
-and Health. Desktop uses the same centered reading layout with a small top
+primary named tab. Mobile uses restrained bottom navigation for Today, Health,
+and Reflect. Desktop uses the same centered reading layout with a small top
 navigation. It should not grow a permanent sidebar.
 
 Opening a different routed page starts at its top. History is the deliberate
@@ -43,14 +42,11 @@ The opening view contains:
 - At most one useful recent insight
 - A subtle sync state rather than a prominent connection dashboard
 - A quiet floating action for beginning a journal entry
-- A restrained Health card, shown only when a body measurement exists, with the
-  latest value and its change from the preceding reading of the same metric
 
 On mobile, Today reads as one daily stream rather than a stack of equal panels:
 the relevant check-in is prominent, the other check-in remains a quiet nearby
-action, habits and tasks follow, and recent Health appears only when it has
-something personal to show. Healthy sync is represented by a small status mark;
-syncing and failure states retain explanatory text.
+action, and habits and tasks follow. Healthy sync is represented by a small
+status mark; syncing and failure states retain explanatory text.
 
 Tomorrow-only tasks are hidden from today's main list. An optional Tomorrow
 section lets the user review them early.

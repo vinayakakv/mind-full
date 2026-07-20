@@ -11,7 +11,6 @@ import { useNavigate } from 'react-router';
 
 import { CheckInFlow, openCheckIn } from '../components/CheckInFlow';
 import { HabitList } from '../components/HabitList';
-import { HealthCard } from '../components/HealthCard';
 import { ReminderNotices } from '../components/ReminderNotices';
 import { TaskList } from '../components/TaskList';
 import { TaskSuggestions } from '../components/TaskSuggestions';
@@ -163,7 +162,6 @@ export function TodayPage() {
       <HabitList />
       <TaskSuggestions />
       <TaskList />
-      <HealthCard />
       <CheckInFlow />
       <JournalComposeAction />
     </>

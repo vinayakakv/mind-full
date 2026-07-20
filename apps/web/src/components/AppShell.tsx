@@ -16,8 +16,8 @@ import { SyncIndicator } from './SyncIndicator';
 
 const navItems = [
   { to: '/', label: 'Today', end: true },
-  { to: '/reflect', label: 'Reflect', end: false },
   { to: '/health', label: 'Health', end: false },
+  { to: '/reflect', label: 'Reflect', end: false },
 ] as const;
 
 function PrimaryNavigation({ className }: { className: string }) {
