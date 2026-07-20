@@ -117,10 +117,12 @@ its paths use a palette separate from the underlying color field so intermediate
 bands remain intentional in both themes. The field shifts between warm morning
 and cooler evening palettes, continues behind translucent navigation, and never
 carries meaning. The synchronized setting offers Gentle, Still, and Off; Gentle
-is the default. Gradient planes move independently over long transform-only
-cycles, while alternating wave layers drift by a smaller amount. Animation
-pauses during focused writing and check-ins, and reduced-motion always receives
-the still treatment.
+is the default. Five grouped, transform-only layers move independently: the
+artwork field and four quieter, paired wave bands. Each app load chooses bounded
+speeds and a balanced starting pattern so two bands initially travel each way.
+Keeping adjacent paths paired avoids costly Android WebView repaints while
+retaining irregular depth. Animation pauses during focused writing and
+check-ins, and reduced-motion always receives the still treatment.
 
 ## Layout
 

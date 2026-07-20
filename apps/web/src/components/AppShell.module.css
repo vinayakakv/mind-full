@@ -186,8 +186,8 @@
   }
 
   .mobileNavigation::before {
-    backdrop-filter: blur(20px) saturate(118%);
-    background: color-mix(in srgb, var(--surface-canvas) 48%, transparent);
+    backdrop-filter: blur(12px) saturate(118%);
+    background: color-mix(in srgb, var(--surface-canvas) 30%, transparent);
     border-top: 1px solid
       color-mix(in srgb, var(--border-subtle) 58%, transparent);
     content: "";

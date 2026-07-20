@@ -66,6 +66,11 @@
   transform-origin: center;
 }
 
+.waveBand {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
 .waves {
   opacity: var(--wave-opacity);
 }
@@ -168,123 +173,93 @@
   --wave-eighth: #5e85a4;
 }
 
-.backdrop[data-motion="gentle"]::before {
-  animation: ambient-drift-first 72s ease-in-out infinite alternate;
-}
-
-.backdrop[data-motion="gentle"]::after {
-  animation: ambient-drift-second 94s ease-in-out infinite alternate;
-}
-
 .backdrop[data-motion="gentle"] .artwork {
-  animation: artwork-drift 128s ease-in-out infinite alternate;
+  animation: artwork-drift 9s ease-in-out infinite alternate;
+  will-change: transform;
 }
 
-.backdrop[data-motion="gentle"] .waves path:nth-child(odd) {
-  animation: wave-shift-first 28s ease-in-out infinite alternate;
+.backdrop[data-motion="gentle"] .waveBandOne {
+  animation: wave-drift-one 10s ease-in-out infinite alternate;
+  will-change: transform;
 }
 
-.backdrop[data-motion="gentle"] .waves path:nth-child(even) {
-  animation: wave-shift-second 36s ease-in-out infinite alternate;
+.backdrop[data-motion="gentle"] .waveBandTwo {
+  animation: wave-drift-two 14s ease-in-out infinite alternate-reverse;
+  will-change: transform;
 }
 
-.backdrop[data-motion="gentle"] .waves path:nth-child(2) {
-  animation-delay: -11s;
+.backdrop[data-motion="gentle"] .waveBandThree {
+  animation: wave-drift-three 11.5s ease-in-out infinite alternate;
+  will-change: transform;
 }
 
-.backdrop[data-motion="gentle"] .waves path:nth-child(3) {
-  animation-delay: -19s;
+.backdrop[data-motion="gentle"] .waveBandFour {
+  animation: wave-drift-four 15.5s ease-in-out infinite alternate-reverse;
+  will-change: transform;
 }
 
-.backdrop[data-motion="gentle"] .waves path:nth-child(4) {
-  animation-delay: -7s;
-}
-
-.backdrop[data-motion="gentle"] .waves path:nth-child(5) {
-  animation-delay: -23s;
-}
-
-.backdrop[data-motion="gentle"] .waves path:nth-child(6) {
-  animation-delay: -17s;
-}
-
-.backdrop[data-motion="gentle"] .waves path:nth-child(7) {
-  animation-delay: -5s;
-}
-
-.backdrop[data-motion="gentle"] .waves path:nth-child(8) {
-  animation-delay: -29s;
-}
-
-:global(body:has(textarea:focus, [aria-modal="true"]))
-  .backdrop[data-motion="gentle"]::before,
-:global(body:has(textarea:focus, [aria-modal="true"]))
-  .backdrop[data-motion="gentle"]::after,
 :global(body:has(textarea:focus, [aria-modal="true"]))
   .backdrop[data-motion="gentle"]
   .artwork,
 :global(body:has(textarea:focus, [aria-modal="true"]))
   .backdrop[data-motion="gentle"]
-  .waves
-  path {
+  .waveBand {
   animation-play-state: paused;
-}
-
-@keyframes ambient-drift-first {
-  from {
-    transform: translate3d(-3%, -2%, 0) rotate(-0.6deg) scale(1.02);
-  }
-
-  to {
-    transform: translate3d(3%, 2%, 0) rotate(0.8deg) scale(1.05);
-  }
-}
-
-@keyframes ambient-drift-second {
-  from {
-    transform: translate3d(2%, 3%, 0) rotate(0.4deg) scale(1.04);
-  }
-
-  to {
-    transform: translate3d(-3%, -2%, 0) rotate(-0.7deg) scale(1);
-  }
 }
 
 @keyframes artwork-drift {
   from {
-    transform: translate3d(-1.5%, 0.5%, 0) rotate(-4.5deg) scale(1.1);
+    transform: translate3d(-2.25%, 0.75%, 0) rotate(-4.75deg) scale(1.1);
   }
 
   to {
-    transform: translate3d(1.5%, -1%, 0) rotate(-3.5deg) scale(1.12);
+    transform: translate3d(2.25%, -1.5%, 0) rotate(-3.25deg) scale(1.12);
   }
 }
 
-@keyframes wave-shift-first {
+@keyframes wave-drift-one {
   from {
-    transform: translate3d(-2.4%, 1%, 0);
+    transform: translate3d(-2.4%, 0.75%, 0);
   }
 
   to {
-    transform: translate3d(2.6%, -1.1%, 0);
+    transform: translate3d(2.4%, -0.75%, 0);
   }
 }
 
-@keyframes wave-shift-second {
+@keyframes wave-drift-two {
   from {
-    transform: translate3d(2.2%, -0.9%, 0);
+    transform: translate3d(-2%, 1%, 0);
   }
 
   to {
-    transform: translate3d(-2.5%, 1.05%, 0);
+    transform: translate3d(1.8%, -0.5%, 0);
+  }
+}
+
+@keyframes wave-drift-three {
+  from {
+    transform: translate3d(-1.8%, -0.6%, 0);
+  }
+
+  to {
+    transform: translate3d(1.8%, 0.6%, 0);
+  }
+}
+
+@keyframes wave-drift-four {
+  from {
+    transform: translate3d(-1.4%, -0.9%, 0);
+  }
+
+  to {
+    transform: translate3d(2.1%, 0.4%, 0);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .backdrop::before,
-  .backdrop::after,
   .artwork,
-  .waves path {
+  .waveBand {
     animation: none;
   }
 }
