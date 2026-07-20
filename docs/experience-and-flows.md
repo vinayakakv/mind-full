@@ -77,8 +77,13 @@ section lets the user review them early.
 - Drafts remain editable until completion. Completed check-ins are immutable
   historical records.
 - The morning/evening time boundaries are customizable.
-- The app offers the relevant flow automatically, while either flow remains
-  manually accessible.
+- Today offers the flow for the current time window. An unstarted flow from the
+  other window stays hidden; if it already has an unfinished draft, a quiet
+  secondary action remains available to continue it.
+- Morning completion never gates the evening flow. When the evening window
+  begins, Evening becomes the primary invitation even if Morning was skipped.
+- Completed check-ins are revisited through History rather than secondary Today
+  actions.
 - Every step is skippable.
 - Draft state is saved after each step and resumes after a reload or app exit.
 - At most one AI-generated question may appear in a check-in.

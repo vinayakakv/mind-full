@@ -106,6 +106,7 @@ export function TodayPage() {
     settings?.payload.eveningStartsAt ?? '18:00',
   );
   const otherKind = relevantKind === 'morning' ? 'evening' : 'morning';
+  const otherCheckIn = checkIns?.[otherKind];
   const openSelectedCheckIn = (
     kind: CheckInKind,
     checkIn: CheckInDocument | undefined,
@@ -143,12 +144,14 @@ export function TodayPage() {
               openSelectedCheckIn(relevantKind, checkIns?.[relevantKind])
             }
           />
-          <CheckInInvitation
-            kind={otherKind}
-            checkIn={checkIns?.[otherKind]}
-            isRelevant={false}
-            onOpen={() => openSelectedCheckIn(otherKind, checkIns?.[otherKind])}
-          />
+          {otherCheckIn?.payload.status === 'draft' ? (
+            <CheckInInvitation
+              kind={otherKind}
+              checkIn={otherCheckIn}
+              isRelevant={false}
+              onOpen={() => openSelectedCheckIn(otherKind, otherCheckIn)}
+            />
+          ) : null}
         </div>
       </section>
       <ReminderNotices />
