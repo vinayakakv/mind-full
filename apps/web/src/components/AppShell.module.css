@@ -152,17 +152,18 @@
   }
 
   .mobileNavigation {
+    align-items: center;
     bottom: 0;
     display: flex;
     justify-content: space-around;
     left: 0;
-    padding: 0.9rem
+    padding: 0.8rem
       calc(
         0.75rem +
         var(--safe-area-inset-right, env(safe-area-inset-right, 0px))
       )
       calc(
-        0.9rem +
+        0.8rem +
         var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))
       )
       calc(
@@ -174,10 +175,21 @@
     z-index: 10;
   }
 
+  .mobileNavigation .navLink {
+    align-items: center;
+    display: inline-flex;
+    font-size: 0.92rem;
+    justify-content: center;
+    min-height: 2.75rem;
+    min-width: 4.5rem;
+    padding-inline: 0.5rem;
+  }
+
   .mobileNavigation::before {
-    backdrop-filter: blur(16px);
-    background: color-mix(in srgb, var(--surface-canvas) 88%, transparent);
-    border-top: 1px solid var(--border-subtle);
+    backdrop-filter: blur(20px) saturate(118%);
+    background: color-mix(in srgb, var(--surface-canvas) 48%, transparent);
+    border-top: 1px solid
+      color-mix(in srgb, var(--border-subtle) 58%, transparent);
     content: "";
     inset: 0;
     position: absolute;
