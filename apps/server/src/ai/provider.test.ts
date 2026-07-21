@@ -5,9 +5,20 @@ import {
   ProviderResponseError,
   providerErrorCode,
   providerErrorMessage,
-  reflectionOutputSchema,
+  reflectionOutputSchemaFor,
   suggestionDuplicateOutputSchema,
 } from './provider.js';
+
+const developedWeekProgress = {
+  currentLocalDate: '2026-07-23',
+  daysElapsed: 4,
+  daysRemaining: 3,
+  processedSourceCount: 3,
+  phase: 'developing',
+  isPartialWeek: true,
+} as const;
+
+const reflectionOutputSchema = reflectionOutputSchemaFor(developedWeekProgress);
 
 describe('reflection output schema', () => {
   it('keeps grammar bounds finite and compatible', () => {
@@ -57,6 +68,39 @@ describe('reflection output schema', () => {
         },
       }).success,
     ).toBe(true);
+  });
+
+  it('allows an early partial week to remain sparse', () => {
+    const output = {
+      updatedMemory: {
+        context: [],
+        supportivePatterns: [],
+        recurringThemes: [],
+        ongoingCommitments: [],
+        openQuestions: [],
+        uncertainImpressions: [],
+      },
+      updatedWeek: {
+        summary: 'The first reflection of the week described a quiet morning.',
+        brightSpots: [],
+        difficultParts: [],
+        supportiveActions: [],
+        questionsToCarry: [],
+      },
+      taskSuggestions: [],
+      habitSuggestions: [],
+    };
+    const beginningSchema = reflectionOutputSchemaFor({
+      currentLocalDate: '2026-07-20',
+      daysElapsed: 1,
+      daysRemaining: 6,
+      processedSourceCount: 1,
+      phase: 'beginning',
+      isPartialWeek: true,
+    });
+
+    expect(beginningSchema.safeParse(output).success).toBe(true);
+    expect(reflectionOutputSchema.safeParse(output).success).toBe(false);
   });
 });
 

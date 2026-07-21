@@ -218,7 +218,7 @@ export const weeklyReflectionSectionsSchema = z.object({
     .min(1)
     .max(1_200)
     .describe(
-      'A concise weekly summary in 2 to 4 complete sentences. Synthesize the week without repeating the section items.',
+      'A concise current-week reflection in 1 to 4 complete sentences. Treat an early partial week as recent evidence, not a completed-week pattern, and do not repeat the section items.',
     ),
   brightSpots: boundedReflectionItems(3).describe(
     'Specific positive, meaningful, or appreciated moments grounded in this week. Empty only when the records contain no such moment.',

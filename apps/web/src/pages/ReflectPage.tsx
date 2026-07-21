@@ -184,6 +184,10 @@ export function ReflectPage() {
   const memory = reflection?.memory;
   const week = reflection?.currentWeek;
   const weekSections = week?.payload.sections;
+  const weekSourceCount = new Set(week?.payload.updatedFromDocumentIds ?? [])
+    .size;
+  const weekLabel =
+    weekSourceCount <= 2 ? 'Beginning this week' : 'This week so far';
   const questions = weekSections?.questionsToCarry ?? [];
   const hasGeneratedReflections = Boolean(
     memory ||
@@ -293,7 +297,7 @@ export function ReflectPage() {
         {week && weekSections ? (
           <article className={`${styles.card} ${styles.weekCard}`}>
             <div className={styles.cardHeading}>
-              <p className={styles.sectionLabel}>This week</p>
+              <p className={styles.sectionLabel}>{weekLabel}</p>
               <p className={styles.updatedAt}>
                 {formatWeek(week.payload.weekStart, week.payload.weekEnd)}
               </p>

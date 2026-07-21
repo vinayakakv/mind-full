@@ -144,8 +144,13 @@ canonical.
 
 The current week is a synchronized singleton covering Monday through Sunday.
 It is replaced when the first reflection from a new week is processed. Mindfull
-does not run a second end-of-week model pass or archive weekly snapshots; the
-rolling reflection already contains that generated material.
+always describes it to the model as a partial calendar week, including the
+current local date, elapsed and remaining days, and processed source count. With
+one or two sources, the model reflects only on available records and must not
+claim weekly patterns or an overall shape. From the third source onward it may
+synthesize cautiously while remaining provisional. Mindfull does not run a
+second end-of-week model pass or archive weekly snapshots; the rolling
+reflection already contains that generated material.
 
 Memory is limited to roughly 1,500–2,000 words and uses stable sections for
 context worth remembering, supportive patterns, recurring themes, ongoing
@@ -162,10 +167,11 @@ model-authored Markdown. A Markdown representation of memory is retained for
 export and compatibility with existing data.
 
 App-supplied source dates and type labels are provenance rather than memory
-content. Rebuild input preserves chronological ordering without exposing those
-dates to the model. The weekly summary uses two to four complete sentences to
-synthesize the week and does not repeat the structured section items. Generated
-output must include at least one grounded detail outside the summary. Each
+content. Rebuild input preserves chronological ordering; only the explicit week
+progress metadata exposes time to the model. An early reflection uses one or two
+grounded sentences and may leave every detail section empty. A developed
+reflection uses two to four sentences without repeating the structured section
+items and must include at least one grounded detail outside the summary. Each
 individual detail section may remain empty when the source records do not
 support it, avoiding invented bright spots or difficulties.
 
@@ -271,8 +277,10 @@ remains readable locally.
 Each completed journal or check-in updates the current-week reflection after it
 reaches the backend and the model is available. Work remains chronological and
 retries after provider downtime. The first processed source from a new week
-starts a fresh reflection in the existing singleton. There is no scheduled
-weekly finalization, separate review generation, or historical review archive.
+starts a fresh reflection in the existing singleton. Reflect labels one or two
+processed sources as “Beginning this week” and later evidence as “This week so
+far.” There is no scheduled weekly finalization, separate review generation, or
+historical review archive.
 
 ## Privacy and degradation
 

@@ -30,6 +30,7 @@ import {
   suggestionDuplicateTimeoutMs,
   type WeeklyRebuildInput,
   type WeeklyRebuildOutput,
+  type WeekProgress,
 } from './provider.js';
 import {
   analysisVersion,
@@ -130,6 +131,16 @@ export const outputAttemptDiagnostic = (
 };
 class StaleMemoryError extends Error {}
 
+const reflectionCorrectionFor = (progress: WeekProgress | null): string => {
+  if (progress?.phase === 'beginning') {
+    return 'The previous response did not match the required schema. Return only a complete valid result. This is the beginning of a partial week: reflect only on the available records, do not infer weekly patterns, and leave all detail sections empty when no grounded item is useful.';
+  }
+  if (!progress) {
+    return 'The previous response did not match the required schema. Return only a complete valid result.';
+  }
+  return 'The previous response did not match the required schema. Return only a complete valid result. Include at least one grounded current-week detail across brightSpots, difficultParts, supportiveActions, or questionsToCarry; leave a particular section empty only when the records do not support it.';
+};
+
 const providerConfiguration = (
   configuration: NonNullable<ReturnType<typeof readAiConfiguration>>,
 ): ProviderConfiguration | null =>
@@ -172,8 +183,7 @@ const invokeReflection = async (
   try {
     return await invoker.reflect(configuration, {
       ...input,
-      correction:
-        'The previous response did not match the required schema. Return only a complete valid result. Include at least one grounded weekly detail across brightSpots, difficultParts, supportiveActions, or questionsToCarry; leave a particular section empty only when the records do not support it.',
+      correction: reflectionCorrectionFor(input.weekProgress),
     });
   } catch (error) {
     if (NoObjectGeneratedError.isInstance(error)) {
@@ -202,8 +212,7 @@ const invokeWeeklyRebuild = async (
   try {
     return await invoker.rebuildWeek(configuration, {
       ...input,
-      correction:
-        'The previous response did not match the required schema. Return only a complete valid result. Include at least one grounded weekly detail across brightSpots, difficultParts, supportiveActions, or questionsToCarry; leave a particular section empty only when the records do not support it.',
+      correction: reflectionCorrectionFor(input.weekProgress),
     });
   } catch (error) {
     if (NoObjectGeneratedError.isInstance(error)) {
@@ -304,6 +313,29 @@ export const weekBounds = (localDate: string) => {
   const daysSinceMonday = weekday === 0 ? 6 : weekday - 1;
   const weekStart = shiftLocalDate(localDate, -daysSinceMonday);
   return { weekStart, weekEnd: shiftLocalDate(weekStart, 6) };
+};
+
+export const weekProgress = (
+  currentLocalDate: string,
+  processedSourceIds: string[],
+): WeekProgress => {
+  const { weekStart } = weekBounds(currentLocalDate);
+  const elapsedMs =
+    Date.parse(`${currentLocalDate}T12:00:00Z`) -
+    Date.parse(`${weekStart}T12:00:00Z`);
+  const daysElapsed = Math.min(
+    7,
+    Math.max(1, Math.floor(elapsedMs / 86_400_000) + 1),
+  );
+  const processedSourceCount = new Set(processedSourceIds).size;
+  return {
+    currentLocalDate,
+    daysElapsed,
+    daysRemaining: 7 - daysElapsed,
+    processedSourceCount,
+    phase: processedSourceCount <= 2 ? 'beginning' : 'developing',
+    isPartialWeek: true,
+  };
 };
 
 const weeklyDocument = (
@@ -561,6 +593,10 @@ const processAnalysis = async (
   const currentWeek = findCurrentWeekReflection(database);
   const bounds = weekBounds(source.payload.localDate);
   const organization = reflectionOrganization(database);
+  const weekSourceIds =
+    currentWeek?.payload.weekStart === bounds.weekStart
+      ? [...currentWeek.payload.updatedFromDocumentIds, source.id]
+      : [source.id];
   const reflectionOutput = await invokeReflection(invoker, configuration, {
     memoryMarkdown: memory?.payload.markdown ?? '',
     memorySections: memory?.payload.sections ?? null,
@@ -573,6 +609,7 @@ const processAnalysis = async (
           }
         : null,
     ...organization,
+    weekProgress: weekProgress(source.payload.localDate, weekSourceIds),
     sourceKind: source.type,
     sourceText: text,
   });
@@ -734,6 +771,7 @@ const processMemoryRebuild = async (
     activeHabits: [],
     pendingTaskSuggestions: [],
     pendingHabitSuggestions: [],
+    weekProgress: null,
     sourceKind: 'memory-batch',
     sourceText: chronologicalSourceText(batch),
   });
@@ -839,6 +877,15 @@ const processWeekRebuild = async (
   const currentSections = build.weekSections
     ? weeklyReflectionSectionsSchema.parse(JSON.parse(build.weekSections))
     : null;
+  const nextIndex = build.weekSourceIndex + batch.length;
+  const sourceDocumentIds = [
+    ...(JSON.parse(build.weekSourceDocumentIds) as string[]),
+    ...batch.map(({ id }) => id),
+  ];
+  const latestSource = batch.at(-1);
+  if (!latestSource) {
+    throw new Error('The weekly reflection rebuild has no current source.');
+  }
   const output = await invokeWeeklyRebuild(invoker, configuration, {
     memoryMarkdown: build.markdown,
     currentWeek: currentSections
@@ -848,13 +895,12 @@ const processWeekRebuild = async (
           sections: currentSections,
         }
       : null,
+    weekProgress: weekProgress(
+      latestSource.payload.localDate,
+      sourceDocumentIds,
+    ),
     sourceText: chronologicalSourceText(batch),
   });
-  const nextIndex = build.weekSourceIndex + batch.length;
-  const sourceDocumentIds = [
-    ...(JSON.parse(build.weekSourceDocumentIds) as string[]),
-    ...batch.map(({ id }) => id),
-  ];
 
   if (nextIndex < sources.length) {
     database.transaction((transaction) => {

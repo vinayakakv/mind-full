@@ -16,6 +16,7 @@ import {
   reflectionMemoryMarkdown,
   reflectionMemoryMarkdownFor,
   weekBounds,
+  weekProgress,
 } from './worker.js';
 
 const providerConfiguration: ProviderConfiguration = {
@@ -229,5 +230,19 @@ describe('current-week bounds', () => {
       weekStart: '2026-07-27',
       weekEnd: '2026-08-02',
     });
+  });
+
+  it('treats one or two processed sources as the beginning of a partial week', () => {
+    expect(weekProgress('2026-07-21', ['morning', 'morning'])).toEqual({
+      currentLocalDate: '2026-07-21',
+      daysElapsed: 2,
+      daysRemaining: 5,
+      processedSourceCount: 1,
+      phase: 'beginning',
+      isPartialWeek: true,
+    });
+    expect(
+      weekProgress('2026-07-22', ['morning', 'journal', 'evening']).phase,
+    ).toBe('developing');
   });
 });

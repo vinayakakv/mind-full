@@ -234,6 +234,12 @@ Reflect is a finite collection of calm cards or sections:
 Suggestions lead because they may need a decision. Long-term memory closes the
 page as the quieter, least time-sensitive layer.
 
+The current-week card is explicitly provisional. With one or two processed
+sources it reads “Beginning this week” and reflects only those records. From
+the third source onward it reads “This week so far” and may cautiously
+synthesize recurring evidence. It never presents an early partial week as a
+completed weekly review.
+
 Concrete one-off commitments appear as task suggestions, repeated practices as
 habit suggestions, and broader intentions in long-term memory. There is no
 separate passive open-commitments card.

@@ -178,8 +178,8 @@ synchronize as tombstones, and charts have an equivalent textual history.
 Values are stored canonically as kilograms or centimetres while each body
 metric synchronizes its preferred display unit. Stable default IDs and an old
 initial version timestamp let independently initialized browsers converge
-without overwriting later customization. Health remains outside primary bottom
-navigation and History; its chart dependency is isolated to the lazy route.
+without overwriting later customization. Health remains in primary navigation
+but outside History; its chart dependency is isolated to the lazy route.
 
 ## Milestone 3 — Android capability
 
@@ -265,8 +265,11 @@ llama.cpp's `llama-server` is the reference local provider; the Vercel AI SDK
 preserves the generic OpenAI-compatible boundary.
 
 The current-week reflection is updated after each completed journal or check-in
-is processed. The first processed reflection from a new week replaces it. A
-second end-of-week model pass, scheduled weekly-review job, and archived weekly
+is processed. The first processed reflection from a new week replaces it. The
+model receives explicit partial-week progress: one or two sources produce a
+sparse “Beginning this week” reflection without pattern claims, while three or
+more sources produce a cautious “This week so far” synthesis. A second
+end-of-week model pass, scheduled weekly-review job, and archived weekly
 snapshot are intentionally omitted because they would duplicate the same
 generated material.
 
