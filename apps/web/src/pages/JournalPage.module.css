@@ -87,7 +87,7 @@
 }
 
 .titleField input {
-  font-family: var(--font-reflection);
+  font-family: var(--font-control);
   font-size: clamp(2.1rem, 7vw, 3.3rem);
   letter-spacing: -0.035em;
   line-height: 1.1;
@@ -100,7 +100,7 @@
 
 .writingField textarea {
   field-sizing: content;
-  font-family: var(--font-reflection);
+  font-family: var(--font-control);
   font-size: 1.15rem;
   line-height: 1.75;
   margin-top: 1.75rem;
