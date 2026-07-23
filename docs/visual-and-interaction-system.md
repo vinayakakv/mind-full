@@ -11,7 +11,7 @@ Avoid:
 - Generic dashboard cards and sidebars
 - Dense grids of metrics
 - Excessive borders and containers
-- Large gradients and glass effects
+- Loud gradients and glass effects used as the interface language
 - Oversized rounded rectangles on every surface
 - Constant icon use
 - Confetti, badges, leaderboards, and guilt-driven streaks
@@ -107,22 +107,31 @@ Decorative dividers may remain quieter, while control outlines, selected-state
 borders, focus rings, and progress indicators maintain at least 3:1 contrast
 against adjacent colors.
 
-An optional ambient color field draws from the calm, graphic character of the
-Zune desktop software: broad asymmetric gradient planes, richer coral, plum,
-amber, teal, and indigo, and generous areas of quiet canvas. It avoids visible
-blobs and decorative particles. A self-hosted layered-wave SVG gives the
-background artwork an asymmetric, cropped form without turning it into a
-foreground illustration;
-its paths use a palette separate from the underlying color field so intermediate
-bands remain intentional in both themes. The field shifts between warm morning
-and cooler evening palettes, continues behind translucent navigation, and never
-carries meaning. The synchronized setting offers Gentle, Still, and Off; Gentle
-is the default. Five grouped, transform-only layers move independently: the
-artwork field and four quieter, paired wave bands. Each app load chooses bounded
-speeds and a balanced starting pattern so two bands initially travel each way.
-Keeping adjacent paths paired avoids costly Android WebView repaints while
-retaining irregular depth. Animation pauses during focused writing and
-check-ins, and reduced-motion always receives the still treatment.
+An optional atmospheric mesh gives the canvas softly luminous depth without
+becoming the interface language. It uses oversized, overlapping radial color
+fields with diffused edges and a very quiet, stationary grain. There are no
+recognizable shapes, hard bands, decorative particles, glass content cards, or
+text effects. The composition keeps the reading column lower in chroma while
+allowing richer color to enter from the viewport edges.
+
+The palette is deterministic for the user's local date:
+
+- Dawn uses warm linen, apricot, pale gold, dusty rose, and quiet green.
+- Day uses soft ivory, botanical green, muted aqua, lavender, and clay.
+- Dusk uses deeper plum, indigo, faded coral, and teal.
+- Night uses midnight blue, aubergine, muted cyan, and dim rose.
+- Light and dark themes have separately tuned luminance and chroma.
+- The calendar week selects one of six curated color harmonies.
+- The weekday subtly changes field positions, so the canvas remains stable for
+  the day while feeling fresh over time.
+
+The field never carries meaning and text, controls, borders, and focus states
+continue using stable semantic tokens. The synchronized setting offers Gentle,
+Still, and Off; Gentle is the default. Gentle moves three already-rendered
+field groups with long, independent transform-and-opacity cycles. Blur, gradient
+stops, and grain are not animated, keeping Android WebView work bounded.
+Animation pauses during focused writing and check-ins, and reduced-motion always
+receives the still treatment.
 
 ## Layout
 

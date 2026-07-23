@@ -1,265 +1,294 @@
 .backdrop {
+  --field-one-x: 7%;
+  --field-one-y: 13%;
+  --field-two-x: 92%;
+  --field-two-y: 19%;
+  --field-three-x: 13%;
+  --field-three-y: 88%;
+  --field-four-x: 91%;
+  --field-four-y: 79%;
+  --harmony-shift: 0;
+  background: var(--surface-canvas);
   inset: 0;
   overflow: hidden;
   pointer-events: none;
   position: fixed;
-  --wave-opacity: 0.34;
   z-index: -1;
 }
 
-.backdrop::before,
-.backdrop::after {
-  content: "";
+.fieldGroup {
   inset: -18%;
   position: absolute;
+  transform: translate3d(0, 0, 0) scale(1.08);
+  transform-origin: center;
 }
 
-.backdrop::before {
+.fieldGroupOne {
   background:
     radial-gradient(
-      ellipse 68% 56% at 12% 16%,
-      var(--ambient-first),
-      color-mix(in srgb, var(--ambient-first) 48%, transparent) 44%,
-      transparent 74%
+      ellipse 65% 58% at var(--field-one-x) var(--field-one-y),
+      var(--field-one) 0%,
+      color-mix(in oklab, var(--field-one) 54%, transparent) 42%,
+      transparent 76%
     ),
     radial-gradient(
-      ellipse 62% 70% at 88% 72%,
-      var(--ambient-second),
-      color-mix(in srgb, var(--ambient-second) 42%, transparent) 46%,
+      ellipse 58% 64% at var(--field-two-x) var(--field-two-y),
+      var(--field-two) 0%,
+      color-mix(in oklab, var(--field-two) 50%, transparent) 43%,
+      transparent 78%
+    );
+}
+
+.fieldGroupTwo {
+  background:
+    radial-gradient(
+      ellipse 72% 62% at var(--field-three-x) var(--field-three-y),
+      var(--field-three) 0%,
+      color-mix(in oklab, var(--field-three) 52%, transparent) 44%,
+      transparent 79%
+    ),
+    radial-gradient(
+      ellipse 64% 69% at var(--field-four-x) var(--field-four-y),
+      var(--field-four) 0%,
+      color-mix(in oklab, var(--field-four) 50%, transparent) 42%,
+      transparent 78%
+    );
+}
+
+.fieldGroupThree {
+  background:
+    radial-gradient(
+      ellipse 48% 35% at 50% 47%,
+      color-mix(in oklab, var(--surface-canvas) 68%, transparent),
       transparent 76%
     ),
     linear-gradient(
-      118deg,
-      transparent 18%,
-      color-mix(in srgb, var(--ambient-third) 72%, transparent) 54%,
-      transparent 82%
+      122deg,
+      color-mix(in oklab, var(--field-two) 18%, transparent),
+      transparent 38% 61%,
+      color-mix(in oklab, var(--field-three) 16%, transparent)
     );
-  opacity: var(--ambient-opacity);
 }
 
-.backdrop::after {
-  background:
-    radial-gradient(
-      ellipse 58% 48% at 18% 88%,
-      color-mix(in srgb, var(--ambient-fourth) 82%, transparent),
-      transparent 76%
-    ),
-    radial-gradient(
-      ellipse 54% 46% at 90% 4%,
-      color-mix(in srgb, var(--ambient-third) 72%, transparent),
-      transparent 78%
-    );
-  opacity: calc(var(--ambient-opacity) * 0.78);
-}
-
-.artwork {
-  height: 116%;
-  inset: -8%;
-  overflow: visible;
+.grain {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.72' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='.42'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 11.25rem 11.25rem;
+  inset: 0;
+  mix-blend-mode: soft-light;
+  opacity: 0.045;
   position: absolute;
-  transform: rotate(-4deg) scale(1.1);
-  width: 116%;
 }
 
-.waves path {
-  transform-box: fill-box;
-  transform-origin: center;
+.backdrop[data-harmony="0"] {
+  --harmony-shift: 0;
 }
 
-.waveBand {
-  transform-box: fill-box;
-  transform-origin: center;
+.backdrop[data-harmony="1"] {
+  --harmony-shift: 14;
 }
 
-.waves {
-  opacity: var(--wave-opacity);
+.backdrop[data-harmony="2"] {
+  --harmony-shift: -18;
 }
 
-.waves path[data-wave="1"] {
-  fill: var(--wave-first);
+.backdrop[data-harmony="3"] {
+  --harmony-shift: 28;
 }
 
-.waves path[data-wave="2"] {
-  fill: var(--wave-second);
+.backdrop[data-harmony="4"] {
+  --harmony-shift: -32;
 }
 
-.waves path[data-wave="3"] {
-  fill: var(--wave-third);
+.backdrop[data-harmony="5"] {
+  --harmony-shift: 44;
 }
 
-.waves path[data-wave="4"] {
-  fill: var(--wave-fourth);
+.backdrop[data-phase="dawn"] {
+  --field-one: oklch(82% 0.115 calc(28 + var(--harmony-shift)) / 0.72);
+  --field-two: oklch(81% 0.105 calc(330 + var(--harmony-shift)) / 0.66);
+  --field-three: oklch(86% 0.1 calc(88 + var(--harmony-shift)) / 0.62);
+  --field-four: oklch(80% 0.09 calc(178 + var(--harmony-shift)) / 0.6);
 }
 
-.waves path[data-wave="5"] {
-  fill: var(--wave-fifth);
+.backdrop[data-phase="day"] {
+  --field-one: oklch(85% 0.085 calc(42 + var(--harmony-shift)) / 0.62);
+  --field-two: oklch(83% 0.09 calc(285 + var(--harmony-shift)) / 0.58);
+  --field-three: oklch(87% 0.075 calc(145 + var(--harmony-shift)) / 0.62);
+  --field-four: oklch(82% 0.08 calc(195 + var(--harmony-shift)) / 0.58);
 }
 
-.waves path[data-wave="6"] {
-  fill: var(--wave-sixth);
+.backdrop[data-phase="dusk"] {
+  --field-one: oklch(80% 0.12 calc(340 + var(--harmony-shift)) / 0.66);
+  --field-two: oklch(77% 0.13 calc(270 + var(--harmony-shift)) / 0.64);
+  --field-three: oklch(82% 0.105 calc(28 + var(--harmony-shift)) / 0.56);
+  --field-four: oklch(76% 0.11 calc(190 + var(--harmony-shift)) / 0.62);
 }
 
-.waves path[data-wave="7"] {
-  fill: var(--wave-seventh);
+.backdrop[data-phase="night"] {
+  --field-one: oklch(79% 0.1 calc(260 + var(--harmony-shift)) / 0.58);
+  --field-two: oklch(76% 0.115 calc(320 + var(--harmony-shift)) / 0.6);
+  --field-three: oklch(81% 0.085 calc(195 + var(--harmony-shift)) / 0.5);
+  --field-four: oklch(75% 0.1 calc(350 + var(--harmony-shift)) / 0.56);
 }
 
-.waves path[data-wave="8"] {
-  fill: var(--wave-eighth);
+:global(:root[data-theme="dark"]) .grain {
+  opacity: 0.06;
 }
 
-.backdrop[data-period="morning"] {
-  --ambient-first: #e48768;
-  --ambient-second: #bc6d94;
-  --ambient-third: #d1a13c;
-  --ambient-fourth: #5e998b;
-  --ambient-line: rgb(62 80 69 / 26%);
-  --wave-first: #c65d56;
-  --wave-second: #b75d78;
-  --wave-third: #8f628f;
-  --wave-fourth: #69719b;
-  --wave-fifth: #4f8c8b;
-  --wave-sixth: #77966e;
-  --wave-seventh: #b08d49;
-  --wave-eighth: #c8784f;
+:global(:root[data-theme="dark"]) .backdrop[data-phase="dawn"] {
+  --field-one: oklch(49% 0.115 calc(28 + var(--harmony-shift)) / 0.72);
+  --field-two: oklch(46% 0.105 calc(330 + var(--harmony-shift)) / 0.68);
+  --field-three: oklch(52% 0.09 calc(88 + var(--harmony-shift)) / 0.58);
+  --field-four: oklch(43% 0.09 calc(178 + var(--harmony-shift)) / 0.66);
 }
 
-.backdrop[data-period="evening"] {
-  --ambient-first: #6856a3;
-  --ambient-second: #994b72;
-  --ambient-third: #3f788c;
-  --ambient-fourth: #ae6b49;
-  --ambient-line: rgb(230 194 147 / 25%);
-  --wave-first: #554a91;
-  --wave-second: #75519a;
-  --wave-third: #95507f;
-  --wave-fourth: #ad5b71;
-  --wave-fifth: #b96f58;
-  --wave-sixth: #af8b52;
-  --wave-seventh: #4f8585;
-  --wave-eighth: #4f718f;
+:global(:root[data-theme="dark"]) .backdrop[data-phase="day"] {
+  --field-one: oklch(46% 0.09 calc(42 + var(--harmony-shift)) / 0.64);
+  --field-two: oklch(44% 0.09 calc(285 + var(--harmony-shift)) / 0.6);
+  --field-three: oklch(49% 0.075 calc(145 + var(--harmony-shift)) / 0.58);
+  --field-four: oklch(42% 0.08 calc(195 + var(--harmony-shift)) / 0.62);
 }
 
-:global(:root[data-theme="dark"]) .backdrop[data-period="morning"] {
-  --wave-opacity: 0.3;
-  --ambient-first: #8f4f3d;
-  --ambient-second: #713f62;
-  --ambient-third: #826421;
-  --ambient-fourth: #356b61;
-  --ambient-line: rgb(206 188 154 / 18%);
-  --wave-first: #d46d60;
-  --wave-second: #c1698b;
-  --wave-third: #a36fa8;
-  --wave-fourth: #7580b7;
-  --wave-fifth: #4f9da0;
-  --wave-sixth: #7da273;
-  --wave-seventh: #c3a054;
-  --wave-eighth: #d18458;
+:global(:root[data-theme="dark"]) .backdrop[data-phase="dusk"] {
+  --field-one: oklch(45% 0.13 calc(340 + var(--harmony-shift)) / 0.74);
+  --field-two: oklch(42% 0.14 calc(270 + var(--harmony-shift)) / 0.72);
+  --field-three: oklch(48% 0.105 calc(28 + var(--harmony-shift)) / 0.62);
+  --field-four: oklch(40% 0.115 calc(190 + var(--harmony-shift)) / 0.7);
 }
 
-:global(:root[data-theme="dark"]) .backdrop[data-period="evening"] {
-  --wave-opacity: 0.3;
-  --ambient-first: #4d407e;
-  --ambient-second: #713651;
-  --ambient-third: #285c70;
-  --ambient-fourth: #70412f;
-  --ambient-line: rgb(190 169 216 / 19%);
-  --wave-first: #7165b4;
-  --wave-second: #8a61ae;
-  --wave-third: #ad6094;
-  --wave-fourth: #c36a83;
-  --wave-fifth: #c87b61;
-  --wave-sixth: #b89a61;
-  --wave-seventh: #5a9997;
-  --wave-eighth: #5e85a4;
+:global(:root[data-theme="dark"]) .backdrop[data-phase="night"] {
+  --field-one: oklch(39% 0.11 calc(260 + var(--harmony-shift)) / 0.72);
+  --field-two: oklch(36% 0.13 calc(320 + var(--harmony-shift)) / 0.7);
+  --field-three: oklch(42% 0.09 calc(195 + var(--harmony-shift)) / 0.58);
+  --field-four: oklch(34% 0.11 calc(350 + var(--harmony-shift)) / 0.68);
 }
 
-.backdrop[data-motion="gentle"] .artwork {
-  animation: artwork-drift 9s ease-in-out infinite alternate;
-  will-change: transform;
+.backdrop[data-composition="1"] {
+  --field-one-x: 14%;
+  --field-one-y: 8%;
+  --field-two-x: 94%;
+  --field-two-y: 29%;
+  --field-three-x: 7%;
+  --field-three-y: 79%;
+  --field-four-x: 84%;
+  --field-four-y: 91%;
 }
 
-.backdrop[data-motion="gentle"] .waveBandOne {
-  animation: wave-drift-one 10s ease-in-out infinite alternate;
-  will-change: transform;
+.backdrop[data-composition="2"] {
+  --field-one-x: 3%;
+  --field-one-y: 27%;
+  --field-two-x: 84%;
+  --field-two-y: 8%;
+  --field-three-x: 22%;
+  --field-three-y: 94%;
+  --field-four-x: 96%;
+  --field-four-y: 68%;
 }
 
-.backdrop[data-motion="gentle"] .waveBandTwo {
-  animation: wave-drift-two 14s ease-in-out infinite alternate-reverse;
-  will-change: transform;
+.backdrop[data-composition="3"] {
+  --field-one-x: 17%;
+  --field-one-y: 17%;
+  --field-two-x: 97%;
+  --field-two-y: 11%;
+  --field-three-x: 4%;
+  --field-three-y: 91%;
+  --field-four-x: 77%;
+  --field-four-y: 82%;
 }
 
-.backdrop[data-motion="gentle"] .waveBandThree {
-  animation: wave-drift-three 11.5s ease-in-out infinite alternate;
-  will-change: transform;
+.backdrop[data-composition="4"] {
+  --field-one-x: 5%;
+  --field-one-y: 7%;
+  --field-two-x: 81%;
+  --field-two-y: 25%;
+  --field-three-x: 16%;
+  --field-three-y: 84%;
+  --field-four-x: 98%;
+  --field-four-y: 91%;
 }
 
-.backdrop[data-motion="gentle"] .waveBandFour {
-  animation: wave-drift-four 15.5s ease-in-out infinite alternate-reverse;
-  will-change: transform;
+.backdrop[data-composition="5"] {
+  --field-one-x: 22%;
+  --field-one-y: 5%;
+  --field-two-x: 95%;
+  --field-two-y: 19%;
+  --field-three-x: 3%;
+  --field-three-y: 73%;
+  --field-four-x: 83%;
+  --field-four-y: 96%;
+}
+
+.backdrop[data-composition="6"] {
+  --field-one-x: 8%;
+  --field-one-y: 24%;
+  --field-two-x: 82%;
+  --field-two-y: 6%;
+  --field-three-x: 24%;
+  --field-three-y: 96%;
+  --field-four-x: 97%;
+  --field-four-y: 74%;
+}
+
+.backdrop[data-motion="gentle"] .fieldGroupOne {
+  animation: field-drift-one 38s ease-in-out infinite alternate;
+  will-change: opacity, transform;
+}
+
+.backdrop[data-motion="gentle"] .fieldGroupTwo {
+  animation: field-drift-two 47s ease-in-out infinite alternate-reverse;
+  will-change: opacity, transform;
+}
+
+.backdrop[data-motion="gentle"] .fieldGroupThree {
+  animation: field-drift-three 56s ease-in-out infinite alternate;
+  will-change: opacity, transform;
 }
 
 :global(body:has(textarea:focus, [aria-modal="true"]))
   .backdrop[data-motion="gentle"]
-  .artwork,
-:global(body:has(textarea:focus, [aria-modal="true"]))
-  .backdrop[data-motion="gentle"]
-  .waveBand {
+  .fieldGroup {
   animation-play-state: paused;
 }
 
-@keyframes artwork-drift {
+@keyframes field-drift-one {
   from {
-    transform: translate3d(-2.25%, 0.75%, 0) rotate(-4.75deg) scale(1.1);
+    opacity: 0.9;
+    transform: translate3d(-3.5%, 1.5%, 0) scale(1.08);
   }
 
   to {
-    transform: translate3d(2.25%, -1.5%, 0) rotate(-3.25deg) scale(1.12);
+    opacity: 1;
+    transform: translate3d(3.5%, -2.5%, 0) scale(1.12);
   }
 }
 
-@keyframes wave-drift-one {
+@keyframes field-drift-two {
   from {
-    transform: translate3d(-2.4%, 0.75%, 0);
+    opacity: 0.92;
+    transform: translate3d(3%, -2%, 0) scale(1.1);
   }
 
   to {
-    transform: translate3d(2.4%, -0.75%, 0);
+    opacity: 1;
+    transform: translate3d(-4%, 2.5%, 0) scale(1.06);
   }
 }
 
-@keyframes wave-drift-two {
+@keyframes field-drift-three {
   from {
-    transform: translate3d(-2%, 1%, 0);
+    opacity: 0.78;
+    transform: translate3d(-2%, -1.5%, 0) scale(1.06);
   }
 
   to {
-    transform: translate3d(1.8%, -0.5%, 0);
-  }
-}
-
-@keyframes wave-drift-three {
-  from {
-    transform: translate3d(-1.8%, -0.6%, 0);
-  }
-
-  to {
-    transform: translate3d(1.8%, 0.6%, 0);
-  }
-}
-
-@keyframes wave-drift-four {
-  from {
-    transform: translate3d(-1.4%, -0.9%, 0);
-  }
-
-  to {
-    transform: translate3d(2.1%, 0.4%, 0);
+    opacity: 0.94;
+    transform: translate3d(2.5%, 2%, 0) scale(1.11);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .artwork,
-  .waveBand {
+  .fieldGroup {
     animation: none;
   }
 }

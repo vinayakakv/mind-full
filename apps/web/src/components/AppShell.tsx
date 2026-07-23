@@ -1,9 +1,7 @@
-import { relevantCheckInKind } from '@mindfull/domain';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { NavLink, Outlet, ScrollRestoration } from 'react-router';
 
 import { loadSettings } from '../data/settings';
-import { localTimeFor } from '../data/time';
 import { useAiStatus } from '../hooks/use-ai-status';
 import { useCurrentTime } from '../hooks/use-current-time';
 import { useHousekeeping } from '../hooks/use-housekeeping';
@@ -48,17 +46,12 @@ export function AppShell() {
   const settings = useLiveQuery(loadSettings);
 
   useResolvedTheme(settings?.payload.theme ?? 'system');
-  const period = relevantCheckInKind(
-    localTimeFor(now),
-    settings?.payload.morningStartsAt ?? '05:00',
-    settings?.payload.eveningStartsAt ?? '18:00',
-  );
 
   return (
     <div className={styles.shell}>
       <AmbientBackdrop
         mode={settings?.payload.ambience ?? 'gentle'}
-        period={period}
+        now={now}
       />
       <div className={styles.headerFrame}>
         <header className={styles.header}>

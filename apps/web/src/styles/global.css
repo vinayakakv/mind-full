@@ -28,7 +28,6 @@
   --shadow-soft: rgb(55 52 45 / 16%);
   --focus-ring: #43583d;
   --text-danger: #7e3e38;
-  --ambient-opacity: 0.28;
   background: var(--surface-canvas);
   color: var(--text-primary);
   font-family: var(--font-control);
@@ -53,7 +52,6 @@
   --shadow-soft: rgb(0 0 0 / 30%);
   --focus-ring: #adc7a0;
   --text-danger: #e19c93;
-  --ambient-opacity: 0.24;
 }
 
 * {
