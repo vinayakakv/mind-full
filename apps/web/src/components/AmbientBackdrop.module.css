@@ -7,6 +7,20 @@
   --field-three-y: 88%;
   --field-four-x: 91%;
   --field-four-y: 79%;
+  --field-one: var(--palette-one);
+  --field-two: var(--palette-two);
+  --field-three: var(--palette-three);
+  --field-four: var(--palette-four);
+  --field-one-width: 74%;
+  --field-one-height: 64%;
+  --field-two-width: 52%;
+  --field-two-height: 58%;
+  --field-three-width: 66%;
+  --field-three-height: 56%;
+  --field-four-width: 58%;
+  --field-four-height: 64%;
+  --group-one-strength: 1;
+  --group-two-strength: 0.88;
   --harmony-shift: 0;
   background: var(--surface-canvas);
   inset: 0;
@@ -24,35 +38,43 @@
 }
 
 .fieldGroupOne {
+  --group-strength: var(--group-one-strength);
   background:
     radial-gradient(
-      ellipse 65% 58% at var(--field-one-x) var(--field-one-y),
+      ellipse var(--field-one-width) var(--field-one-height) at
+        var(--field-one-x) var(--field-one-y),
       var(--field-one) 0%,
       color-mix(in oklab, var(--field-one) 54%, transparent) 42%,
       transparent 76%
     ),
     radial-gradient(
-      ellipse 58% 64% at var(--field-two-x) var(--field-two-y),
+      ellipse var(--field-two-width) var(--field-two-height) at
+        var(--field-two-x) var(--field-two-y),
       var(--field-two) 0%,
       color-mix(in oklab, var(--field-two) 50%, transparent) 43%,
       transparent 78%
     );
+  opacity: var(--group-strength);
 }
 
 .fieldGroupTwo {
+  --group-strength: var(--group-two-strength);
   background:
     radial-gradient(
-      ellipse 72% 62% at var(--field-three-x) var(--field-three-y),
+      ellipse var(--field-three-width) var(--field-three-height) at
+        var(--field-three-x) var(--field-three-y),
       var(--field-three) 0%,
       color-mix(in oklab, var(--field-three) 52%, transparent) 44%,
       transparent 79%
     ),
     radial-gradient(
-      ellipse 64% 69% at var(--field-four-x) var(--field-four-y),
+      ellipse var(--field-four-width) var(--field-four-height) at
+        var(--field-four-x) var(--field-four-y),
       var(--field-four) 0%,
       color-mix(in oklab, var(--field-four) 50%, transparent) 42%,
       transparent 78%
     );
+  opacity: var(--group-strength);
 }
 
 .fieldGroupThree {
@@ -105,31 +127,31 @@
 }
 
 .backdrop[data-phase="dawn"] {
-  --field-one: oklch(82% 0.115 calc(28 + var(--harmony-shift)) / 0.72);
-  --field-two: oklch(81% 0.105 calc(330 + var(--harmony-shift)) / 0.66);
-  --field-three: oklch(86% 0.1 calc(88 + var(--harmony-shift)) / 0.62);
-  --field-four: oklch(80% 0.09 calc(178 + var(--harmony-shift)) / 0.6);
+  --palette-one: oklch(82% 0.115 calc(28 + var(--harmony-shift)) / 0.72);
+  --palette-two: oklch(81% 0.105 calc(330 + var(--harmony-shift)) / 0.66);
+  --palette-three: oklch(86% 0.1 calc(88 + var(--harmony-shift)) / 0.62);
+  --palette-four: oklch(80% 0.09 calc(178 + var(--harmony-shift)) / 0.6);
 }
 
 .backdrop[data-phase="day"] {
-  --field-one: oklch(85% 0.085 calc(42 + var(--harmony-shift)) / 0.62);
-  --field-two: oklch(83% 0.09 calc(285 + var(--harmony-shift)) / 0.58);
-  --field-three: oklch(87% 0.075 calc(145 + var(--harmony-shift)) / 0.62);
-  --field-four: oklch(82% 0.08 calc(195 + var(--harmony-shift)) / 0.58);
+  --palette-one: oklch(85% 0.085 calc(42 + var(--harmony-shift)) / 0.62);
+  --palette-two: oklch(83% 0.09 calc(285 + var(--harmony-shift)) / 0.58);
+  --palette-three: oklch(87% 0.075 calc(145 + var(--harmony-shift)) / 0.62);
+  --palette-four: oklch(82% 0.08 calc(195 + var(--harmony-shift)) / 0.58);
 }
 
 .backdrop[data-phase="dusk"] {
-  --field-one: oklch(80% 0.12 calc(340 + var(--harmony-shift)) / 0.66);
-  --field-two: oklch(77% 0.13 calc(270 + var(--harmony-shift)) / 0.64);
-  --field-three: oklch(82% 0.105 calc(28 + var(--harmony-shift)) / 0.56);
-  --field-four: oklch(76% 0.11 calc(190 + var(--harmony-shift)) / 0.62);
+  --palette-one: oklch(80% 0.12 calc(340 + var(--harmony-shift)) / 0.66);
+  --palette-two: oklch(77% 0.13 calc(270 + var(--harmony-shift)) / 0.64);
+  --palette-three: oklch(82% 0.105 calc(28 + var(--harmony-shift)) / 0.56);
+  --palette-four: oklch(76% 0.11 calc(190 + var(--harmony-shift)) / 0.62);
 }
 
 .backdrop[data-phase="night"] {
-  --field-one: oklch(79% 0.1 calc(260 + var(--harmony-shift)) / 0.58);
-  --field-two: oklch(76% 0.115 calc(320 + var(--harmony-shift)) / 0.6);
-  --field-three: oklch(81% 0.085 calc(195 + var(--harmony-shift)) / 0.5);
-  --field-four: oklch(75% 0.1 calc(350 + var(--harmony-shift)) / 0.56);
+  --palette-one: oklch(79% 0.1 calc(260 + var(--harmony-shift)) / 0.58);
+  --palette-two: oklch(76% 0.115 calc(320 + var(--harmony-shift)) / 0.6);
+  --palette-three: oklch(81% 0.085 calc(195 + var(--harmony-shift)) / 0.5);
+  --palette-four: oklch(75% 0.1 calc(350 + var(--harmony-shift)) / 0.56);
 }
 
 :global(:root[data-theme="dark"]) .grain {
@@ -137,97 +159,144 @@
 }
 
 :global(:root[data-theme="dark"]) .backdrop[data-phase="dawn"] {
-  --field-one: oklch(49% 0.115 calc(28 + var(--harmony-shift)) / 0.72);
-  --field-two: oklch(46% 0.105 calc(330 + var(--harmony-shift)) / 0.68);
-  --field-three: oklch(52% 0.09 calc(88 + var(--harmony-shift)) / 0.58);
-  --field-four: oklch(43% 0.09 calc(178 + var(--harmony-shift)) / 0.66);
+  --palette-one: oklch(49% 0.115 calc(28 + var(--harmony-shift)) / 0.72);
+  --palette-two: oklch(46% 0.105 calc(330 + var(--harmony-shift)) / 0.68);
+  --palette-three: oklch(52% 0.09 calc(88 + var(--harmony-shift)) / 0.58);
+  --palette-four: oklch(43% 0.09 calc(178 + var(--harmony-shift)) / 0.66);
 }
 
 :global(:root[data-theme="dark"]) .backdrop[data-phase="day"] {
-  --field-one: oklch(46% 0.09 calc(42 + var(--harmony-shift)) / 0.64);
-  --field-two: oklch(44% 0.09 calc(285 + var(--harmony-shift)) / 0.6);
-  --field-three: oklch(49% 0.075 calc(145 + var(--harmony-shift)) / 0.58);
-  --field-four: oklch(42% 0.08 calc(195 + var(--harmony-shift)) / 0.62);
+  --palette-one: oklch(46% 0.09 calc(42 + var(--harmony-shift)) / 0.64);
+  --palette-two: oklch(44% 0.09 calc(285 + var(--harmony-shift)) / 0.6);
+  --palette-three: oklch(49% 0.075 calc(145 + var(--harmony-shift)) / 0.58);
+  --palette-four: oklch(42% 0.08 calc(195 + var(--harmony-shift)) / 0.62);
 }
 
 :global(:root[data-theme="dark"]) .backdrop[data-phase="dusk"] {
-  --field-one: oklch(45% 0.13 calc(340 + var(--harmony-shift)) / 0.74);
-  --field-two: oklch(42% 0.14 calc(270 + var(--harmony-shift)) / 0.72);
-  --field-three: oklch(48% 0.105 calc(28 + var(--harmony-shift)) / 0.62);
-  --field-four: oklch(40% 0.115 calc(190 + var(--harmony-shift)) / 0.7);
+  --palette-one: oklch(45% 0.13 calc(340 + var(--harmony-shift)) / 0.74);
+  --palette-two: oklch(42% 0.14 calc(270 + var(--harmony-shift)) / 0.72);
+  --palette-three: oklch(48% 0.105 calc(28 + var(--harmony-shift)) / 0.62);
+  --palette-four: oklch(40% 0.115 calc(190 + var(--harmony-shift)) / 0.7);
 }
 
 :global(:root[data-theme="dark"]) .backdrop[data-phase="night"] {
-  --field-one: oklch(39% 0.11 calc(260 + var(--harmony-shift)) / 0.72);
-  --field-two: oklch(36% 0.13 calc(320 + var(--harmony-shift)) / 0.7);
-  --field-three: oklch(42% 0.09 calc(195 + var(--harmony-shift)) / 0.58);
-  --field-four: oklch(34% 0.11 calc(350 + var(--harmony-shift)) / 0.68);
+  --palette-one: oklch(39% 0.11 calc(260 + var(--harmony-shift)) / 0.72);
+  --palette-two: oklch(36% 0.13 calc(320 + var(--harmony-shift)) / 0.7);
+  --palette-three: oklch(42% 0.09 calc(195 + var(--harmony-shift)) / 0.58);
+  --palette-four: oklch(34% 0.11 calc(350 + var(--harmony-shift)) / 0.68);
 }
 
 .backdrop[data-composition="1"] {
-  --field-one-x: 14%;
-  --field-one-y: 8%;
-  --field-two-x: 94%;
-  --field-two-y: 29%;
-  --field-three-x: 7%;
-  --field-three-y: 79%;
-  --field-four-x: 84%;
-  --field-four-y: 91%;
+  --field-one: var(--palette-two);
+  --field-two: var(--palette-four);
+  --field-three: var(--palette-one);
+  --field-four: var(--palette-three);
+  --field-one-x: -4%;
+  --field-one-y: 40%;
+  --field-two-x: 78%;
+  --field-two-y: -6%;
+  --field-three-x: 38%;
+  --field-three-y: 105%;
+  --field-four-x: 108%;
+  --field-four-y: 65%;
+  --field-one-width: 82%;
+  --field-one-height: 70%;
+  --field-two-width: 48%;
+  --field-two-height: 54%;
+  --group-two-strength: 0.78;
 }
 
 .backdrop[data-composition="2"] {
-  --field-one-x: 3%;
-  --field-one-y: 27%;
-  --field-two-x: 84%;
-  --field-two-y: 8%;
-  --field-three-x: 22%;
-  --field-three-y: 94%;
-  --field-four-x: 96%;
-  --field-four-y: 68%;
+  --field-one: var(--palette-four);
+  --field-two: var(--palette-one);
+  --field-three: var(--palette-two);
+  --field-four: var(--palette-three);
+  --field-one-x: 45%;
+  --field-one-y: -8%;
+  --field-two-x: 108%;
+  --field-two-y: 34%;
+  --field-three-x: -8%;
+  --field-three-y: 68%;
+  --field-four-x: 64%;
+  --field-four-y: 108%;
+  --field-three-width: 80%;
+  --field-three-height: 66%;
+  --group-one-strength: 0.82;
+  --group-two-strength: 1;
 }
 
 .backdrop[data-composition="3"] {
-  --field-one-x: 17%;
-  --field-one-y: 17%;
-  --field-two-x: 97%;
-  --field-two-y: 11%;
-  --field-three-x: 4%;
-  --field-three-y: 91%;
-  --field-four-x: 77%;
-  --field-four-y: 82%;
+  --field-one: var(--palette-one);
+  --field-two: var(--palette-four);
+  --field-three: var(--palette-three);
+  --field-four: var(--palette-two);
+  --field-one-x: 13%;
+  --field-one-y: 12%;
+  --field-two-x: 106%;
+  --field-two-y: 6%;
+  --field-three-x: -5%;
+  --field-three-y: 100%;
+  --field-four-x: 72%;
+  --field-four-y: 78%;
+  --field-four-width: 72%;
+  --field-four-height: 72%;
 }
 
 .backdrop[data-composition="4"] {
-  --field-one-x: 5%;
-  --field-one-y: 7%;
-  --field-two-x: 81%;
-  --field-two-y: 25%;
-  --field-three-x: 16%;
-  --field-three-y: 84%;
-  --field-four-x: 98%;
-  --field-four-y: 91%;
+  --field-one: var(--palette-two);
+  --field-two: var(--palette-three);
+  --field-three: var(--palette-four);
+  --field-four: var(--palette-one);
+  --field-one-x: -6%;
+  --field-one-y: 8%;
+  --field-two-x: 74%;
+  --field-two-y: 24%;
+  --field-three-x: 26%;
+  --field-three-y: 92%;
+  --field-four-x: 108%;
+  --field-four-y: 102%;
+  --field-two-width: 76%;
+  --field-two-height: 68%;
+  --group-one-strength: 0.92;
+  --group-two-strength: 1;
 }
 
 .backdrop[data-composition="5"] {
-  --field-one-x: 22%;
-  --field-one-y: 5%;
-  --field-two-x: 95%;
-  --field-two-y: 19%;
-  --field-three-x: 3%;
-  --field-three-y: 73%;
-  --field-four-x: 83%;
-  --field-four-y: 96%;
+  --field-one: var(--palette-three);
+  --field-two: var(--palette-one);
+  --field-three: var(--palette-two);
+  --field-four: var(--palette-four);
+  --field-one-x: 28%;
+  --field-one-y: -10%;
+  --field-two-x: 105%;
+  --field-two-y: 48%;
+  --field-three-x: -8%;
+  --field-three-y: 45%;
+  --field-four-x: 72%;
+  --field-four-y: 108%;
+  --field-three-width: 76%;
+  --field-three-height: 72%;
+  --group-one-strength: 0.84;
+  --group-two-strength: 1;
 }
 
 .backdrop[data-composition="6"] {
-  --field-one-x: 8%;
-  --field-one-y: 24%;
-  --field-two-x: 82%;
-  --field-two-y: 6%;
-  --field-three-x: 24%;
-  --field-three-y: 96%;
-  --field-four-x: 97%;
-  --field-four-y: 74%;
+  --field-one: var(--palette-four);
+  --field-two: var(--palette-three);
+  --field-three: var(--palette-one);
+  --field-four: var(--palette-two);
+  --field-one-x: -8%;
+  --field-one-y: 32%;
+  --field-two-x: 64%;
+  --field-two-y: -12%;
+  --field-three-x: 38%;
+  --field-three-y: 112%;
+  --field-four-x: 108%;
+  --field-four-y: 62%;
+  --field-one-width: 78%;
+  --field-one-height: 74%;
+  --field-four-width: 76%;
+  --field-four-height: 66%;
 }
 
 .backdrop[data-motion="gentle"] .fieldGroupOne {
@@ -253,24 +322,24 @@
 
 @keyframes field-drift-one {
   from {
-    opacity: 0.9;
+    opacity: calc(var(--group-strength) * 0.9);
     transform: translate3d(-3.5%, 1.5%, 0) scale(1.08);
   }
 
   to {
-    opacity: 1;
+    opacity: var(--group-strength);
     transform: translate3d(3.5%, -2.5%, 0) scale(1.12);
   }
 }
 
 @keyframes field-drift-two {
   from {
-    opacity: 0.92;
+    opacity: calc(var(--group-strength) * 0.92);
     transform: translate3d(3%, -2%, 0) scale(1.1);
   }
 
   to {
-    opacity: 1;
+    opacity: var(--group-strength);
     transform: translate3d(-4%, 2.5%, 0) scale(1.06);
   }
 }

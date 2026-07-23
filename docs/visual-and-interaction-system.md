@@ -122,8 +122,8 @@ The palette is deterministic for the user's local date:
 - Night uses midnight blue, aubergine, muted cyan, and dim rose.
 - Light and dark themes have separately tuned luminance and chroma.
 - The calendar week selects one of six curated color harmonies.
-- The weekday subtly changes field positions, so the canvas remains stable for
-  the day while feeling fresh over time.
+- The weekday changes field placement, dominance, and color assignment within
+  the weekly harmony, so each day is visibly distinct while remaining related.
 
 The field never carries meaning and text, controls, borders, and focus states
 continue using stable semantic tokens. The synchronized setting offers Gentle,
